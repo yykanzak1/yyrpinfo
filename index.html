@@ -842,6 +842,54 @@
             table.craft-material-price-table th:first-child, table.craft-material-price-table td:first-child { min-width: 0; position: static; left: auto; }
         }
 
+
+        /* スマホ全体：メイン領域を画面幅に合わせて伸縮 */
+        @media (max-width: 700px) {
+            .app-body { align-items: stretch; }
+            .main-area { width: 100%; min-width: 0; box-sizing: border-box; }
+            .search-bar { width: 100%; min-width: 0; }
+            .search-bar input { min-width: 0; }
+        }
+        /* スマホ：換金表のアイテム名と単価を同時表示 */
+        @media (max-width: 600px) {
+            .table-wrapper.exchange-price-wrapper { width: 100%; max-width: 100%; box-sizing: border-box; overflow: visible; }
+            table.exchange-price-table { width: 100%; max-width: 100%; min-width: 0; table-layout: fixed; }
+            table.exchange-price-table th, table.exchange-price-table td { padding: 8px 10px; font-size: .84rem; }
+            table.exchange-price-table th:first-child, table.exchange-price-table td:first-child { min-width: 0; position: static; left: auto; }
+        }
+
+
+        /* スマホ：タブを2段にして全メニューを常時表示 */
+        @media (max-width: 600px) {
+            .app-body > nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; width: 100%; max-width: 100%; box-sizing: border-box; padding: 4px 8px; overflow: visible; }
+            .app-body > nav .tab-btn { min-width: 0; width: 100%; box-sizing: border-box; flex: initial; padding: 10px 5px; font-size: .8rem; line-height: 1.35; white-space: normal; text-align: center; }
+        }
+
+
+        /* サイト更新履歴 */
+        .updates-btn { background: var(--highlight-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: .85rem; white-space: nowrap; }
+        .updates-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .updates-label-short { display: none; }
+        .updates-overlay { display: none; position: fixed; inset: 0; z-index: 22000; padding: 20px; box-sizing: border-box; overflow-y: auto; background: rgba(0,0,0,.72); }
+        .updates-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+        .updates-dialog { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; margin: 5vh auto 20px; padding: 20px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 14px; background: var(--card-bg); color: var(--text-color); box-shadow: 0 18px 60px rgba(0,0,0,.4); }
+        .updates-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .updates-dialog-head h2 { margin: 0; font-size: 1.2rem; }
+        .updates-close { flex-shrink: 0; padding: 7px 11px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-color); font-weight: 700; cursor: pointer; }
+        .updates-note { margin: 10px 0 14px; color: var(--text-dim); font-size: .85rem; }
+        .update-entry { padding: 13px 14px; margin: 10px 0 0; border: 1px solid var(--border-color); border-left: 3px solid var(--accent-cyan); border-radius: 9px; background: var(--bg-color); }
+        .update-entry-date { margin-bottom: 5px; color: var(--accent-cyan); font-size: .78rem; font-weight: 700; }
+        .update-entry h3 { margin: 0 0 6px; font-size: .98rem; }
+        .update-entry p { margin: 0; color: var(--text-dim); font-size: .88rem; line-height: 1.65; }
+        @media (max-width: 600px) {
+            .header-tools { gap: 7px; }
+            .updates-btn { padding: 7px 9px; font-size: .78rem; }
+            .updates-label-full { display: none; }
+            .updates-label-short { display: inline; }
+            .updates-overlay { padding: 12px; }
+            .updates-dialog { max-height: calc(100vh - 24px); margin: 3vh auto 12px; padding: 16px; }
+        }
+
 </style>
 </head>
 <body>
@@ -859,6 +907,7 @@
             <h1>獺祭 DASSAI</h1>
         </div>
         <div class="header-tools">
+            <button type="button" class="updates-btn" id="updatesBtn" onclick="openSiteUpdates()" aria-haspopup="dialog" aria-controls="siteUpdatesOverlay" aria-expanded="false"><span class="updates-label-full">更新履歴</span><span class="updates-label-short">更新</span></button>
             <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="ライト/ダーク切り替え">☀️ ライト</button>
         </div>
     </header>
@@ -1412,8 +1461,8 @@
             <div class="category-header">
                 <span class="category-title">換金所 値段表</span>
             </div>
-            <div class="table-wrapper" style="max-width:520px;">
-                <table class="craft-table">
+            <div class="table-wrapper exchange-price-wrapper" style="max-width:520px;">
+                <table class="craft-table exchange-price-table">
                     <thead>
                         <tr>
                             <th style="text-align:left;">アイテム名</th>
@@ -1733,5 +1782,66 @@
 <script src="https://player.vimeo.com/api/player.js"></script>
 
 
-    </body>
+    
+    <div class="updates-overlay" id="siteUpdatesOverlay" aria-hidden="true" onclick="if(event.target===this)closeSiteUpdates()">
+        <section class="updates-dialog" role="dialog" aria-modal="true" aria-labelledby="siteUpdatesTitle" tabindex="-1">
+            <div class="updates-dialog-head">
+                <h2 id="siteUpdatesTitle">サイト更新履歴</h2>
+                <button type="button" class="updates-close" onclick="closeSiteUpdates()" aria-label="更新履歴を閉じる">閉じる</button>
+            </div>
+            <p class="updates-note">新しい更新から順に表示しています。</p>
+            <div id="siteUpdatesList" aria-live="polite"></div>
+        </section>
+    </div>
+    <script>
+        // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
+        const SITE_UPDATE_HISTORY = [
+            { date: '2026-10-01', title: 'スマホ表示を改善', summary: '4つのメニューを2段表示に変更。クラフトをカード表示にし、リサセン素材価格と換金所価格を横スワイプなしで確認できるようにしました。' },
+            { date: '2026-10-01', title: '犯罪マニュアルを見やすく更新', summary: '必要アイテムごとの作成素材を整理し、犯罪報酬に現金・Dirty Money・武器などの画像を追加しました。' },
+            { date: '2026-10-01', title: 'クラフト・換金情報を更新', summary: 'クラフトレシピにアイテム画像を追加し、換金表にWeed Pooch（$50,000）を掲載しました。' },
+            { date: '2026-10-01', title: '犯罪手順動画を追加', summary: '客船、ATM、コンビニ、宝石店、ボブキャット、フリーカ、ドラッグ販売、ウィードの手順動画を犯罪マニュアルに埋め込みました。' }
+        ];
+        function renderSiteUpdates() {
+            const list = document.getElementById('siteUpdatesList');
+            if (!list) return;
+            list.replaceChildren();
+            SITE_UPDATE_HISTORY.forEach(function (update) {
+                const entry = document.createElement('article');
+                entry.className = 'update-entry';
+                const date = document.createElement('div');
+                date.className = 'update-entry-date';
+                date.textContent = update.date;
+                const title = document.createElement('h3');
+                title.textContent = update.title;
+                const summary = document.createElement('p');
+                summary.textContent = update.summary;
+                entry.append(date, title, summary);
+                list.appendChild(entry);
+            });
+        }
+        function openSiteUpdates() {
+            const overlay = document.getElementById('siteUpdatesOverlay');
+            if (!overlay) return;
+            renderSiteUpdates();
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.getElementById('updatesBtn')?.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+            overlay.querySelector('.updates-close')?.focus();
+        }
+        function closeSiteUpdates() {
+            const overlay = document.getElementById('siteUpdatesOverlay');
+            if (!overlay) return;
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.getElementById('updatesBtn')?.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            document.getElementById('updatesBtn')?.focus();
+        }
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && document.getElementById('siteUpdatesOverlay')?.classList.contains('open')) closeSiteUpdates();
+        });
+    </script>
+
+</body>
 </html>
