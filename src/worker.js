@@ -90,15 +90,23 @@ async function callback(request, url, env) {
     if (!tokenRes.ok) return fail('oauth');
     const { access_token } = await tokenRes.json();
     const auth = { Authorization: `Bearer ${access_token}` };
-    const [meRes, memRes] = await Promise.all([
+    const guilds = String(env.GUILD_ID).split(',').map((g) => g.trim()).filter(Boolean);
+    const roles = String(env.REQUIRED_ROLE_ID || '').split(',').map((r) => r.trim()).filter(Boolean);
+    const [meRes, ...memRes] = await Promise.all([
       fetch(`${API}/users/@me`, { headers: auth }),
-      fetch(`${API}/users/@me/guilds/${env.GUILD_ID}/member`, { headers: auth }),
+      ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
-    if (memRes.status === 404 || memRes.status === 403) return fail('denied'); // サーバー未参加
-    if (!memRes.ok) return fail('server');
-    const member = await memRes.json();
-    if (env.REQUIRED_ROLE_ID && !(member.roles || []).includes(env.REQUIRED_ROLE_ID)) return fail('role');
+    // 複数サーバーのどれか1つに参加していればOK（ロール指定がある場合は、そのロールも必要）
+    let joined = false, allowed = false, error = false;
+    for (const r of memRes) {
+      if (r.status === 404 || r.status === 403) continue;
+      if (!r.ok) { error = true; continue; }
+      joined = true;
+      const member = await r.json();
+      if (!roles.length || roles.some((id) => (member.roles || []).includes(id))) allowed = true;
+    }
+    if (!allowed) return fail(joined ? 'role' : error ? 'server' : 'denied');
     const me = await meRes.json();
     const days = Number(env.SESSION_DAYS) || 7;
     const token = await sign(env, { u: me.id, n: me.global_name || me.username, exp: Math.floor(Date.now() / 1000) + days * 86400 });
