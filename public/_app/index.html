@@ -1318,6 +1318,17 @@ header::after {
   border-color: rgba(46, 201, 255, .78);
   box-shadow: 0 0 0 3px rgba(0, 163, 255, .1), 0 7px 18px rgba(0, 0, 0, .19);
 }
+#themeBtn {
+  border-color: #78b8d3;
+  background: linear-gradient(145deg, #f6fcff, #dceef7);
+  color: #12334a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+#themeBtn .lucide-icon { color: currentColor; }
+#themeBtn:hover {
+  border-color: #20b7e8;
+  box-shadow: 0 0 0 3px rgba(32, 183, 232, .18), 0 7px 18px rgba(0, 0, 0, .24);
+}
 
 /* Segmented navigation and search */
 .app-body > nav {
@@ -1596,6 +1607,16 @@ html[data-theme="light"] .theme-btn {
   background: linear-gradient(145deg, #fff, #edf4f8);
   color: #173750;
   box-shadow: 0 4px 12px rgba(37, 79, 111, .08);
+}
+html[data-theme="light"] #themeBtn {
+  border-color: #365b76;
+  background: linear-gradient(145deg, #24465f, #102b42);
+  color: #f0f9ff;
+  box-shadow: 0 5px 14px rgba(13, 40, 62, .22), inset 0 1px 0 rgba(255, 255, 255, .1);
+}
+html[data-theme="light"] #themeBtn:hover {
+  border-color: #168fbd;
+  box-shadow: 0 0 0 3px rgba(22, 143, 189, .16), 0 7px 16px rgba(13, 40, 62, .2);
 }
 html[data-theme="light"] .app-body > nav {
   border-bottom-color: #cbd9e4;
@@ -3536,7 +3557,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
-            { date: '2026-10-07', title: 'Lucideアイコンに統一・スマホ検索を改善', summary: 'ページ内の絵文字をLucideアイコンに置き換えました。スマホでは検索バーを隠し、更新ボタン横の虫眼鏡から検索できるようにしました。' },
+            { date: '2026-10-07', title: 'Lucideアイコン・スマホ検索・テーマ切替を改善', summary: 'ページ内の絵文字をLucideアイコンに置き換え、スマホでは更新ボタン横の虫眼鏡から検索できるようにしました。テーマ切替ボタンはダーク時に明るく、ライト時に濃色にして視認性を高めました。' },
             { date: '2026-10-05', title: '貨物機強盗の進行手順を追加', summary: '受注（8006）から、10012の空港、NPCの撃破、ゴールドバーの回収、ゼントーノの納品（3048）までの手順を追加しました。' },
             { date: '2026-10-05', title: '普通のArmorの素材を変更', summary: 'クラフトレシピの普通のArmorを、鉄×15・布×6から、鉄×15・化学繊維×3に変更しました。' },
             { date: '2026-10-05', title: '上級Armorの化学繊維がスマホで表示されない不具合を修正', summary: '上級のクラフトレシピで、Armorの化学繊維×2がスマホ表示で隠れていたのを修正しました（スチール×10・化学繊維×2）。' },
