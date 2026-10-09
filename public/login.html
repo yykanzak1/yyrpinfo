@@ -20,8 +20,31 @@
 <style>
 :root{color-scheme:dark;--text:#e6ebf2;--dim:#8f9bb0;--line:#1c2430;--blue:#0088ff;--cyan:#00d2ff}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:28px 20px;background:#05070a;color:var(--text);font-family:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif;
+body{position:relative;isolation:isolate;margin:0;min-height:100vh;display:grid;place-items:center;padding:28px 20px;background:#05070a;color:var(--text);font-family:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif;
   background-image:radial-gradient(55% 45% at 50% 30%,rgba(0,170,255,.2),transparent 70%),radial-gradient(70% 40% at 50% 110%,rgba(0,136,255,.12),transparent 70%)}
+body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1}
+body::before{
+  inset:-15%;
+  background:radial-gradient(ellipse 42% 36% at 22% 35%,rgba(0,136,255,.27),transparent 74%),radial-gradient(ellipse 38% 34% at 78% 58%,rgba(0,210,255,.17),transparent 76%),radial-gradient(ellipse 44% 30% at 52% 94%,rgba(35,78,255,.16),transparent 78%);
+  opacity:.9;
+  will-change:transform;
+  animation:blue-aurora-drift 28s ease-in-out infinite alternate;
+}
+body::after{
+  background:linear-gradient(112deg,transparent 0%,rgba(0,136,255,0) 45%,rgba(0,210,255,.075) 50%,rgba(0,136,255,0) 55%,transparent 100%);
+  transform:translate3d(-110%,0,0);
+  will-change:transform;
+  animation:blue-scan 20s ease-in-out infinite;
+}
+@keyframes blue-aurora-drift{
+  0%{transform:translate3d(-2%,-1%,0) scale(1.02) rotate(0deg)}
+  50%{transform:translate3d(2%,1.5%,0) scale(1.08) rotate(2deg)}
+  100%{transform:translate3d(-1%,2%,0) scale(1.03) rotate(-1deg)}
+}
+@keyframes blue-scan{
+  0%,72%{transform:translate3d(-110%,0,0)}
+  100%{transform:translate3d(110%,0,0)}
+}
 .gate{width:100%;max-width:360px;text-align:center}
 .mark{position:relative;width:176px;height:176px;margin:0 auto 26px}
 .mark img{position:absolute;inset:14px;width:calc(100% - 28px);height:calc(100% - 28px);border-radius:50%;object-fit:cover;box-shadow:0 0 56px rgba(0,210,255,.45);animation:fade .8s ease both}
@@ -42,7 +65,7 @@ h1{margin:0 0 6px;font-family:Orbitron,'Segoe UI',sans-serif;font-weight:800;fon
 .btn.sec:hover{background:rgba(0,136,255,.1);border-color:var(--blue)}
 .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 .note{margin:20px 0 0;font-size:.76rem;line-height:1.8;color:#667286}
-@media (prefers-reduced-motion:reduce){.mark img,.mark circle{animation:none}.mark circle{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.mark img,.mark circle,body::before,body::after{animation:none;will-change:auto}.mark circle{stroke-dashoffset:0}}
 </style></head><body>
 <main class="gate">
   <div class="mark">
