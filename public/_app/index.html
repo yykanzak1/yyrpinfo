@@ -3090,6 +3090,63 @@ SOFTWARE.
 
     </div>
 
+<style id="ds-login-style">
+#ds-login{display:none;position:fixed;inset:0;z-index:10000;background:rgba(2,6,12,.72);align-items:center;justify-content:center;padding:16px}
+#ds-login.open{display:flex}
+#ds-login form{width:min(340px,100%);background:#0a1420;border:1px solid #15324a;border-radius:14px;padding:22px 22px 18px;color:#d7e6f2;font:14px/1.5 "Hiragino Sans","Yu Gothic",system-ui,sans-serif;box-shadow:0 0 40px rgba(0,200,255,.18)}
+#ds-login h4{margin:0 0 14px;color:#00c8ff;letter-spacing:.05em;font-size:15px}
+#ds-login label{display:block;font-size:12px;color:#6f8aa0;margin:10px 0 4px}
+#ds-login input{width:100%;background:#050c15;color:#d7e6f2;border:1px solid #15324a;border-radius:8px;padding:9px 11px;font:inherit;outline:none}
+#ds-login input:focus{border-color:#00c8ff}
+#ds-login .ds-row{display:flex;gap:8px;margin-top:16px}
+#ds-login button{flex:1;border:0;border-radius:8px;padding:9px;font:inherit;font-weight:700;cursor:pointer;color:#fff}
+#ds-login .ok{background:linear-gradient(135deg,#0070d8,#00b4ff)}
+#ds-login .cancel{background:#1d3550}
+#ds-login .ds-err{color:#ff6b6b;font-size:12px;min-height:1.2em;margin-top:10px;word-break:break-all}
+#ds-login .ds-hint{font-size:11px;color:#6f8aa0;margin-top:8px}
+</style>
+<div id="ds-login" aria-hidden="true">
+<form id="ds-form" autocomplete="on">
+    <h4>獺祭 AI コンソール</h4>
+    <label for="ds-id">ログインID</label>
+    <input id="ds-id" name="username" autocomplete="username" required>
+    <label for="ds-pw">パスワード</label>
+    <input id="ds-pw" name="password" type="password" autocomplete="current-password" required>
+    <div class="ds-row"><button type="submit" class="ok">ログイン</button><button type="button" class="cancel" id="ds-cancel">閉じる</button></div>
+    <div class="ds-err" id="ds-err"></div>
+    <div class="ds-hint">Ctrl+Alt+K で開閉 / Esc で閉じる</div>
+</form>
+</div>
+<script>
+(function(){
+    var HELPER = 'http://127.0.0.1:8765', TOKEN_KEY = 'dassai_ai_token';
+    var box = document.getElementById('ds-login'), form = document.getElementById('ds-form');
+    var idEl = document.getElementById('ds-id'), pwEl = document.getElementById('ds-pw'), err = document.getElementById('ds-err');
+    function open(){ box.classList.add('open'); box.setAttribute('aria-hidden', 'false'); setTimeout(function(){ idEl.focus(); }, 0); }
+    function close(){ box.classList.remove('open'); box.setAttribute('aria-hidden', 'true'); pwEl.value = ''; err.textContent = ''; }
+    function toggle(){ if (box.classList.contains('open')) close(); else open(); }
+    document.addEventListener('keydown', function(e){
+        if (e.ctrlKey && e.altKey && e.code === 'KeyK'){ e.preventDefault(); toggle(); }
+        else if (e.key === 'Escape' && box.classList.contains('open')){ close(); }
+    });
+    document.getElementById('ds-cancel').addEventListener('click', close);
+    box.addEventListener('click', function(e){ if (e.target === box) close(); });
+    form.addEventListener('submit', function(e){
+        e.preventDefault(); err.textContent = '';
+        fetch(HELPER + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+            body: JSON.stringify({ id: idEl.value.trim(), pw: pwEl.value }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok: r.ok, status: r.status, j: j }; }); })
+        .then(function(x){
+            if (!x.ok){ err.textContent = x.j.message || ('ログインに失敗しました (HTTP ' + x.status + ')'); return; }
+            sessionStorage.setItem(TOKEN_KEY, x.j.token);
+            pwEl.value = '';
+            location.href = 'ai.html';
+        })
+        .catch(function(){ err.textContent = 'ヘルパーに接続できません（python server.py を起動してください）'; });
+    });
+})();
+</script>
+
     <script>
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
