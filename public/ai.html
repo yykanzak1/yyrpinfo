@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>獺祭 AI コンソール ｜Blue Gang</title>
+<style>
+:root{--bg:#060b12;--panel:#0a1420;--panel2:#0e1c2c;--border:#15324a;--cyan:#00c8ff;--text:#d7e6f2;--muted:#6f8aa0;--green:#4ade80;--red:#ff6b6b;--yellow:#facc15;--code:#050c15;
+--mono:"Cascadia Code",Consolas,Menlo,"Noto Sans Mono CJK JP",monospace}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif}
+button{font:inherit;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,textarea,select{font:inherit;color:var(--text);background:var(--code);border:1px solid var(--border);border-radius:8px;padding:9px 11px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
+.btn{background:linear-gradient(135deg,#0070d8,#00b4ff);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:700}
+.btn:not(:disabled):hover{filter:brightness(1.12)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
+.btn.ghost:not(:disabled):hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.danger{background:#8b2a2a}
+.btn.sm{padding:6px 10px;font-size:.8rem}
+
+/* ----- gate (login) ----- */
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 25%,#06243a 0%,#060b12 65%)}
+.card{width:min(380px,100%);background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:0 0 42px rgba(0,200,255,.12)}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;border-radius:10px;flex:none;background:linear-gradient(135deg,#0a2d4d,#0088ff);display:grid;place-items:center;font-weight:900;color:#fff}
+.brand h1{font-size:1.05rem;margin:0;letter-spacing:.04em}
+.brand small{color:var(--cyan);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em}
+.card label{display:block;font-size:.8rem;color:var(--muted);margin:14px 0 6px}
+.err{color:var(--red);font-size:.82rem;min-height:1.2em;margin-top:10px;word-break:break-all}
+.note{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.6}
+
+/* ----- app ----- */
+#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:260px 1fr}
+header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
+header .ttl{font-family:var(--mono);font-size:.9rem}
+header .ttl b{color:var(--cyan)}
+.ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:.75rem;padding:5px 10px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+.pill.on{color:var(--green);border-color:rgba(74,222,128,.4)}
+.pill.off{color:var(--muted)}
+.pill.wait{color:var(--yellow);border-color:rgba(250,204,21,.4)}
+.pill.err{color:var(--red);border-color:rgba(255,107,107,.4)}
+
+aside{background:var(--panel);border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+aside h3{margin:6px 0 0;font-family:var(--mono);font-size:.72rem;color:var(--cyan);letter-spacing:.12em;font-weight:600}
+aside label{font-size:.78rem;color:var(--muted);margin-top:4px}
+aside textarea{min-height:90px;resize:vertical}
+.hint{font-size:.7rem;color:var(--muted);line-height:1.55}
+
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#log{flex:1;overflow:auto;padding:18px 22px;font-family:var(--mono);font-size:.88rem;line-height:1.65;background:linear-gradient(180deg,#05090f,#070e18)}
+.msg{display:grid;grid-template-columns:78px 1fr;gap:12px;margin-bottom:16px}
+.tag{font-size:.75rem;font-weight:700;padding-top:2px;white-space:nowrap}
+.msg.user .tag{color:var(--green)}
+.msg.ai .tag{color:var(--cyan)}
+.msg.sys .tag{color:var(--muted)}
+.body{min-width:0;overflow-wrap:anywhere}
+.msg.user .body{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.msg.ai .body{border-left:2px solid var(--cyan);padding-left:12px}
+.body p{margin:0 0 8px}
+.body p.err{color:var(--red)}
+.body p.warn{color:var(--yellow)}
+code.inline{background:var(--code);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#7dd3fc}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.thumbs img{width:110px;height:82px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.cursor{color:var(--cyan);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.code{margin:10px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--code)}
+.code-head{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:#0a1826;border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted)}
+.code pre{margin:0;padding:12px;overflow:auto;color:#cbe7ff;font-size:.82rem;line-height:1.5}
+.copy{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;font-size:.7rem}
+.copy:hover{color:var(--cyan);border-color:var(--cyan)}
+
+.composer{border-top:1px solid var(--border);background:var(--panel);padding:12px 18px 14px}
+.attachments{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.attachments:empty{display:none}
+.att{position:relative;width:72px;height:72px;border:1px solid var(--cyan);border-radius:8px;overflow:hidden}
+.att img{width:100%;height:100%;object-fit:cover}
+.att button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;padding:0;line-height:20px}
+.prompt-wrap{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:8px}
+.prompt-wrap:focus-within{border-color:var(--cyan)}
+#prompt{border:0;padding:6px;resize:none;min-height:44px;max-height:240px;background:transparent;font-family:var(--mono);line-height:1.5}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:.72rem;color:var(--muted);font-family:var(--mono);flex-wrap:wrap}
+.tools .l{display:flex;gap:8px;align-items:center}
+
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  aside{border-right:0;border-bottom:1px solid var(--border);max-height:260px}
+  header{grid-column:auto}
+  .msg{grid-template-columns:1fr;gap:4px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== ログイン（ゲート） ===== -->
+<section id="gate">
+  <form class="card" id="gateForm" autocomplete="on">
+    <div class="brand">
+      <div class="mark">獺</div>
+      <div><h1>獺祭 AI コンソール</h1><small>BLUE GANG / SECURE ACCESS</small></div>
+    </div>
+    <label for="gid">ログインID</label>
+    <input id="gid" name="username" autocomplete="username" required>
+    <label for="gpw">パスワード</label>
+    <input id="gpw" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" style="width:100%;margin-top:18px">ログイン</button>
+    <div class="err" id="gateErr"></div>
+    <div class="note">ヘルパー（server.py）が起動している必要があります。ログイン後の操作はすべてヘルパーが認証を確認します。</div>
+  </form>
+</section>
+
+<!-- ===== 操作画面 ===== -->
+<section id="app" hidden>
+  <header>
+    <div class="ttl"><b>$</b> dassai-ai · ollama</div>
+    <div class="ctrls">
+      <span class="pill" id="pill">確認中…</span>
+      <button class="btn sm" id="btnStart" type="button">起動</button>
+      <button class="btn sm danger" id="btnStop" type="button">終了</button>
+      <button class="btn sm ghost" id="btnRefresh" type="button">更新</button>
+      <button class="btn sm ghost" id="btnLogout" type="button">ログアウト</button>
+    </div>
+  </header>
+
+  <aside>
+    <h3>MODEL</h3>
+    <label for="model">使用するモデル</label>
+    <select id="model"><option value="">（読み込み中）</option></select>
+    <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
+    <label for="sys">システムプロンプト（任意）</label>
+    <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
+    <button class="btn sm ghost" id="btnNew" type="button" style="margin-top:auto">新しいチャット</button>
+    <button class="btn sm danger" id="btnClear" type="button">履歴を消去</button>
+    <div class="hint">起動・終了はヘルパー経由で行います。モデルがない場合は端末で <code class="inline">ollama pull モデル名</code> を実行してください。</div>
+  </aside>
+
+  <main>
+    <div id="log"></div>
+    <div class="composer">
+      <div class="attachments" id="attachments"></div>
+      <div class="prompt-wrap">
+        <textarea id="prompt" rows="1" placeholder="プロンプトを入力（Enterで送信 / Shift+Enterで改行）。画像は貼り付け・ドラッグ・📎で添付"></textarea>
+      </div>
+      <div class="tools">
+        <div class="l">
+          <button class="btn sm ghost" id="btnAttach" type="button">📎 画像を添付</button>
+          <input id="fileInput" type="file" accept="image/*" multiple hidden>
+          <span id="count">0 文字</span>
+        </div>
+        <div class="l">
+          <button class="btn sm danger" id="btnAbort" type="button" hidden>生成を中断</button>
+          <button class="btn" id="btnSend" type="button">送信 ▶</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<script>
+(function(){
+'use strict';
+var HELPER = 'http://127.0.0.1:8765';
+var TOKEN_KEY = 'dassai_ai_token';
+var MAX_IMG = 8 * 1024 * 1024;
+var $ = function(s){ return document.querySelector(s); };
+
+var token = sessionStorage.getItem(TOKEN_KEY) || '';
+var messages = [];      // 会話履歴（Ollama の messages 形式）
+var STORE_KEY = 'dassai_chat_v1';
+var shown = [];         // 表示用履歴 {role,text,imgs:[{name,dataUrl}]}（localStorage に保存）
+var pending = [];       // 添付中の画像 {name,type,dataUrl}
+var chatBusy = false;   // 生成中
+var opBusy = false;     // 起動・終了中
+var ctrl = null;        // 中断用 AbortController
+var pollTimer = null;
+var running = false;
+
+/* ---------- 表示ユーティリティ ---------- */
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function inline(t){
+  return esc(t).replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .split(/\n{2,}/).map(function(p){ return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
+}
+function codeBlock(lang, code){
+  return '<div class="code"><div class="code-head"><span>' + esc(lang || 'text') +
+    '</span><button class="copy" type="button">コピー</button></div><pre><code>' +
+    esc(code.replace(/\n$/, '')) + '</code></pre></div>';
+}
+function render(md){
+  var parts = String(md).split(/```([\w+-]*)\n?([\s\S]*?)```/g), html = '';
+  for (var i = 0; i < parts.length; i++){
+    var m = i % 3;
+    if (m === 0){ if (parts[i]) html += inline(parts[i]); }
+    else if (m === 1){ html += codeBlock(parts[i], parts[i+1] || ''); i++; }
+  }
+  return html;
+}
+function scrollLog(){ var l = $('#log'); l.scrollTop = l.scrollHeight; }
+function appendMsg(role, text, imgs){
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  var tag = role === 'user' ? 'you ›' : (role === 'sys' ? 'sys' : 'ai ›');
+  wrap.innerHTML = '<div class="tag">' + tag + '</div><div class="body"></div>';
+  var body = wrap.querySelector('.body');
+  if (role === 'user'){
+    body.innerHTML = (text ? inline(text) : '<p><em>(画像のみ)</em></p>') +
+      (imgs && imgs.length ? '<div class="thumbs">' + imgs.map(function(i){ return '<img src="' + esc(i.dataUrl) + '" alt="' + esc(i.name) + '">'; }).join('') + '</div>' : '');
+  } else if (role === 'ai'){
+    body.innerHTML = text ? render(text) : '<span class="cursor">▌</span>';
+  } else {
+    body.innerHTML = render(text);
+  }
+  $('#log').appendChild(wrap);
+  scrollLog();
+  return body;
+}
+function note(text, isErr){
+  var b = appendMsg('sys', text);
+  if (isErr) b.innerHTML = '<p class="err">' + esc(text) + '</p>';
+}
+$('#log').addEventListener('click', function(e){
+  var b = e.target.closest('.copy');
+  if (!b || !navigator.clipboard) return;
+  var code = b.closest('.code').querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(function(){
+    b.textContent = 'コピー済'; setTimeout(function(){ b.textContent = 'コピー'; }, 1200);
+  }).catch(function(){});
+});
+
+/* ---------- ヘルパー通信 ---------- */
+function api(path, opts){
+  opts = opts || {};
+  var headers = Object.assign({}, opts.headers || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  var init = Object.assign({}, opts, { headers: headers, cache: 'no-store' });
+  return fetch(HELPER + path, init).then(function(res){
+    return res.json().catch(function(){ return {}; }).then(function(j){
+      if (res.status === 401 && path !== '/login'){
+        expireSession('セッションの期限が切れました。再度ログインしてください。');
+      }
+      if (!res.ok){
+        var err = new Error(j.message || ('HTTP ' + res.status));
+        err.status = res.status;
+        throw err;
+      }
+      return j;
+    });
+  }, function(){
+    var err = new Error('ヘルパーに接続できません（python server.py が起動しているか確認してください）');
+    err.offline = true;
+    throw err;
+  });
+}
+
+/* ---------- ゲート（ログイン） ---------- */
+function showGate(msg){
+  stopPolling();
+  $('#app').hidden = true;
+  $('#gate').hidden = false;
+  $('#gateErr').textContent = msg || '';
+  setTimeout(function(){ $('#gid').focus(); }, 0);
+}
+function showApp(){
+  $('#gate').hidden = true;
+  $('#app').hidden = false;
+  if (!$('#log').childElementCount) restoreChat();
+  startPolling();
+  loadModels();
+  $('#prompt').focus();
+}
+function expireSession(msg){
+  sessionStorage.removeItem(TOKEN_KEY);
+  token = '';
+  showGate(msg);
+}
+
+$('#gateForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  $('#gateErr').textContent = '';
+  api('/login', { method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ id: $('#gid').value.trim(), pw: $('#gpw').value }) })
+    .then(function(j){
+      token = j.token;
+      sessionStorage.setItem(TOKEN_KEY, token);
+      $('#gpw').value = '';
+      if (!restoreChat()) note('ログインしました。プロンプトを入力できます。');
+      showApp();
+    })
+    .catch(function(err){ $('#gateErr').textContent = err.message; });
+});
+
+$('#btnLogout').addEventListener('click', function(){
+  api('/logout', { method: 'POST' }).catch(function(){}).then(function(){
+    expireSession('ログアウトしました。');
+  });
+});
+
+/* ---------- Ollama 起動・終了・状態 ---------- */
+function setPill(cls, text){ var p = $('#pill'); p.className = 'pill ' + cls; p.textContent = text; }
+function setCtlButtons(){
+  var busy = opBusy;
+  $('#btnStart').disabled = busy || running;
+  $('#btnStop').disabled = busy || !running;
+  $('#btnRefresh').disabled = busy;
+}
+function refreshStatus(){
+  if (opBusy) return Promise.resolve();
+  return api('/status').then(function(j){
+    running = !!j.running;
+    setPill(running ? 'on' : 'off', running ? 'Ollama 稼働中' + (j.managed ? '（ヘルパー起動）' : '') : 'Ollama 停止中');
+    setCtlButtons();
+  }).catch(function(err){
+    running = false;
+    setPill('err', err.offline ? 'ヘルパー未接続' : err.message);
+    setCtlButtons();
+  });
+}
+function controlOllama(path, label){
+  if (opBusy) return;
+  opBusy = true;
+  setPill('wait', label);
+  setCtlButtons();
+  api(path, { method: 'POST' })
+    .then(function(j){ note(j.message || '完了'); })
+    .catch(function(err){ note('エラー: ' + err.message, true); })
+    .then(function(){
+      opBusy = false;
+      setCtlButtons();
+      return refreshStatus();
+    })
+    .then(function(){ loadModels(); });
+}
+$('#btnStart').addEventListener('click', function(){ controlOllama('/start', '起動中…'); });
+$('#btnStop').addEventListener('click', function(){
+  if (chatBusy && ctrl) ctrl.abort();
+  controlOllama('/stop', '終了中…');
+});
+$('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); });
+
+function startPolling(){ stopPolling(); refreshStatus(); pollTimer = setInterval(refreshStatus, 5000); }
+function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+/* ---------- モデル一覧 ---------- */
+function loadModels(){
+  var sel = $('#model');
+  var keep = sel.value;
+  return api('/models').then(function(j){
+    sel.innerHTML = '';
+    if (!j.models.length){
+      sel.innerHTML = '<option value="">（モデルなし: ollama pull で取得）</option>';
+      return;
+    }
+    j.models.forEach(function(m){
+      var o = document.createElement('option');
+      o.value = m; o.textContent = m; sel.appendChild(o);
+    });
+    if (keep && j.models.indexOf(keep) >= 0) sel.value = keep;
+  }).catch(function(err){
+    if (err.status === 401) return;
+    sel.innerHTML = '<option value="">（Ollama 停止中・起動してください）</option>';
+  });
+}
+$('#btnModels').addEventListener('click', loadModels);
+
+/* ---------- 画像添付 ---------- */
+function renderPending(){
+  $('#attachments').innerHTML = pending.map(function(a, i){
+    return '<div class="att"><img src="' + esc(a.dataUrl) + '" alt="' + esc(a.name) + '">' +
+      '<button type="button" data-rm="' + i + '" aria-label="削除">×</button></div>';
+  }).join('');
+}
+function addFiles(list){
+  Array.prototype.forEach.call(list || [], function(f){
+    if (!f.type || f.type.indexOf('image/') !== 0) return;
+    if (f.size > MAX_IMG){ note('「' + f.name + '」は8MBを超えるため添付できません。', true); return; }
+    var r = new FileReader();
+    r.onload = function(){ pending.push({ name: f.name, type: f.type, dataUrl: r.result }); renderPending(); };
+    r.readAsDataURL(f);
+  });
+}
+$('#attachments').addEventListener('click', function(e){
+  var b = e.target.closest('[data-rm]');
+  if (!b) return;
+  pending.splice(Number(b.getAttribute('data-rm')), 1);
+  renderPending();
+});
+$('#btnAttach').addEventListener('click', function(){ $('#fileInput').click(); });
+$('#fileInput').addEventListener('change', function(e){ addFiles(e.target.files); e.target.value = ''; });
+
+var prompt = $('#prompt');
+prompt.addEventListener('paste', function(e){
+  var files = Array.prototype.slice.call((e.clipboardData && e.clipboardData.items) || [])
+    .filter(function(i){ return i.kind === 'file' && i.type.indexOf('image/') === 0; })
+    .map(function(i){ return i.getAsFile(); }).filter(Boolean);
+  if (files.length){ e.preventDefault(); addFiles(files); }
+});
+var main = document.querySelector('main');
+main.addEventListener('dragover', function(e){ e.preventDefault(); });
+main.addEventListener('drop', function(e){ e.preventDefault(); addFiles(e.dataTransfer.files); });
+
+function autoResize(){
+  prompt.style.height = 'auto';
+  prompt.style.height = Math.min(prompt.scrollHeight, 240) + 'px';
+  $('#count').textContent = prompt.value.length + ' 文字';
+}
+prompt.addEventListener('input', autoResize);
+prompt.addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); send(); }
+});
+
+/* ---------- 送信・ストリーミング ---------- */
+function setChatUi(){
+  $('#btnSend').disabled = chatBusy;
+  $('#btnAbort').hidden = !chatBusy;
+}
+function send(){
+  if (chatBusy) return;
+  var text = prompt.value.trim();
+  if (!text && !pending.length) return;
+  var model = $('#model').value;
+  if (!model){
+    note('モデルが選択されていません。Ollama を起動し、モデルを用意してください（例: ollama pull llama3.2）。', true);
+    return;
+  }
+
+  var imgs = pending.slice();
+  pending = []; renderPending();
+  prompt.value = ''; autoResize();
+
+  var userMsg = { role: 'user', content: text || '画像について説明してください。' };
+  if (imgs.length) userMsg.images = imgs.map(function(i){ return i.dataUrl.split(',')[1]; });
+  messages.push(userMsg);
+  appendMsg('user', text, imgs);
+  var userShown = { role: 'user', text: text, imgs: imgs.map(function(i){ return { name: i.name, dataUrl: i.dataUrl }; }) };
+  shown.push(userShown);
+  saveChat();
+  var aiBody = appendMsg('ai', '');
+
+  var sysText = $('#sys').value.trim();
+  var payload = (sysText ? [{ role: 'system', content: sysText }] : []).concat(messages);
+
+  chatBusy = true; setChatUi();
+  ctrl = new AbortController();
+  var acc = '', ok = false;
+
+  fetch(HELPER + '/chat', {
+    method: 'POST',
+    signal: ctrl.signal,
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ model: model, messages: payload, stream: true })
+  }).then(function(res){
+    if (!res.ok){
+      return res.json().catch(function(){ return {}; }).then(function(j){
+        if (res.status === 401){ expireSession('セッションの期限が切れました。再度ログインしてください。'); throw new Error('ログインが必要です'); }
+        throw new Error(j.message || ('HTTP ' + res.status));
+      });
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder('utf-8');
+    var buf = '', finished = false;
+
+    function handleLine(line){
+      if (!line.trim()) return;
+      var obj = JSON.parse(line);
+      if (obj.error) throw new Error(obj.error);
+      if (obj.message && obj.message.content) acc += obj.message.content;
+      if (obj.done) finished = true;
+    }
+    function pump(){
+      return reader.read().then(function(r){
+        if (r.done){
+          if (buf.trim()) handleLine(buf);
+          return;
+        }
+        buf += dec.decode(r.value, { stream: true });
+        var idx;
+        while ((idx = buf.indexOf('\n')) >= 0){
+          var line = buf.slice(0, idx); buf = buf.slice(idx + 1);
+          handleLine(line);
+        }
+        aiBody.innerHTML = render(acc) + '<span class="cursor">▌</span>';
+        scrollLog();
+        return pump();
+      });
+    }
+    return pump().then(function(){
+      aiBody.innerHTML = render(acc || '（空の応答）');
+      ok = true;
+    });
+  }).catch(function(err){
+    if (err && err.name === 'AbortError'){
+      aiBody.innerHTML = render(acc) + '<p class="warn">（生成を中断しました）</p>';
+      ok = !!acc;
+    } else if (err instanceof TypeError){
+      aiBody.innerHTML = '<p class="err">ヘルパーに接続できません（server.py を確認してください）</p>';
+    } else {
+      aiBody.innerHTML = '<p class="err">エラー: ' + esc(err.message || String(err)) + '</p>';
+    }
+  }).then(function(){
+    if (ok){
+      messages.push({ role: 'assistant', content: acc });
+      shown.push({ role: 'ai', text: acc });
+    } else {
+      var i = messages.lastIndexOf(userMsg); if (i >= 0) messages.splice(i, 1);
+      var j = shown.lastIndexOf(userShown); if (j >= 0) shown.splice(j, 1);
+    }
+    saveChat();
+    chatBusy = false; ctrl = null;
+    setChatUi();
+    scrollLog();
+    prompt.focus();
+  });
+}
+$('#btnSend').addEventListener('click', send);
+$('#btnClear').addEventListener('click', function(){
+  if (chatBusy) return;
+  if (!confirm('保存されているチャット履歴をすべて消去します。よろしいですか？')) return;
+  clearChat();
+  note('履歴を消去しました。');
+});
+$('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
+
+$('#btnNew').addEventListener('click', function(){
+  if (chatBusy) return;
+  clearChat();
+  note('新しいチャットを開始しました。');
+});
+
+/* ---------- 履歴の保存・復元（localStorage） ---------- */
+function saveChat(){
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, messages: messages, shown: shown, sys: $('#sys').value }));
+  } catch (e) {
+    note('履歴の保存に失敗しました（画像が多すぎるなど容量超過の可能性）。古いチャットを消去してください。', true);
+  }
+}
+function restoreChat(){
+  var raw = null;
+  try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
+  if (!raw) return false;
+  try {
+    var d = JSON.parse(raw);
+    messages = Array.isArray(d.messages) ? d.messages : [];
+    shown = Array.isArray(d.shown) ? d.shown : [];
+    if (typeof d.sys === 'string') $('#sys').value = d.sys;
+  } catch (e) { messages = []; shown = []; return false; }
+  $('#log').innerHTML = '';
+  shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || '', m.imgs || []); });
+  return shown.length > 0;
+}
+function clearChat(){
+  messages = []; shown = []; pending = []; renderPending();
+  $('#log').innerHTML = '';
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+}
+$('#sys').addEventListener('input', saveChat);
+
+/* ---------- 起動 ---------- */
+function boot(){
+  if (!token){ showGate(''); return; }
+  api('/me').then(function(){ showApp(); }).catch(function(err){
+    if (err.status === 401){ showGate('ログインが必要です。'); return; }
+    showGate(err.message);
+  });
+}
+boot();
+})();
+</script>
+</body>
+</html>
