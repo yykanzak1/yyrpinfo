@@ -1549,6 +1549,53 @@ table.craft-recipe-matrix td.val-cost { color: var(--cost-color); font-weight: 8
   border-radius: 8px;
   background: rgba(24, 39, 53, .82);
 }
+.crime-material-total {
+  margin: 10px 0 18px;
+  padding: 13px 14px;
+  border: 1px solid rgba(54, 185, 230, .42);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(12, 39, 58, .82), rgba(14, 25, 38, .96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035), 0 7px 18px rgba(0, 0, 0, .12);
+}
+.crime-material-total-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.crime-material-total-title { color: #65d8ff; font-size: .92rem; font-weight: 850; }
+.crime-material-total-note { margin-left: auto; color: #a7bdcc; font-size: .7rem; text-align: right; }
+.crime-material-total-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 9px; }
+.crime-material-total-option {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(92, 148, 177, .28);
+  border-radius: 11px;
+  background: rgba(5, 17, 28, .42);
+}
+.crime-material-total-option-title { margin: 0 0 8px; color: #d7e9f3; font-size: .78rem; font-weight: 800; }
+.crime-material-total-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.crime-material-total-chip {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 8px;
+  border: 1px solid rgba(94, 143, 171, .22);
+  border-radius: 8px;
+  background: rgba(22, 39, 53, .72);
+}
+.crime-material-total-name { color: #d5e3ec; font-size: .72rem; overflow-wrap: anywhere; }
+.crime-material-total-amount { color: #55d4ff; font-family: 'Orbitron', sans-serif; font-size: .82rem; font-weight: 800; }
+.crime-material-total-empty { margin: 0; color: #a7bdcc; font-size: .76rem; }
+.crime-material-total-footnote { margin: 9px 0 0; color: #91a8b9; font-size: .68rem; line-height: 1.55; }
+@media (max-width: 620px) {
+  .crime-material-total { padding: 11px; }
+  .crime-material-total-options { grid-template-columns: 1fr; }
+  .crime-material-total-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crime-material-total-head { align-items: flex-start; flex-wrap: wrap; }
+  .crime-material-total-note { width: 100%; margin-left: 0; text-align: left; }
+}
 .crime-material-card.crime-material-card--advanced {
   border-color: #ad7924;
   background: linear-gradient(145deg, rgba(54, 42, 23, .78), rgba(30, 26, 20, .96));
@@ -1711,6 +1758,20 @@ html[data-theme="light"] .crime-material-card {
 }
 html[data-theme="light"] .crime-material-item { color: #20384c; }
 html[data-theme="light"] .crime-material-part { background: #eef4f7; }
+html[data-theme="light"] .crime-material-total {
+  border-color: #a9d9e9;
+  background: linear-gradient(145deg, #f0faff, #e5f2f8);
+  box-shadow: 0 6px 16px rgba(28, 62, 91, .06);
+}
+html[data-theme="light"] .crime-material-total-title { color: #087fa7; }
+html[data-theme="light"] .crime-material-total-note,
+html[data-theme="light"] .crime-material-total-empty,
+html[data-theme="light"] .crime-material-total-footnote { color: #5c7486; }
+html[data-theme="light"] .crime-material-total-option { border-color: #d4e4ec; background: rgba(255, 255, 255, .78); }
+html[data-theme="light"] .crime-material-total-option-title,
+html[data-theme="light"] .crime-material-total-name { color: #263f52; }
+html[data-theme="light"] .crime-material-total-chip { border-color: #d8e5ec; background: #f3f8fb; }
+html[data-theme="light"] .crime-material-total-amount { color: #087fa7; }
 html[data-theme="light"] .crime-material-card.crime-material-card--advanced {
   border-color: #bd8121;
   background: linear-gradient(145deg, #fff7e6, #fffaf1);
@@ -3061,11 +3122,118 @@ SOFTWARE.
                 }
             });
         }
+        const crimeMaterialScenarioConfig = {
+            conveni: [
+                { match: 'Pistol（普通', label: 'Pistol（普通）を選択' },
+                { match: 'Pistol（上級', label: 'Pistol（上級）を選択' },
+                { match: '近接武器の場合', label: '近接武器を選択' }
+            ],
+            jewel: [
+                { match: 'Bullpup Rifle（普通', label: 'Bullpup Rifle（普通）を選択' },
+                { match: 'Bullpup Rifle（上級', label: 'Bullpup Rifle（上級）を選択' }
+            ]
+        };
+        function sumCrimeMaterialCards(cards) {
+            const totals = new Map();
+            cards.forEach(function (card) {
+                card.querySelectorAll('.crime-material-part').forEach(function (part) {
+                    const text = part.textContent.replace(/\s+/g, ' ').trim();
+                    const match = text.match(/^(.+?)\s*[×x]\s*([\d,]+)\s*$/);
+                    if (!match) return;
+                    const amount = Number(match[2].replace(/,/g, ''));
+                    if (!Number.isFinite(amount) || amount <= 0) return;
+                    const material = match[1].trim();
+                    totals.set(material, (totals.get(material) || 0) + amount);
+                });
+            });
+            return totals;
+        }
+        function renderCrimeMaterialTotals(container, crimeId) {
+            container.querySelectorAll('.crime-material-guide').forEach(function (guide) {
+                if (guide.nextElementSibling && guide.nextElementSibling.classList.contains('crime-material-total')) return;
+                const cards = Array.from(guide.querySelectorAll('.crime-material-card'));
+                const configs = crimeMaterialScenarioConfig[crimeId] || [];
+                const matchedCards = new Set();
+                const scenarios = configs.map(function (config) {
+                    const selected = cards.filter(function (card) {
+                        const item = card.querySelector('.crime-material-item');
+                        return item && item.textContent.includes(config.match);
+                    });
+                    selected.forEach(function (card) { matchedCards.add(card); });
+                    return { label: config.label, cards: selected };
+                }).filter(function (scenario) { return scenario.cards.length > 0; });
+                const commonCards = cards.filter(function (card) { return !matchedCards.has(card); });
+                const groups = scenarios.length
+                    ? scenarios.map(function (scenario) { return { label: scenario.label, cards: commonCards.concat(scenario.cards) }; })
+                    : [{ label: '全ての必要アイテム', cards: cards }];
+
+                const panel = document.createElement('section');
+                panel.className = 'crime-material-total';
+                panel.setAttribute('aria-label', '必要素材の合計');
+                const head = document.createElement('div');
+                head.className = 'crime-material-total-head';
+                const previousLabel = guide.previousElementSibling;
+                const sourceIcon = previousLabel && previousLabel.querySelector('.lucide-icon');
+                if (sourceIcon) head.appendChild(sourceIcon.cloneNode(true));
+                const title = document.createElement('span');
+                title.className = 'crime-material-total-title';
+                title.textContent = '必要素材の合計';
+                const note = document.createElement('span');
+                note.className = 'crime-material-total-note';
+                note.textContent = scenarios.length ? '選択式のアイテムは別々に表示' : '必要アイテムの作成素材を合算';
+                head.append(title, note);
+                panel.appendChild(head);
+
+                const optionList = document.createElement('div');
+                optionList.className = 'crime-material-total-options';
+                groups.forEach(function (group) {
+                    const option = document.createElement('div');
+                    option.className = 'crime-material-total-option';
+                    const optionTitle = document.createElement('p');
+                    optionTitle.className = 'crime-material-total-option-title';
+                    optionTitle.textContent = group.label;
+                    option.appendChild(optionTitle);
+
+                    const totals = sumCrimeMaterialCards(group.cards);
+                    if (!totals.size) {
+                        const empty = document.createElement('p');
+                        empty.className = 'crime-material-total-empty';
+                        empty.textContent = '作成素材の掲載なし';
+                        option.appendChild(empty);
+                    } else {
+                        const grid = document.createElement('div');
+                        grid.className = 'crime-material-total-grid';
+                        totals.forEach(function (amount, material) {
+                            const chip = document.createElement('div');
+                            chip.className = 'crime-material-total-chip';
+                            const name = document.createElement('span');
+                            name.className = 'crime-material-total-name';
+                            name.textContent = material;
+                            const quantity = document.createElement('strong');
+                            quantity.className = 'crime-material-total-amount';
+                            quantity.textContent = '× ' + amount.toLocaleString('ja-JP');
+                            chip.append(name, quantity);
+                            grid.appendChild(chip);
+                        });
+                        option.appendChild(grid);
+                    }
+                    optionList.appendChild(option);
+                });
+                panel.appendChild(optionList);
+
+                const footnote = document.createElement('p');
+                footnote.className = 'crime-material-total-footnote';
+                footnote.textContent = '※必要アイテム欄に掲載された作成素材を合算しています。素材レシピが未掲載のアイテムは合計に含みません。';
+                panel.appendChild(footnote);
+                guide.after(panel);
+            });
+        }
         function openCrime(id) {
             const source = document.getElementById('detail-' + id);
             if (!source) return;
             const body = document.getElementById('crimeModalBody');
             body.innerHTML = source.innerHTML;
+            renderCrimeMaterialTotals(body, id);
             activateVideos(body);
             document.getElementById('crimeModal').classList.add('open');
             document.body.style.overflow = 'hidden';
@@ -3557,6 +3725,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-10-09', title: '犯罪ごとの必要素材合計を追加', summary: '各犯罪の必要アイテム欄にある作成素材を集計して詳細内に表示。普通・上級など選択式の武器は別々に合算し、素材レシピ未掲載のアイテムは合計対象外と明記しました。' },
             { date: '2026-10-07', title: 'Lucideアイコン・スマホ検索・テーマ切替を改善', summary: 'ページ内の絵文字をLucideアイコンに置き換え、スマホでは更新ボタン横の虫眼鏡から検索できるようにしました。テーマ切替ボタンはダーク時に明るく、ライト時に濃色にして視認性を高めました。' },
             { date: '2026-10-05', title: '貨物機強盗の進行手順を追加', summary: '受注（8006）から、10012の空港、NPCの撃破、ゴールドバーの回収、ゼントーノの納品（3048）までの手順を追加しました。' },
             { date: '2026-10-05', title: '普通のArmorの素材を変更', summary: 'クラフトレシピの普通のArmorを、鉄×15・布×6から、鉄×15・化学繊維×3に変更しました。' },
