@@ -129,6 +129,7 @@ export default {
     if (path === '/' || path === '/index.html') {
       return session ? secure(await asset(env, url, '/_app/index.html')) : loginPage(url, env);
     }
+    if (path === '/ai.html') return session ? secure(await asset(env, url, '/ai.html')) : redirect('/');
     return session ? new Response('Not found', { status: 404 }) : redirect('/');
   },
 };
