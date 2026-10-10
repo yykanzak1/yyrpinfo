@@ -34,8 +34,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
 .note{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.6}
 
 /* ----- app ----- */
-#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:260px 1fr}
-header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
+#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:230px 260px 1fr}
+header{grid-column:1/4;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
 header .ttl{font-family:var(--mono);font-size:.9rem}
 header .ttl b{color:var(--cyan)}
 .ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -50,6 +50,16 @@ aside h3{margin:6px 0 0;font-family:var(--mono);font-size:.72rem;color:var(--cya
 aside label{font-size:.78rem;color:var(--muted);margin-top:4px}
 aside textarea{min-height:90px;resize:vertical}
 .hint{font-size:.7rem;color:var(--muted);line-height:1.55}
+
+#hist{background:var(--panel);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+#hist h3{margin:0;font-family:var(--mono);font-size:.72rem;color:var(--cyan);letter-spacing:.12em;font-weight:600}
+.hist-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.chat-item{display:flex;align-items:center;gap:6px;padding:8px 9px;border-radius:8px;border:1px solid transparent;cursor:pointer;font-size:.8rem;color:var(--text)}
+.chat-item:hover{background:var(--panel2)}
+.chat-item.active{background:var(--panel2);border-color:var(--cyan)}
+.chat-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-item .del{opacity:.5;border:0;background:transparent;color:var(--muted);padding:2px 6px;border-radius:5px;flex:none}
+.chat-item .del:hover{color:var(--red);opacity:1}
 
 main{display:flex;flex-direction:column;min-width:0;min-height:0}
 #log{flex:1;overflow:auto;padding:18px 22px;font-family:var(--mono);font-size:.88rem;line-height:1.65;background:linear-gradient(180deg,#05090f,#070e18)}
@@ -86,9 +96,13 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
 #prompt{border:0;padding:6px;resize:none;min-height:44px;max-height:240px;background:transparent;font-family:var(--mono);line-height:1.5}
 .tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:.72rem;color:var(--muted);font-family:var(--mono);flex-wrap:wrap}
 .tools .l{display:flex;gap:8px;align-items:center}
+.agent-tgl{display:flex;gap:5px;align-items:center;cursor:pointer;user-select:none;padding:5px 8px;border:1px solid var(--border);border-radius:8px;background:transparent;white-space:nowrap}
+.agent-tgl:has(input:checked){border-color:var(--cyan);color:var(--cyan)}
+.agent-tgl input{width:auto;margin:0}
 
 @media (max-width:760px){
-  #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto auto 1fr}
+  #hist{border-right:0;border-bottom:1px solid var(--border);max-height:200px}
   aside{border-right:0;border-bottom:1px solid var(--border);max-height:260px}
   header{grid-column:auto}
   .msg{grid-template-columns:1fr;gap:4px}
@@ -127,6 +141,12 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
     </div>
   </header>
 
+  <aside id="hist">
+    <h3>CHATS</h3>
+    <button class="btn sm" id="btnNew" type="button">＋ 新しいチャット</button>
+    <div class="hist-list" id="histList"></div>
+  </aside>
+
   <aside>
     <h3>MODEL</h3>
     <label for="model">使用するモデル</label>
@@ -134,9 +154,8 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
     <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
     <label for="sys">システムプロンプト（任意）</label>
     <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
-    <button class="btn sm ghost" id="btnNew" type="button" style="margin-top:auto">新しいチャット</button>
-    <button class="btn sm danger" id="btnClear" type="button">履歴を消去</button>
-    <div class="hint">起動・終了はヘルパー経由で行います。モデルがない場合は端末で <code class="inline">ollama pull モデル名</code> を実行してください。</div>
+    <button class="btn sm danger" id="btnClear" type="button" style="margin-top:auto">すべての履歴を消去</button>
+    <div class="hint">起動・終了はヘルパー経由で行います。モデルがない場合は端末で <code class="inline">ollama pull モデル名</code> を実行してください。画像を使う場合は vision 対応モデル（例: <code class="inline">llava</code>）を選んでください。</div>
   </aside>
 
   <main>
@@ -150,6 +169,7 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
         <div class="l">
           <button class="btn sm ghost" id="btnAttach" type="button">📎 画像を添付</button>
           <input id="fileInput" type="file" accept="image/*" multiple hidden>
+          <label class="agent-tgl" title="ONにするとプロンプトで指定したパスへファイルを作成/編集します"><input type="checkbox" id="agentMode"> 🛠 エージェント</label>
           <span id="count">0 文字</span>
         </div>
         <div class="l">
@@ -170,15 +190,17 @@ var MAX_IMG = 8 * 1024 * 1024;
 var $ = function(s){ return document.querySelector(s); };
 
 var token = sessionStorage.getItem(TOKEN_KEY) || '';
-var messages = [];      // 会話履歴（Ollama の messages 形式）
-var STORE_KEY = 'dassai_chat_v1';
-var shown = [];         // 表示用履歴 {role,text,imgs:[{name,dataUrl}]}（localStorage に保存）
+var messages = [];      // 現在の会話（Ollama の messages 形式）
+var shown = [];         // 現在の会話の表示用履歴 {role,text,imgs:[{name,dataUrl}]}
 var pending = [];       // 添付中の画像 {name,type,dataUrl}
 var chatBusy = false;   // 生成中
 var opBusy = false;     // 起動・終了中
 var ctrl = null;        // 中断用 AbortController
 var pollTimer = null;
 var running = false;
+var CHATS_KEY = 'dassai_chats_v2';  // 複数チャット保存 {v:2,currentId,conversations:[{id,title,createdAt,updatedAt,messages,shown,sys}]}
+var OLD_KEY = 'dassai_chat_v1';     // 旧・単一会話データ（移行用）
+var store = { v: 2, currentId: null, conversations: [] };
 
 /* ---------- 表示ユーティリティ ---------- */
 function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -269,6 +291,7 @@ function showGate(msg){
 function showApp(){
   $('#gate').hidden = true;
   $('#app').hidden = false;
+  renderHistList();
   if (!$('#log').childElementCount) restoreChat();
   startPolling();
   loadModels();
@@ -375,13 +398,32 @@ function renderPending(){
       '<button type="button" data-rm="' + i + '" aria-label="削除">×</button></div>';
   }).join('');
 }
+function downscale(file, cb){
+  var fr = new FileReader();
+  fr.onload = function(){
+    var img = new Image();
+    img.onload = function(){
+      var max = 1024, w = img.width, h = img.height;
+      if (w > max || h > max){ var s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = function(){ cb(null); };
+    img.src = fr.result;
+  };
+  fr.onerror = function(){ cb(null); };
+  fr.readAsDataURL(file);
+}
 function addFiles(list){
   Array.prototype.forEach.call(list || [], function(f){
     if (!f.type || f.type.indexOf('image/') !== 0) return;
     if (f.size > MAX_IMG){ note('「' + f.name + '」は8MBを超えるため添付できません。', true); return; }
-    var r = new FileReader();
-    r.onload = function(){ pending.push({ name: f.name, type: f.type, dataUrl: r.result }); renderPending(); };
-    r.readAsDataURL(f);
+    downscale(f, function(dataUrl){
+      if (!dataUrl){ note('「' + f.name + '」を読み込めませんでした。', true); return; }
+      pending.push({ name: f.name, type: 'image/jpeg', dataUrl: dataUrl });
+      renderPending();
+    });
   });
 }
 $('#attachments').addEventListener('click', function(e){
@@ -440,9 +482,16 @@ function send(){
   var userShown = { role: 'user', text: text, imgs: imgs.map(function(i){ return { name: i.name, dataUrl: i.dataUrl }; }) };
   shown.push(userShown);
   saveChat();
-  var aiBody = appendMsg('ai', '');
 
   var sysText = $('#sys').value.trim();
+
+  if (agentEnabled()){
+    sendAgent(model, sysText, userMsg, userShown);
+    return;
+  }
+
+  var aiBody = appendMsg('ai', '');
+
   var payload = (sysText ? [{ role: 'system', content: sysText }] : []).concat(messages);
 
   chatBusy = true; setChatUi();
@@ -501,7 +550,12 @@ function send(){
     } else if (err instanceof TypeError){
       aiBody.innerHTML = '<p class="err">ヘルパーに接続できません（server.py を確認してください）</p>';
     } else {
-      aiBody.innerHTML = '<p class="err">エラー: ' + esc(err.message || String(err)) + '</p>';
+      var msg = String((err && err.message) || err);
+      if (msg.indexOf('multimodal') >= 0 || msg.indexOf('does not support') >= 0){
+        aiBody.innerHTML = '<p class="err">このモデルは画像（マルチモーダル）に対応していません。画像を使うには vision 対応モデルを選んでください（例: llava / llama3.2-vision / gemma3）。</p>';
+      } else {
+        aiBody.innerHTML = '<p class="err">エラー: ' + esc(msg) + '</p>';
+      }
     }
   }).then(function(){
     if (ok){
@@ -519,50 +573,264 @@ function send(){
   });
 }
 $('#btnSend').addEventListener('click', send);
-$('#btnClear').addEventListener('click', function(){
-  if (chatBusy) return;
-  if (!confirm('保存されているチャット履歴をすべて消去します。よろしいですか？')) return;
-  clearChat();
-  note('履歴を消去しました。');
-});
+$('#btnClear').addEventListener('click', function(){ clearAllChats(); });
 $('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
 
-$('#btnNew').addEventListener('click', function(){
-  if (chatBusy) return;
-  clearChat();
-  note('新しいチャットを開始しました。');
-});
+/* ---------- エージェント（ファイル操作）送信 ---------- */
+function agentEnabled(){ var c = $('#agentMode'); return !!(c && c.checked); }
+function short(s, n){ s = String(s == null ? '' : s); return s.length > (n || 300) ? s.slice(0, n || 300) + '…' : s; }
+function finishAgent(ok, acc, userMsg, userShown, sysShown){
+  if (ok && acc){
+    messages.push({ role: 'assistant', content: acc });
+    for (var k = 0; k < sysShown.length; k++) shown.push(sysShown[k]);
+    shown.push({ role: 'ai', text: acc });
+  } else {
+    var i = messages.lastIndexOf(userMsg); if (i >= 0) messages.splice(i, 1);
+    var j = shown.lastIndexOf(userShown); if (j >= 0) shown.splice(j, 1);
+  }
+  saveChat();
+  chatBusy = false; ctrl = null;
+  setChatUi();
+  scrollLog();
+  prompt.focus();
+}
+function sendAgent(model, sysText, userMsg, userShown){
+  var payload = (sysText ? [{ role: 'system', content: sysText }] : []).concat(messages);
+  chatBusy = true; setChatUi();
+  ctrl = new AbortController();
+  var acc = '', ok = false, sysShown = [];
 
-/* ---------- 履歴の保存・復元（localStorage） ---------- */
-function saveChat(){
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, messages: messages, shown: shown, sys: $('#sys').value }));
-  } catch (e) {
-    note('履歴の保存に失敗しました（画像が多すぎるなど容量超過の可能性）。古いチャットを消去してください。', true);
+  fetch(HELPER + '/agent', {
+    method: 'POST',
+    signal: ctrl.signal,
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ model: model, messages: payload })
+  }).then(function(res){
+    if (!res.ok){
+      return res.json().catch(function(){ return {}; }).then(function(j){
+        if (res.status === 401){ expireSession('セッションの期限が切れました。再度ログインしてください。'); throw new Error('ログインが必要です'); }
+        throw new Error(j.message || ('HTTP ' + res.status));
+      });
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder('utf-8');
+    var buf = '';
+
+    function handleLine(line){
+      if (!line.trim()) return;
+      var obj = JSON.parse(line);
+      if (obj.type === 'tool_call'){
+        var a = '';
+        try { a = JSON.stringify(obj.arguments); } catch (e) { a = ''; }
+        var t = '🔧 ' + obj.name + ' ' + short(a, 200);
+        note(t);
+        sysShown.push({ role: 'sys', text: t });
+      } else if (obj.type === 'tool_result'){
+        var t2 = (obj.ok ? '✓ ' : '✗ ') + obj.name + ': ' + short(obj.result, 300);
+        note(t2, !obj.ok);
+        sysShown.push({ role: 'sys', text: t2 });
+      } else if (obj.type === 'final'){
+        acc = obj.content || ''; ok = true;
+      } else if (obj.type === 'error'){
+        throw new Error(obj.message || 'エラー');
+      }
+    }
+    function pump(){
+      return reader.read().then(function(r){
+        if (r.done){ if (buf.trim()) handleLine(buf); return; }
+        buf += dec.decode(r.value, { stream: true });
+        var idx;
+        while ((idx = buf.indexOf('\n')) >= 0){
+          var line = buf.slice(0, idx); buf = buf.slice(idx + 1);
+          handleLine(line);
+        }
+        return pump();
+      });
+    }
+    return pump();
+  }).catch(function(err){
+    if (err && err.name === 'AbortError'){
+      note('（生成を中断しました）');
+    } else if (err instanceof TypeError){
+      note('ヘルパーに接続できません（server.py を確認してください）', true);
+    } else {
+      note('エラー: ' + String((err && err.message) || err), true);
+    }
+  }).then(function(){
+    if (ok && acc) appendMsg('ai', acc);
+    finishAgent(ok && !!acc, acc, userMsg, userShown, sysShown);
+  });
+}
+
+$('#btnNew').addEventListener('click', function(){ newChat(); });
+
+/* ---------- 会話（複数チャット）の保存・切替（localStorage） ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function currentConv(){
+  for (var i = 0; i < store.conversations.length; i++){
+    if (store.conversations[i].id === store.currentId) return store.conversations[i];
+  }
+  return null;
+}
+function deriveTitle(shownArr){
+  for (var i = 0; i < shownArr.length; i++){
+    var m = shownArr[i];
+    if (m && m.role === 'user' && m.text){
+      var t = m.text.replace(/\s+/g, ' ').trim();
+      if (t) return t.length > 40 ? t.slice(0, 40) + '…' : t;
+    }
+  }
+  return '新しいチャット';
+}
+function emptyConv(){
+  return { id: uid(), title: '', createdAt: Date.now(), updatedAt: Date.now(), messages: [], shown: [], sys: '' };
+}
+function loadStore(){
+  var raw = null;
+  try { raw = localStorage.getItem(CHATS_KEY); } catch (e) {}
+  if (raw){
+    try {
+      var d = JSON.parse(raw);
+      if (d && d.v === 2 && Array.isArray(d.conversations)) store = d;
+    } catch (e) {}
+  }
+  if (!store.conversations.length){
+    var old = null;
+    try { old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); } catch (e) {}
+    var conv = emptyConv();
+    if (old){
+      conv.messages = Array.isArray(old.messages) ? old.messages : [];
+      conv.shown = Array.isArray(old.shown) ? old.shown : [];
+      conv.sys = typeof old.sys === 'string' ? old.sys : '';
+      conv.title = deriveTitle(conv.shown);
+    }
+    store = { v: 2, currentId: conv.id, conversations: [conv] };
+    saveStore();
+    try { localStorage.removeItem(OLD_KEY); } catch (e) {}
+  }
+  if (!currentConv()) store.currentId = store.conversations[0].id;
+}
+var quotaWarned = false;
+function saveStore(){
+  try { localStorage.setItem(CHATS_KEY, JSON.stringify(store)); quotaWarned = false; }
+  catch (e) {
+    if (!quotaWarned){
+      quotaWarned = true;
+      note('履歴の保存に失敗しました（保存容量の上限）。画像を減らすか、古いチャットを削除してください。', true);
+    }
   }
 }
+function syncCurrent(touch){
+  var conv = currentConv();
+  if (!conv) return;
+  conv.messages = messages.map(function(m){
+    if (m && m.images && m.images.length) return { role: m.role, content: m.content, imgCount: m.images.length };
+    return { role: m.role, content: m.content };
+  });
+  conv.shown = shown;
+  conv.sys = $('#sys').value;
+  if (!conv.title || conv.title === '新しいチャット') conv.title = deriveTitle(shown);
+  if (touch !== false) conv.updatedAt = Date.now();
+}
+function saveChat(){ syncCurrent(true); saveStore(); renderHistList(); }
 function restoreChat(){
-  var raw = null;
-  try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
-  if (!raw) return false;
-  try {
-    var d = JSON.parse(raw);
-    messages = Array.isArray(d.messages) ? d.messages : [];
-    shown = Array.isArray(d.shown) ? d.shown : [];
-    if (typeof d.sys === 'string') $('#sys').value = d.sys;
-  } catch (e) { messages = []; shown = []; return false; }
+  var conv = currentConv();
+  var pm = conv && Array.isArray(conv.messages) ? conv.messages : [];
+  var ps = conv && Array.isArray(conv.shown) ? conv.shown : [];
+  var queue = [];
+  ps.forEach(function(s){
+    if (s && s.role === 'user' && s.imgs && s.imgs.length){
+      queue.push(s.imgs.map(function(i){ return (i && i.dataUrl ? i.dataUrl.split(',')[1] : '') || ''; }).filter(Boolean));
+    }
+  });
+  var qi = 0;
+  messages = pm.map(function(m){
+    if (!m) return m;
+    if (m.images && m.images.length) return m;   // 旧形式（画像を直接保持）
+    if (m.imgCount){ var imgs = queue[qi++] || []; return { role: m.role, content: m.content, images: imgs }; }
+    return { role: m.role, content: m.content };
+  });
+  shown = ps;
+  $('#sys').value = conv && typeof conv.sys === 'string' ? conv.sys : '';
   $('#log').innerHTML = '';
-  shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || '', m.imgs || []); });
+  shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : (m.role === 'sys' ? 'sys' : 'ai'), m.text || '', m.imgs || []); });
   return shown.length > 0;
 }
-function clearChat(){
-  messages = []; shown = []; pending = []; renderPending();
-  $('#log').innerHTML = '';
-  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+function renderHistList(){
+  var list = $('#histList');
+  if (!list) return;
+  list.innerHTML = '';
+  store.conversations.slice().sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); })
+    .forEach(function(c){
+      var div = document.createElement('div');
+      div.className = 'chat-item' + (c.id === store.currentId ? ' active' : '');
+      div.setAttribute('data-id', c.id);
+      div.innerHTML = '<span class="t"></span><button class="del" type="button" aria-label="削除">×</button>';
+      div.querySelector('.t').textContent = c.title || '新しいチャット';
+      list.appendChild(div);
+    });
 }
+function switchChat(id){
+  if (chatBusy || id === store.currentId) return;
+  syncCurrent(false);
+  store.currentId = id;
+  saveStore();
+  restoreChat();
+  renderHistList();
+  $('#prompt').focus();
+}
+function newChat(){
+  if (chatBusy) return;
+  syncCurrent(false);
+  var conv = emptyConv();
+  store.conversations.push(conv);
+  store.currentId = conv.id;
+  saveStore();
+  messages = []; shown = []; pending = []; renderPending();
+  $('#log').innerHTML = ''; $('#sys').value = '';
+  renderHistList();
+  note('新しいチャットを開始しました。');
+  $('#prompt').focus();
+}
+function deleteChat(id){
+  if (chatBusy) return;
+  var idx = -1;
+  for (var i = 0; i < store.conversations.length; i++){
+    if (store.conversations[i].id === id){ idx = i; break; }
+  }
+  if (idx < 0) return;
+  if (!confirm('このチャットを削除します。よろしいですか？')) return;
+  var wasCurrent = (id === store.currentId);
+  store.conversations.splice(idx, 1);
+  if (!store.conversations.length) store.conversations.push(emptyConv());
+  if (wasCurrent){ store.currentId = store.conversations[0].id; saveStore(); restoreChat(); }
+  else saveStore();
+  renderHistList();
+}
+function clearAllChats(){
+  if (chatBusy) return;
+  if (!confirm('保存されているチャット履歴をすべて消去します。よろしいですか？')) return;
+  var conv = emptyConv();
+  store.conversations = [conv];
+  store.currentId = conv.id;
+  saveStore();
+  messages = []; shown = []; pending = []; renderPending();
+  $('#log').innerHTML = ''; $('#sys').value = '';
+  renderHistList();
+  note('履歴を消去しました。');
+}
+$('#histList').addEventListener('click', function(e){
+  var item = e.target.closest('.chat-item');
+  if (!item) return;
+  var id = item.getAttribute('data-id');
+  if (e.target.closest('.del')){ deleteChat(id); return; }
+  switchChat(id);
+});
 $('#sys').addEventListener('input', saveChat);
 
 /* ---------- 起動 ---------- */
+loadStore();
 function boot(){
   if (!token){ showGate(''); return; }
   api('/me').then(function(){ showApp(); }).catch(function(err){

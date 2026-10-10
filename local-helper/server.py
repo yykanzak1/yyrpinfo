@@ -6,7 +6,7 @@
 【認証】
 - ログインID:   環境変数 DASSAI_LOGIN_ID        （既定: dassai）
 - パスワード:   環境変数 DASSAI_LOGIN_PASSWORD   （未設定の間はログイン不可）
-- ログイン成功でトークンを発行。/start /stop /models /chat はトークン必須。
+- ログイン成功でトークンを発行。/start /stop /models /chat /agent はトークン必須。
 - 失敗が連続すると一定時間ロックします。
 
 【API】
@@ -18,6 +18,7 @@
 - POST /stop     起動した ollama を終了（要トークン）
 - GET  /models   インストール済みモデル一覧（要トークン）
 - POST /chat     Ollama /api/chat をストリーミング中継（要トークン）
+- POST /agent    ファイル操作エージェント。Ollama のツール機能でリスト/読み書き/作成（要トークン）
 
 【その他の環境変数】
 - HELPER_PORT     既定 8765
@@ -25,6 +26,9 @@
 - OLLAMA_API      既定 http://127.0.0.1:11434
 - ALLOWED_ORIGINS 追加で許可するページのオリジン（カンマ区切り）
 - DASSAI_TOKEN_TTL トークンの有効秒数（既定 28800 = 8時間）
+- AGENT_ROOT      エージェントが操作できる範囲（既定: ユーザーフォルダ）。空にすると制限なし
+- AGENT_ALLOW_SHELL 1 で run_command（シェル実行）を有効化（既定: 無効）
+- AGENT_MAX_STEPS エージェントの最大ツール実行ステップ数（既定 12）
 """
 import hmac
 import json
@@ -56,6 +60,13 @@ LOCAL_ORIGIN_RE = re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$")
 LOCAL_HOST_RE = re.compile(r"^(localhost|127\.0\.0\.1)(:\d+)?$")
 IS_WINDOWS = platform.system() == "Windows"
 LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ollama_serve.log")
+
+# エージェント（ファイル操作）設定
+AGENT_ROOT = os.path.expanduser(os.environ.get("AGENT_ROOT", "~")).strip()
+AGENT_ROOT = os.path.abspath(AGENT_ROOT) if AGENT_ROOT else ""
+AGENT_ALLOW_SHELL = os.environ.get("AGENT_ALLOW_SHELL", "").strip().lower() in ("1", "true", "yes", "on")
+AGENT_MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "12"))
+AGENT_MAX_READ = 200 * 1024
 
 _ctl_lock = threading.Lock()    # Ollama プロセス制御用
 _auth_lock = threading.Lock()   # トークン・ロック状態用
@@ -259,6 +270,200 @@ def proxy_chat(handler, body):
                 pass
 
 
+# ---------------- エージェント（ファイル操作） ----------------
+def _agent_resolve(path):
+    p = os.path.expanduser(str(path if path is not None else "").strip().strip('"'))
+    if not p:
+        raise ValueError("path が空です")
+    if not os.path.isabs(p):
+        p = os.path.join(AGENT_ROOT or os.getcwd(), p)
+    p = os.path.abspath(p)
+    if AGENT_ROOT:
+        root = AGENT_ROOT
+        if p != root and not (p + os.sep).startswith(root + os.sep):
+            raise ValueError("許可された範囲外のパスです: " + p)
+    return p
+
+
+def _tool_list_dir(args):
+    p = _agent_resolve(args.get("path") or ".")
+    if not os.path.isdir(p):
+        raise ValueError("ディレクトリではありません: " + p)
+    lines = []
+    for name in sorted(os.listdir(p)):
+        lines.append(("[dir]  " if os.path.isdir(os.path.join(p, name)) else "[file] ") + name)
+    return p + "\n" + ("\n".join(lines) if lines else "(空)")
+
+
+def _tool_read_file(args):
+    p = _agent_resolve(args.get("path"))
+    if not os.path.isfile(p):
+        raise ValueError("ファイルがありません: " + p)
+    with open(p, "r", encoding="utf-8", errors="replace") as f:
+        data = f.read(AGENT_MAX_READ + 1)
+    if len(data) > AGENT_MAX_READ:
+        data = data[:AGENT_MAX_READ] + "\n...(以下省略)"
+    return data
+
+
+def _tool_write_file(args):
+    p = _agent_resolve(args.get("path"))
+    if os.path.isdir(p):
+        raise ValueError("指定パスはフォルダです。ファイルパスを指定してください: " + p)
+    content = str(args.get("content", ""))
+    d = os.path.dirname(p)
+    if d:
+        os.makedirs(d, exist_ok=True)
+    with open(p, "w", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+    return "書き込みました: %s (%d 文字)" % (p, len(content))
+
+
+def _tool_append_file(args):
+    p = _agent_resolve(args.get("path"))
+    if os.path.isdir(p):
+        raise ValueError("指定パスはフォルダです。ファイルパスを指定してください: " + p)
+    content = str(args.get("content", ""))
+    d = os.path.dirname(p)
+    if d:
+        os.makedirs(d, exist_ok=True)
+    with open(p, "a", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+    return "追記しました: %s (%d 文字)" % (p, len(content))
+
+
+def _tool_make_dir(args):
+    p = _agent_resolve(args.get("path"))
+    os.makedirs(p, exist_ok=True)
+    return "作成しました: " + p
+
+
+def _tool_run_command(args):
+    if not AGENT_ALLOW_SHELL:
+        raise ValueError("コマンド実行は無効です（AGENT_ALLOW_SHELL=1 で有効化）")
+    cmd = str(args.get("command", "")).strip()
+    if not cmd:
+        raise ValueError("command が空です")
+    cwd = _agent_resolve(args.get("cwd")) if args.get("cwd") else None
+    if IS_WINDOWS:
+        proc = subprocess.run(["powershell", "-NoProfile", "-Command", cmd], cwd=cwd,
+                              capture_output=True, text=True, timeout=120)
+    else:
+        proc = subprocess.run(["/bin/sh", "-lc", cmd], cwd=cwd,
+                              capture_output=True, text=True, timeout=120)
+    out = (proc.stdout or "") + (("\n[stderr]\n" + proc.stderr) if proc.stderr else "")
+    out = out.strip() or "(出力なし)"
+    if len(out) > AGENT_MAX_READ:
+        out = out[:AGENT_MAX_READ] + "\n...(以下省略)"
+    return "exit=%d\n%s" % (proc.returncode, out)
+
+
+AGENT_TOOLS = [
+    {"type": "function", "function": {"name": "list_dir", "description": "指定ディレクトリ内の一覧を返す",
+        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
+    {"type": "function", "function": {"name": "read_file", "description": "テキストファイルを読む",
+        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
+    {"type": "function", "function": {"name": "write_file", "description": "ファイルを新規作成または上書きする（親フォルダは自動作成）",
+        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
+    {"type": "function", "function": {"name": "append_file", "description": "ファイルに追記する（無ければ作成）",
+        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
+    {"type": "function", "function": {"name": "make_dir", "description": "ディレクトリを作成する",
+        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
+]
+if AGENT_ALLOW_SHELL:
+    AGENT_TOOLS.append({"type": "function", "function": {"name": "run_command", "description": "シェルコマンドを実行して出力を返す",
+        "parameters": {"type": "object", "properties": {"command": {"type": "string"}, "cwd": {"type": "string"}}, "required": ["command"]}}})
+
+AGENT_TOOL_FUNCS = {
+    "list_dir": _tool_list_dir,
+    "read_file": _tool_read_file,
+    "write_file": _tool_write_file,
+    "append_file": _tool_append_file,
+    "make_dir": _tool_make_dir,
+    "run_command": _tool_run_command,
+}
+
+
+def agent_system_prompt():
+    scope = AGENT_ROOT if AGENT_ROOT else "（制限なし）"
+    shell = " / run_command" if AGENT_ALLOW_SHELL else ""
+    return (
+        "あなたはローカルPC上のファイルを操作できるコーディングエージェントです。"
+        "ユーザーの依頼を達成するため、必要に応じてツール（list_dir / read_file / write_file / append_file / make_dir" + shell + "）を呼び出してください。\n"
+        "【重要】"
+        "ファイルを新規作成・上書きするときは write_file を呼ぶだけで、親フォルダは自動で作成されます。"
+        "ファイルのパスを make_dir に渡さないでください（make_dir はフォルダ作成専用です）。"
+        "例: 「C:\\work\\note.txt に hello と書いて」→ write_file(path=\"C:\\work\\note.txt\", content=\"hello\") を1回呼ぶだけ。\n"
+        "ファイルを編集する依頼では必ずツールで実際に書き込んでください。"
+        "操作可能な範囲: " + scope + "（範囲外のパスはエラーになります）。"
+        "同じ操作を繰り返さないこと。作業が完了したら、作成/変更したファイルのフルパスと内容の要点を日本語で簡潔に報告してください。"
+    )
+
+
+def agent_stream(handler, body):
+    try:
+        data = json.loads(body.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return handler._send(400, {"ok": False, "message": "JSON が不正です"})
+    model = data.get("model")
+    if not model or not isinstance(data.get("messages"), list):
+        return handler._send(400, {"ok": False, "message": "model と messages が必要です"})
+
+    messages = [{"role": "system", "content": agent_system_prompt()}] + data["messages"]
+
+    handler.send_response(200)
+    handler._cors()
+    handler.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("X-Accel-Buffering", "no")
+    handler.end_headers()
+
+    def emit(obj):
+        handler.wfile.write((json.dumps(obj, ensure_ascii=False) + "\n").encode("utf-8"))
+        handler.wfile.flush()
+
+    try:
+        for _ in range(AGENT_MAX_STEPS):
+            payload = json.dumps({"model": model, "messages": messages, "tools": AGENT_TOOLS, "stream": False},
+                                 ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(OLLAMA_API + "/api/chat", data=payload,
+                                         headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=600) as up:
+                obj = json.loads(up.read().decode("utf-8"))
+            msg = obj.get("message") or {}
+            tcs = msg.get("tool_calls") or []
+            if not tcs:
+                emit({"type": "final", "content": msg.get("content", "")})
+                return
+            messages.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tcs})
+            for tc in tcs:
+                fn = tc.get("function") or {}
+                name = fn.get("name")
+                args = fn.get("arguments") or {}
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except ValueError:
+                        args = {"_raw": args}
+                emit({"type": "tool_call", "name": name, "arguments": args})
+                func = AGENT_TOOL_FUNCS.get(name)
+                if not func:
+                    result, ok = "不明なツール: " + str(name), False
+                else:
+                    try:
+                        result, ok = func(args), True
+                    except Exception as e:
+                        result, ok = "エラー: " + str(e), False
+                emit({"type": "tool_result", "name": name, "ok": ok, "result": result})
+                messages.append({"role": "tool", "tool_name": name, "content": result})
+        emit({"type": "final", "content": "（ステップ上限に達しました。続けて指示してください。）"})
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:300]
+        emit({"type": "error", "message": "Ollama エラー: " + detail})
+    except Exception:
+        emit({"type": "error", "message": "Ollama に接続できません。先に起動してください"})
+
+
 # ---------------- HTTP ----------------
 class Handler(BaseHTTPRequestHandler):
     server_version = "DassaiOllamaHelper/2.0"
@@ -372,7 +577,7 @@ class Handler(BaseHTTPRequestHandler):
             revoke_token(self._bearer())
             return self._send(200, {"ok": True, "message": "ログアウトしました"})
 
-        if path in ("/start", "/stop", "/chat"):
+        if path in ("/start", "/stop", "/chat", "/agent"):
             if not self._require():
                 return
 
@@ -392,6 +597,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, {"ok": False, "message": "model と messages が必要です"})
             data["stream"] = True
             return proxy_chat(self, json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        if path == "/agent":
+            raw = self._read_body()
+            if raw is None:
+                return self._send(400, {"ok": False, "message": "リクエストサイズが不正です"})
+            return agent_stream(self, raw)
 
         self._send(404, {"ok": False, "message": "not found"})
 
