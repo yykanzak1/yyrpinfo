@@ -36,11 +36,11 @@ ID は既定で `dassai` です（DASSAI_LOGIN_ID 未設定時）。
 ## 3. キーの注意
 - Ctrl + Alt + K は、AltGr を使うキーボード配列（ドイツ語・フランス語など）では AltGr と競合する場合があります。その場合は index.html 内の `e.code==='KeyK'` の条件を変更してください。
 
-## 3-1. エージェント（ファイル操作）モード
-`ai.html` の入力欄の「🛠 エージェント」にチェックを入れると、Claude Code / opencode のようにプロンプトでパスを指定してファイルを作成・編集できます。
+## 3-1. エージェント（ファイル操作）
+`ai.html` は**常にエージェントモード**です。モデルは選ぶ必要がなく、ヘルパー側の固定モデル（既定 `gemma4:e4b`）を使います。Claude Code / opencode のように、プロンプトでパスを指定してファイルを作成・編集できます。
 
 - 例: `C:\Users\user\Downloads\memo.txt を作成して、内容は「こんにちは」として`
-- モデルは **ツール対応** のものが必要です（例: `llama3.2`、`qwen2.5`、`llama3.1` など）。`llava` など vision 専用モデルはツール非対応のため使えません。
+- 使うモデルは `gemma4:e4b`（画像とツール呼び出しの両対応）。変更するには環境変数 `AGENT_MODEL` を指定してヘルパーを再起動します（例: `$env:AGENT_MODEL="qwen3-vl:4b"`）。`ollama pull モデル名` で先に取得してください。
 - 使えるツール: `list_dir`（一覧）/ `read_file`（読む）/ `write_file`（作成・上書き、親フォルダ自動作成）/ `append_file`（追記）/ `make_dir`（フォルダ作成）。
 - 操作できる範囲は既定で**ユーザーフォルダ（C:\Users\user）内のみ**です。範囲を変えるには環境変数 `AGENT_ROOT` を指定します（例: `$env:AGENT_ROOT="C:\work"`。空文字にすると制限なし）。
 - シェル（PowerShell）コマンド実行を有効にするには `$env:AGENT_ALLOW_SHELL="1"` を設定してヘルパーを再起動します（既定は無効）。有効化すると `run_command` ツールが使えます。

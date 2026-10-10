@@ -96,9 +96,6 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
 #prompt{border:0;padding:6px;resize:none;min-height:44px;max-height:240px;background:transparent;font-family:var(--mono);line-height:1.5}
 .tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:.72rem;color:var(--muted);font-family:var(--mono);flex-wrap:wrap}
 .tools .l{display:flex;gap:8px;align-items:center}
-.agent-tgl{display:flex;gap:5px;align-items:center;cursor:pointer;user-select:none;padding:5px 8px;border:1px solid var(--border);border-radius:8px;background:transparent;white-space:nowrap}
-.agent-tgl:has(input:checked){border-color:var(--cyan);color:var(--cyan)}
-.agent-tgl input{width:auto;margin:0}
 
 @media (max-width:760px){
   #app{grid-template-columns:1fr;grid-template-rows:auto auto auto 1fr}
@@ -148,14 +145,11 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
   </aside>
 
   <aside>
-    <h3>MODEL</h3>
-    <label for="model">使用するモデル</label>
-    <select id="model"><option value="">（読み込み中）</option></select>
-    <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
+    <h3>AI</h3>
     <label for="sys">システムプロンプト（任意）</label>
     <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
     <button class="btn sm danger" id="btnClear" type="button" style="margin-top:auto">すべての履歴を消去</button>
-    <div class="hint">起動・終了はヘルパー経由で行います。モデルがない場合は端末で <code class="inline">ollama pull モデル名</code> を実行してください。画像を使う場合は vision 対応モデル（例: <code class="inline">llava</code>）を選んでください。</div>
+    <div class="hint">モデルは固定です（画像とファイル操作の両対応）。起動・終了はヘルパー経由で行います。</div>
   </aside>
 
   <main>
@@ -169,7 +163,6 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
         <div class="l">
           <button class="btn sm ghost" id="btnAttach" type="button">📎 画像を添付</button>
           <input id="fileInput" type="file" accept="image/*" multiple hidden>
-          <label class="agent-tgl" title="ONにするとプロンプトで指定したパスへファイルを作成/編集します"><input type="checkbox" id="agentMode"> 🛠 エージェント</label>
           <span id="count">0 文字</span>
         </div>
         <div class="l">
@@ -294,7 +287,6 @@ function showApp(){
   renderHistList();
   if (!$('#log').childElementCount) restoreChat();
   startPolling();
-  loadModels();
   $('#prompt').focus();
 }
 function expireSession(msg){
@@ -356,40 +348,19 @@ function controlOllama(path, label){
       opBusy = false;
       setCtlButtons();
       return refreshStatus();
-    })
-    .then(function(){ loadModels(); });
+    });
 }
 $('#btnStart').addEventListener('click', function(){ controlOllama('/start', '起動中…'); });
 $('#btnStop').addEventListener('click', function(){
   if (chatBusy && ctrl) ctrl.abort();
   controlOllama('/stop', '終了中…');
 });
-$('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); });
+$('#btnRefresh').addEventListener('click', function(){ refreshStatus(); });
 
 function startPolling(){ stopPolling(); refreshStatus(); pollTimer = setInterval(refreshStatus, 5000); }
 function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
-/* ---------- モデル一覧 ---------- */
-function loadModels(){
-  var sel = $('#model');
-  var keep = sel.value;
-  return api('/models').then(function(j){
-    sel.innerHTML = '';
-    if (!j.models.length){
-      sel.innerHTML = '<option value="">（モデルなし: ollama pull で取得）</option>';
-      return;
-    }
-    j.models.forEach(function(m){
-      var o = document.createElement('option');
-      o.value = m; o.textContent = m; sel.appendChild(o);
-    });
-    if (keep && j.models.indexOf(keep) >= 0) sel.value = keep;
-  }).catch(function(err){
-    if (err.status === 401) return;
-    sel.innerHTML = '<option value="">（Ollama 停止中・起動してください）</option>';
-  });
-}
-$('#btnModels').addEventListener('click', loadModels);
+/* ---------- モデルはヘルパー側で固定（画像＋ファイル操作の両対応） ---------- */
 
 /* ---------- 画像添付 ---------- */
 function renderPending(){
@@ -465,11 +436,6 @@ function send(){
   if (chatBusy) return;
   var text = prompt.value.trim();
   if (!text && !pending.length) return;
-  var model = $('#model').value;
-  if (!model){
-    note('モデルが選択されていません。Ollama を起動し、モデルを用意してください（例: ollama pull llama3.2）。', true);
-    return;
-  }
 
   var imgs = pending.slice();
   pending = []; renderPending();
@@ -483,101 +449,13 @@ function send(){
   shown.push(userShown);
   saveChat();
 
-  var sysText = $('#sys').value.trim();
-
-  if (agentEnabled()){
-    sendAgent(model, sysText, userMsg, userShown);
-    return;
-  }
-
-  var aiBody = appendMsg('ai', '');
-
-  var payload = (sysText ? [{ role: 'system', content: sysText }] : []).concat(messages);
-
-  chatBusy = true; setChatUi();
-  ctrl = new AbortController();
-  var acc = '', ok = false;
-
-  fetch(HELPER + '/chat', {
-    method: 'POST',
-    signal: ctrl.signal,
-    cache: 'no-store',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ model: model, messages: payload, stream: true })
-  }).then(function(res){
-    if (!res.ok){
-      return res.json().catch(function(){ return {}; }).then(function(j){
-        if (res.status === 401){ expireSession('セッションの期限が切れました。再度ログインしてください。'); throw new Error('ログインが必要です'); }
-        throw new Error(j.message || ('HTTP ' + res.status));
-      });
-    }
-    var reader = res.body.getReader();
-    var dec = new TextDecoder('utf-8');
-    var buf = '', finished = false;
-
-    function handleLine(line){
-      if (!line.trim()) return;
-      var obj = JSON.parse(line);
-      if (obj.error) throw new Error(obj.error);
-      if (obj.message && obj.message.content) acc += obj.message.content;
-      if (obj.done) finished = true;
-    }
-    function pump(){
-      return reader.read().then(function(r){
-        if (r.done){
-          if (buf.trim()) handleLine(buf);
-          return;
-        }
-        buf += dec.decode(r.value, { stream: true });
-        var idx;
-        while ((idx = buf.indexOf('\n')) >= 0){
-          var line = buf.slice(0, idx); buf = buf.slice(idx + 1);
-          handleLine(line);
-        }
-        aiBody.innerHTML = render(acc) + '<span class="cursor">▌</span>';
-        scrollLog();
-        return pump();
-      });
-    }
-    return pump().then(function(){
-      aiBody.innerHTML = render(acc || '（空の応答）');
-      ok = true;
-    });
-  }).catch(function(err){
-    if (err && err.name === 'AbortError'){
-      aiBody.innerHTML = render(acc) + '<p class="warn">（生成を中断しました）</p>';
-      ok = !!acc;
-    } else if (err instanceof TypeError){
-      aiBody.innerHTML = '<p class="err">ヘルパーに接続できません（server.py を確認してください）</p>';
-    } else {
-      var msg = String((err && err.message) || err);
-      if (msg.indexOf('multimodal') >= 0 || msg.indexOf('does not support') >= 0){
-        aiBody.innerHTML = '<p class="err">このモデルは画像（マルチモーダル）に対応していません。画像を使うには vision 対応モデルを選んでください（例: llava / llama3.2-vision / gemma3）。</p>';
-      } else {
-        aiBody.innerHTML = '<p class="err">エラー: ' + esc(msg) + '</p>';
-      }
-    }
-  }).then(function(){
-    if (ok){
-      messages.push({ role: 'assistant', content: acc });
-      shown.push({ role: 'ai', text: acc });
-    } else {
-      var i = messages.lastIndexOf(userMsg); if (i >= 0) messages.splice(i, 1);
-      var j = shown.lastIndexOf(userShown); if (j >= 0) shown.splice(j, 1);
-    }
-    saveChat();
-    chatBusy = false; ctrl = null;
-    setChatUi();
-    scrollLog();
-    prompt.focus();
-  });
+  sendAgent($('#sys').value.trim(), userMsg, userShown);
 }
 $('#btnSend').addEventListener('click', send);
 $('#btnClear').addEventListener('click', function(){ clearAllChats(); });
 $('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
 
 /* ---------- エージェント（ファイル操作）送信 ---------- */
-function agentEnabled(){ var c = $('#agentMode'); return !!(c && c.checked); }
 function short(s, n){ s = String(s == null ? '' : s); return s.length > (n || 300) ? s.slice(0, n || 300) + '…' : s; }
 function finishAgent(ok, acc, userMsg, userShown, sysShown){
   if (ok && acc){
@@ -594,7 +472,7 @@ function finishAgent(ok, acc, userMsg, userShown, sysShown){
   scrollLog();
   prompt.focus();
 }
-function sendAgent(model, sysText, userMsg, userShown){
+function sendAgent(sysText, userMsg, userShown){
   var payload = (sysText ? [{ role: 'system', content: sysText }] : []).concat(messages);
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
@@ -605,7 +483,7 @@ function sendAgent(model, sysText, userMsg, userShown){
     signal: ctrl.signal,
     cache: 'no-store',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ model: model, messages: payload })
+    body: JSON.stringify({ messages: payload })
   }).then(function(res){
     if (!res.ok){
       return res.json().catch(function(){ return {}; }).then(function(j){
@@ -655,7 +533,12 @@ function sendAgent(model, sysText, userMsg, userShown){
     } else if (err instanceof TypeError){
       note('ヘルパーに接続できません（server.py を確認してください）', true);
     } else {
-      note('エラー: ' + String((err && err.message) || err), true);
+      var m = String((err && err.message) || err);
+      if (m.indexOf('multimodal') >= 0 || m.indexOf('does not support') >= 0){
+        note('このモデルは画像に対応していません。ヘルパーを再起動してモデルを確認してください。', true);
+      } else {
+        note('エラー: ' + m, true);
+      }
     }
   }).then(function(){
     if (ok && acc) appendMsg('ai', acc);

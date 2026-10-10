@@ -27,6 +27,7 @@
 - ALLOWED_ORIGINS 追加で許可するページのオリジン（カンマ区切り）
 - DASSAI_TOKEN_TTL トークンの有効秒数（既定 28800 = 8時間）
 - AGENT_ROOT      エージェントが操作できる範囲（既定: ユーザーフォルダ）。空にすると制限なし
+- AGENT_MODEL     エージェントが使うモデル（既定: gemma4:e4b。画像とツールの両対応）
 - AGENT_ALLOW_SHELL 1 で run_command（シェル実行）を有効化（既定: 無効）
 - AGENT_MAX_STEPS エージェントの最大ツール実行ステップ数（既定 12）
 """
@@ -67,6 +68,7 @@ AGENT_ROOT = os.path.abspath(AGENT_ROOT) if AGENT_ROOT else ""
 AGENT_ALLOW_SHELL = os.environ.get("AGENT_ALLOW_SHELL", "").strip().lower() in ("1", "true", "yes", "on")
 AGENT_MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "12"))
 AGENT_MAX_READ = 200 * 1024
+AGENT_MODEL = os.environ.get("AGENT_MODEL", "gemma4:e4b").strip() or "gemma4:e4b"
 
 _ctl_lock = threading.Lock()    # Ollama プロセス制御用
 _auth_lock = threading.Lock()   # トークン・ロック状態用
@@ -405,9 +407,9 @@ def agent_stream(handler, body):
         data = json.loads(body.decode("utf-8"))
     except (ValueError, UnicodeDecodeError):
         return handler._send(400, {"ok": False, "message": "JSON が不正です"})
-    model = data.get("model")
+    model = data.get("model") or AGENT_MODEL
     if not model or not isinstance(data.get("messages"), list):
-        return handler._send(400, {"ok": False, "message": "model と messages が必要です"})
+        return handler._send(400, {"ok": False, "message": "messages が必要です"})
 
     messages = [{"role": "system", "content": agent_system_prompt()}] + data["messages"]
 
