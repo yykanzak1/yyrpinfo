@@ -1,8 +1,8 @@
 node_modules/
-.wrangler/
-.dev.vars
-*.log
 __pycache__/
 *.pyc
 .DS_Store
-Thumbs.db
+.vscode/
+.dev.vars
+local-helper/*.log
+*.log

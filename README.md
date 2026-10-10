@@ -66,3 +66,9 @@ npx wrangler deploy
 - ログイン済みの人がスクリーンショットや内容を共有することまでは防げません。
 - サーバーを抜けた人は、Cookieの有効期限（`SESSION_DAYS`）が切れて再ログインした時点で閲覧できなくなります。
 - ローカル確認は `npx wrangler dev`（`.dev.vars.example` を `.dev.vars` にコピーして値を入れる）。Redirectsに `http://localhost:8787/auth/callback` も追加が必要です。
+
+## AI コンソールについて
+
+- `public/ai.html`（獺祭 AI コンソール）は、opencode でコード作業・ファイル操作を行うためのチャットUIです。詳細は `local-helper/RUN_GUIDE_ja.md` を参照してください。
+- ヘルパー `local-helper/server.py` は **opencode**（`opencode serve`）の起動・終了とチャット中継を担当します。Ollama ではありません。
+- モデルは opencode が接続するクラウドプロバイダ（例: OpenCode Zen）を使うため、**アカウントの残高／APIキー**が必要です。

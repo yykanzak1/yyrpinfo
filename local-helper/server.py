@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-獺祭 Ollama ヘルパー（標準ライブラリのみ・追加インストール不要）
+獺祭 OpenCode ヘルパー（標準ライブラリのみ・追加インストール不要）
+
+Ollama の代わりに opencode を操作します。
+- opencode serve を起動・終了
+- 利用可能なモデル一覧（opencode の /config/providers から取得）
+- opencode のセッションを作成し、プロンプトを送って応答をストリーミング中継
 
 【認証】
 - ログインID:   環境変数 DASSAI_LOGIN_ID        （既定: dassai）
 - パスワード:   環境変数 DASSAI_LOGIN_PASSWORD   （未設定の間はログイン不可）
-- ログイン成功でトークンを発行。/start /stop /models /chat /agent はトークン必須。
+- ログイン成功でトークンを発行。/start /stop /models /new /chat はトークン必須。
 - 失敗が連続すると一定時間ロックします。
 
 【API】
@@ -14,74 +19,89 @@
 - POST /login    {"id","pw"} -> {"token"}
 - POST /logout   トークンを破棄
 - GET  /me       トークンの有効確認（200 / 401）
-- POST /start    ollama serve を起動（要トークン）
-- POST /stop     起動した ollama を終了（要トークン）
-- GET  /models   インストール済みモデル一覧（要トークン）
-- POST /chat     Ollama /api/chat をストリーミング中継（要トークン）
-- POST /agent    ファイル操作エージェント。Ollama のツール機能でリスト/読み書き/作成（要トークン）
+- POST /start    opencode serve を起動（要トークン）  body: {"directory"?}
+- POST /stop     起動した opencode を終了（要トークン）
+- GET  /models   利用可能なモデル一覧（要トークン）
+- POST /new      新しいチャット（セッション）を開始（要トークン）
+- POST /chat     opencode セッションへ送信し応答を NDJSON で中継（要トークン）
 
 【その他の環境変数】
-- HELPER_PORT     既定 8765
-- OLLAMA_CMD      既定 ollama
-- OLLAMA_API      既定 http://127.0.0.1:11434
-- ALLOWED_ORIGINS 追加で許可するページのオリジン（カンマ区切り）
+- HELPER_PORT      既定 8765
+- OPENCODE_CMD     既定 opencode（見つからなければ PATH から解決）
+- OPENCODE_API     既定 http://127.0.0.1:4096（opencode serve の待受）
+- OPENCODE_CWD     opencode を起動する作業ディレクトリ（既定: 実行ユーザーのホーム）
+- OPENCODE_SERVER_PASSWORD  設定時は opencode サーバへ Basic 認証で接続
+- OPENCODE_SERVER_USERNAME  既定 opencode
+- ALLOWED_ORIGINS  追加で許可するページのオリジン（カンマ区切り）
 - DASSAI_TOKEN_TTL トークンの有効秒数（既定 28800 = 8時間）
-- AGENT_ROOT      エージェントが操作できる範囲（既定: ユーザーフォルダ）。空にすると制限なし
-- AGENT_MODEL     エージェントが使うモデル（既定: gemma4:e4b。画像とツールの両対応）
-- AGENT_ALLOW_SHELL 1 で run_command（シェル実行）を有効化（既定: 無効）
-- AGENT_MAX_STEPS エージェントの最大ツール実行ステップ数（既定 12）
 """
+import base64
 import hmac
 import json
 import os
 import platform
 import re
 import secrets
+import shutil
 import signal
 import subprocess
 import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HELPER_HOST = "127.0.0.1"
 HELPER_PORT = int(os.environ.get("HELPER_PORT", "8765"))
-OLLAMA_API = os.environ.get("OLLAMA_API", "http://127.0.0.1:11434").rstrip("/")
-OLLAMA_CMD = os.environ.get("OLLAMA_CMD", "ollama")
+OPENCODE_API = os.environ.get("OPENCODE_API", "http://127.0.0.1:4096").rstrip("/")
+OPENCODE_CMD = os.environ.get("OPENCODE_CMD", "opencode")
+DEFAULT_CWD = os.environ.get("OPENCODE_CWD", os.path.expanduser("~"))
 LOGIN_ID = os.environ.get("DASSAI_LOGIN_ID", "dassai")
 LOGIN_PASSWORD = os.environ.get("DASSAI_LOGIN_PASSWORD", "")
+SRV_USER = os.environ.get("OPENCODE_SERVER_USERNAME", "opencode")
+SRV_PASSWORD = os.environ.get("OPENCODE_SERVER_PASSWORD", "")
 TOKEN_TTL = int(os.environ.get("DASSAI_TOKEN_TTL", str(8 * 3600)))
 MAX_FAILS = 5
 LOCK_SECONDS = 300
 MAX_BODY = 25 * 1024 * 1024
+CHAT_TIMEOUT = 1800
 EXTRA_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 LOCAL_ORIGIN_RE = re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$")
 LOCAL_HOST_RE = re.compile(r"^(localhost|127\.0\.0\.1)(:\d+)?$")
 IS_WINDOWS = platform.system() == "Windows"
-LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ollama_serve.log")
+LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "opencode_serve.log")
 
-# エージェント（ファイル操作）設定
-AGENT_ROOT = os.path.expanduser(os.environ.get("AGENT_ROOT", "~")).strip()
-AGENT_ROOT = os.path.abspath(AGENT_ROOT) if AGENT_ROOT else ""
-AGENT_ALLOW_SHELL = os.environ.get("AGENT_ALLOW_SHELL", "").strip().lower() in ("1", "true", "yes", "on")
-AGENT_MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "12"))
-AGENT_MAX_READ = 200 * 1024
-AGENT_MODEL = os.environ.get("AGENT_MODEL", "gemma4:e4b").strip() or "gemma4:e4b"
-
-_ctl_lock = threading.Lock()    # Ollama プロセス制御用
+_ctl_lock = threading.Lock()    # opencode プロセス制御用
 _auth_lock = threading.Lock()   # トークン・ロック状態用
 _tokens = {}                    # token -> 失効時刻(epoch)
 _fail_count = 0
 _locked_until = 0.0
-_proc = None                    # このヘルパーが起動した ollama serve
+_proc = None                    # このヘルパーが起動した opencode serve
+_session_id = None              # 現在のチャットセッション
+_session_lock = threading.Lock()
 
 
-# ---------------- Ollama 制御 ----------------
-def ollama_up(timeout=2.0):
+# ---------------- opencode 制御 ----------------
+def _auth_header():
+    if SRV_PASSWORD:
+        raw = ("%s:%s" % (SRV_USER, SRV_PASSWORD)).encode("utf-8")
+        return {"Authorization": "Basic " + base64.b64encode(raw).decode("ascii")}
+    return {}
+
+
+def upstream(method, path, body=None, timeout=30, stream=False):
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    headers = {"Content-Type": "application/json"}
+    headers.update(_auth_header())
+    req = urllib.request.Request(OPENCODE_API + path, data=data, headers=headers, method=method)
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
+def server_up(timeout=2.0):
     try:
-        with urllib.request.urlopen(OLLAMA_API + "/api/tags", timeout=timeout) as r:
+        with upstream("GET", "/global/health", timeout=timeout) as r:
             return r.status == 200
     except Exception:
         return False
@@ -91,8 +111,16 @@ def managed_alive():
     return _proc is not None and _proc.poll() is None
 
 
+def _resolve_cmd():
+    for cand in (OPENCODE_CMD, "opencode.cmd", "opencode.exe", "opencode"):
+        p = shutil.which(cand)
+        if p:
+            return p
+    return OPENCODE_CMD
+
+
 def do_status():
-    up = ollama_up()
+    up = server_up()
     alive = managed_alive()
     return {
         "ok": True,
@@ -100,39 +128,57 @@ def do_status():
         "running": up,
         "managed": alive,
         "pid": _proc.pid if alive else None,
+        "directory": _current_cwd(),
     }
 
 
-def do_start():
+def _current_cwd():
+    return getattr(_proc, "_dassai_cwd", DEFAULT_CWD) if _proc is not None else DEFAULT_CWD
+
+
+def do_start(directory=None):
     global _proc
+    cwd = directory or DEFAULT_CWD
     with _ctl_lock:
-        if ollama_up():
-            return {"ok": True, "running": True, "message": "Ollama は既に起動しています"}
+        if server_up():
+            return {"ok": True, "running": True, "managed": managed_alive(),
+                    "directory": _current_cwd(), "message": "opencode サーバは既に起動しています"}
+        if not os.path.isdir(cwd):
+            return {"ok": False, "running": False, "message": "作業ディレクトリが見つかりません: " + cwd}
         if not managed_alive():
-            kwargs = {"stdin": subprocess.DEVNULL, "stderr": subprocess.STDOUT}
+            parsed = urllib.parse.urlparse(OPENCODE_API)
+            host = parsed.hostname or "127.0.0.1"
+            port = str(parsed.port or 4096)
+            exe = _resolve_cmd()
+            args = [exe, "serve", "--hostname", host, "--port", port]
+            if IS_WINDOWS and exe.lower().endswith((".cmd", ".bat")):
+                args = [os.environ.get("COMSPEC", "cmd.exe"), "/c"] + args
+            kwargs = {"stdin": subprocess.DEVNULL, "stderr": subprocess.STDOUT, "cwd": cwd}
             if IS_WINDOWS:
                 kwargs["creationflags"] = 0x00000200 | 0x08000000  # NEW_PROCESS_GROUP | NO_WINDOW
             else:
                 kwargs["start_new_session"] = True
             log = open(LOG_PATH, "ab")
             try:
-                _proc = subprocess.Popen([OLLAMA_CMD, "serve"], stdout=log, **kwargs)
+                _proc = subprocess.Popen(args, stdout=log, **kwargs)
+                _proc._dassai_cwd = cwd
             except FileNotFoundError:
                 return {"ok": False, "running": False,
-                        "message": "ollama コマンドが見つかりません。インストールと PATH を確認してください"}
+                        "message": "opencode コマンドが見つかりません。インストールと PATH を確認してください"}
             finally:
                 log.close()
 
-    deadline = time.time() + 20
+    deadline = time.time() + 30
     while time.time() < deadline:
-        if ollama_up():
-            return {"ok": True, "running": True, "message": "Ollama を起動しました"}
+        if server_up():
+            return {"ok": True, "running": True, "managed": True, "directory": cwd,
+                    "message": "opencode サーバを起動しました"}
         if _proc is not None and _proc.poll() is not None:
             return {"ok": False, "running": False,
-                    "message": "ollama serve が起動直後に終了しました。ollama_serve.log を確認してください"}
+                    "message": "opencode serve が起動直後に終了しました。opencode_serve.log を確認してください"}
         time.sleep(0.5)
-    return {"ok": False, "running": ollama_up(),
-            "message": "起動待ちがタイムアウトしました（ollama_serve.log を確認してください）"}
+    return {"ok": False, "running": server_up(),
+            "message": "起動待ちがタイムアウトしました（opencode_serve.log を確認してください）"}
 
 
 def _kill_managed():
@@ -158,34 +204,77 @@ def _kill_managed():
 
 
 def do_stop():
-    global _proc
+    global _proc, _session_id
     with _ctl_lock:
         if managed_alive():
             _kill_managed()
         else:
             _proc = None
-        if ollama_up():
-            # 別経路で起動された Ollama も含めて終了を試みる
+        if server_up():
             try:
                 if IS_WINDOWS:
-                    subprocess.run(["taskkill", "/IM", "ollama.exe", "/F"], capture_output=True, text=True)
+                    subprocess.run(["taskkill", "/IM", "opencode.exe", "/F"], capture_output=True, text=True)
                 else:
-                    subprocess.run(["pkill", "-f", "ollama serve"], capture_output=True, text=True)
+                    subprocess.run(["pkill", "-f", "opencode serve"], capture_output=True, text=True)
             except FileNotFoundError:
                 pass
         deadline = time.time() + 5
-        while time.time() < deadline and ollama_up():
+        while time.time() < deadline and server_up():
             time.sleep(0.3)
-        still = ollama_up()
+        still = server_up()
+    with _session_lock:
+        _session_id = None
     if still:
-        return {"ok": False, "running": True, "message": "Ollama を終了できませんでした。手動で確認してください"}
-    return {"ok": True, "running": False, "message": "Ollama を終了しました"}
+        return {"ok": False, "running": True, "message": "opencode サーバを終了できませんでした。手動で確認してください"}
+    return {"ok": True, "running": False, "message": "opencode サーバを終了しました"}
 
 
 def list_models():
-    with urllib.request.urlopen(OLLAMA_API + "/api/tags", timeout=5) as r:
+    with upstream("GET", "/config/providers", timeout=10) as r:
         data = json.loads(r.read().decode("utf-8"))
-    return [m["name"] for m in data.get("models", []) if m.get("name")]
+    models = []
+    for p in data.get("providers", []):
+        pid = p.get("id")
+        for mid in (p.get("models") or {}):
+            if pid and mid:
+                models.append(pid + "/" + mid)
+    default = ""
+    for pid, mid in (data.get("default") or {}).items():
+        if pid and mid:
+            default = pid + "/" + mid
+            break
+    return sorted(set(models)), default
+
+
+def _get_or_create_session():
+    global _session_id
+    with _session_lock:
+        if _session_id:
+            return _session_id
+        with upstream("POST", "/session", {"title": "dassai-console"}, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        _session_id = data.get("id")
+        return _session_id
+
+
+def new_session():
+    global _session_id
+    with _session_lock:
+        old = _session_id
+        _session_id = None
+    if old:
+        try:
+            upstream("DELETE", "/session/" + old, timeout=10).close()
+        except Exception:
+            pass
+    return True
+
+
+def _parse_model(s):
+    if "/" in s:
+        pid, mid = s.split("/", 1)
+        return {"providerID": pid, "modelID": mid}
+    return {"providerID": "opencode", "modelID": s}
 
 
 # ---------------- 認証 ----------------
@@ -240,179 +329,16 @@ def try_login(uid, pw):
 
 
 # ---------------- チャット中継 ----------------
-def proxy_chat(handler, body):
+def proxy_chat(handler, model, text, system):
+    # 1) セッション作成
     try:
-        req = urllib.request.Request(OLLAMA_API + "/api/chat", data=body,
-                                     headers={"Content-Type": "application/json"}, method="POST")
-        upstream = urllib.request.urlopen(req, timeout=600)
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", "replace")[:300]
-        return handler._send(e.code, {"ok": False, "message": "Ollama エラー: " + detail})
+        sid = _get_or_create_session()
     except Exception:
-        return handler._send(502, {"ok": False, "message": "Ollama に接続できません。先に起動してください"})
+        return handler._send(502, {"ok": False, "message": "opencode に接続できません。先に起動してください"})
+    if not sid:
+        return handler._send(502, {"ok": False, "message": "セッションを作成できませんでした"})
 
-    with upstream:
-        handler.send_response(200)
-        handler._cors()
-        handler.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
-        handler.send_header("Cache-Control", "no-store")
-        handler.send_header("X-Accel-Buffering", "no")
-        handler.end_headers()
-        try:
-            for line in upstream:
-                handler.wfile.write(line)
-                handler.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
-            return  # クライアントが中断
-        except Exception as e:
-            try:
-                handler.wfile.write((json.dumps({"error": str(e)}, ensure_ascii=False) + "\n").encode("utf-8"))
-                handler.wfile.flush()
-            except Exception:
-                pass
-
-
-# ---------------- エージェント（ファイル操作） ----------------
-def _agent_resolve(path):
-    p = os.path.expanduser(str(path if path is not None else "").strip().strip('"'))
-    if not p:
-        raise ValueError("path が空です")
-    if not os.path.isabs(p):
-        p = os.path.join(AGENT_ROOT or os.getcwd(), p)
-    p = os.path.abspath(p)
-    if AGENT_ROOT:
-        root = AGENT_ROOT
-        if p != root and not (p + os.sep).startswith(root + os.sep):
-            raise ValueError("許可された範囲外のパスです: " + p)
-    return p
-
-
-def _tool_list_dir(args):
-    p = _agent_resolve(args.get("path") or ".")
-    if not os.path.isdir(p):
-        raise ValueError("ディレクトリではありません: " + p)
-    lines = []
-    for name in sorted(os.listdir(p)):
-        lines.append(("[dir]  " if os.path.isdir(os.path.join(p, name)) else "[file] ") + name)
-    return p + "\n" + ("\n".join(lines) if lines else "(空)")
-
-
-def _tool_read_file(args):
-    p = _agent_resolve(args.get("path"))
-    if not os.path.isfile(p):
-        raise ValueError("ファイルがありません: " + p)
-    with open(p, "r", encoding="utf-8", errors="replace") as f:
-        data = f.read(AGENT_MAX_READ + 1)
-    if len(data) > AGENT_MAX_READ:
-        data = data[:AGENT_MAX_READ] + "\n...(以下省略)"
-    return data
-
-
-def _tool_write_file(args):
-    p = _agent_resolve(args.get("path"))
-    if os.path.isdir(p):
-        raise ValueError("指定パスはフォルダです。ファイルパスを指定してください: " + p)
-    content = str(args.get("content", ""))
-    d = os.path.dirname(p)
-    if d:
-        os.makedirs(d, exist_ok=True)
-    with open(p, "w", encoding="utf-8", newline="\n") as f:
-        f.write(content)
-    return "書き込みました: %s (%d 文字)" % (p, len(content))
-
-
-def _tool_append_file(args):
-    p = _agent_resolve(args.get("path"))
-    if os.path.isdir(p):
-        raise ValueError("指定パスはフォルダです。ファイルパスを指定してください: " + p)
-    content = str(args.get("content", ""))
-    d = os.path.dirname(p)
-    if d:
-        os.makedirs(d, exist_ok=True)
-    with open(p, "a", encoding="utf-8", newline="\n") as f:
-        f.write(content)
-    return "追記しました: %s (%d 文字)" % (p, len(content))
-
-
-def _tool_make_dir(args):
-    p = _agent_resolve(args.get("path"))
-    os.makedirs(p, exist_ok=True)
-    return "作成しました: " + p
-
-
-def _tool_run_command(args):
-    if not AGENT_ALLOW_SHELL:
-        raise ValueError("コマンド実行は無効です（AGENT_ALLOW_SHELL=1 で有効化）")
-    cmd = str(args.get("command", "")).strip()
-    if not cmd:
-        raise ValueError("command が空です")
-    cwd = _agent_resolve(args.get("cwd")) if args.get("cwd") else None
-    if IS_WINDOWS:
-        proc = subprocess.run(["powershell", "-NoProfile", "-Command", cmd], cwd=cwd,
-                              capture_output=True, text=True, timeout=120)
-    else:
-        proc = subprocess.run(["/bin/sh", "-lc", cmd], cwd=cwd,
-                              capture_output=True, text=True, timeout=120)
-    out = (proc.stdout or "") + (("\n[stderr]\n" + proc.stderr) if proc.stderr else "")
-    out = out.strip() or "(出力なし)"
-    if len(out) > AGENT_MAX_READ:
-        out = out[:AGENT_MAX_READ] + "\n...(以下省略)"
-    return "exit=%d\n%s" % (proc.returncode, out)
-
-
-AGENT_TOOLS = [
-    {"type": "function", "function": {"name": "list_dir", "description": "指定ディレクトリ内の一覧を返す",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
-    {"type": "function", "function": {"name": "read_file", "description": "テキストファイルを読む",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
-    {"type": "function", "function": {"name": "write_file", "description": "ファイルを新規作成または上書きする（親フォルダは自動作成）",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
-    {"type": "function", "function": {"name": "append_file", "description": "ファイルに追記する（無ければ作成）",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
-    {"type": "function", "function": {"name": "make_dir", "description": "ディレクトリを作成する",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
-]
-if AGENT_ALLOW_SHELL:
-    AGENT_TOOLS.append({"type": "function", "function": {"name": "run_command", "description": "シェルコマンドを実行して出力を返す",
-        "parameters": {"type": "object", "properties": {"command": {"type": "string"}, "cwd": {"type": "string"}}, "required": ["command"]}}})
-
-AGENT_TOOL_FUNCS = {
-    "list_dir": _tool_list_dir,
-    "read_file": _tool_read_file,
-    "write_file": _tool_write_file,
-    "append_file": _tool_append_file,
-    "make_dir": _tool_make_dir,
-    "run_command": _tool_run_command,
-}
-
-
-def agent_system_prompt():
-    scope = AGENT_ROOT if AGENT_ROOT else "（制限なし）"
-    shell = " / run_command" if AGENT_ALLOW_SHELL else ""
-    return (
-        "あなたはローカルPC上のファイルを操作できるコーディングエージェントです。"
-        "ユーザーの依頼を達成するため、必要に応じてツール（list_dir / read_file / write_file / append_file / make_dir" + shell + "）を呼び出してください。\n"
-        "【重要】"
-        "ファイルを新規作成・上書きするときは write_file を呼ぶだけで、親フォルダは自動で作成されます。"
-        "ファイルのパスを make_dir に渡さないでください（make_dir はフォルダ作成専用です）。"
-        "例: 「C:\\work\\note.txt に hello と書いて」→ write_file(path=\"C:\\work\\note.txt\", content=\"hello\") を1回呼ぶだけ。\n"
-        "ファイルを編集する依頼では必ずツールで実際に書き込んでください。"
-        "操作可能な範囲: " + scope + "（範囲外のパスはエラーになります）。"
-        "同じ操作を繰り返さないこと。作業が完了したら、作成/変更したファイルのフルパスと内容の要点を日本語で簡潔に報告してください。"
-    )
-
-
-def agent_stream(handler, body):
-    try:
-        data = json.loads(body.decode("utf-8"))
-    except (ValueError, UnicodeDecodeError):
-        return handler._send(400, {"ok": False, "message": "JSON が不正です"})
-    model = data.get("model") or AGENT_MODEL
-    if not model or not isinstance(data.get("messages"), list):
-        return handler._send(400, {"ok": False, "message": "messages が必要です"})
-
-    messages = [{"role": "system", "content": agent_system_prompt()}] + data["messages"]
-
+    # 2) 応答ヘッダ（NDJSON ストリーム）
     handler.send_response(200)
     handler._cors()
     handler.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
@@ -424,51 +350,119 @@ def agent_stream(handler, body):
         handler.wfile.write((json.dumps(obj, ensure_ascii=False) + "\n").encode("utf-8"))
         handler.wfile.flush()
 
+    # 3) イベントストリームを開く
     try:
-        for _ in range(AGENT_MAX_STEPS):
-            payload = json.dumps({"model": model, "messages": messages, "tools": AGENT_TOOLS, "stream": False},
-                                 ensure_ascii=False).encode("utf-8")
-            req = urllib.request.Request(OLLAMA_API + "/api/chat", data=payload,
-                                         headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=600) as up:
-                obj = json.loads(up.read().decode("utf-8"))
-            msg = obj.get("message") or {}
-            tcs = msg.get("tool_calls") or []
-            if not tcs:
-                emit({"type": "final", "content": msg.get("content", "")})
-                return
-            messages.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tcs})
-            for tc in tcs:
-                fn = tc.get("function") or {}
-                name = fn.get("name")
-                args = fn.get("arguments") or {}
-                if isinstance(args, str):
-                    try:
-                        args = json.loads(args)
-                    except ValueError:
-                        args = {"_raw": args}
-                emit({"type": "tool_call", "name": name, "arguments": args})
-                func = AGENT_TOOL_FUNCS.get(name)
-                if not func:
-                    result, ok = "不明なツール: " + str(name), False
-                else:
-                    try:
-                        result, ok = func(args), True
-                    except Exception as e:
-                        result, ok = "エラー: " + str(e), False
-                emit({"type": "tool_result", "name": name, "ok": ok, "result": result})
-                messages.append({"role": "tool", "tool_name": name, "content": result})
-        emit({"type": "final", "content": "（ステップ上限に達しました。続けて指示してください。）"})
+        ev = upstream("GET", "/event", timeout=CHAT_TIMEOUT, stream=True)
+    except Exception:
+        try:
+            emit({"error": "opencode のイベントストリームに接続できません"})
+        except Exception:
+            pass
+        return
+
+    # 4) プロンプト送信
+    body = {"model": _parse_model(model), "parts": [{"type": "text", "text": text}]}
+    if system:
+        body["system"] = system
+    try:
+        upstream("POST", "/session/%s/prompt_async" % sid, body, timeout=30).close()
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", "replace")[:300]
-        emit({"type": "error", "message": "Ollama エラー: " + detail})
+        try:
+            emit({"error": "opencode エラー: " + detail})
+        except Exception:
+            pass
+        ev.close()
+        return
     except Exception:
-        emit({"type": "error", "message": "Ollama に接続できません。先に起動してください"})
+        try:
+            emit({"error": "プロンプトの送信に失敗しました"})
+        except Exception:
+            pass
+        ev.close()
+        return
+
+    # 5) イベントを中継
+    assistant_ids = set()
+    text_parts = {}     # partID -> 送信済み文字数
+    tool_state = {}     # partID -> 最後に通知した status
+    deadline = time.time() + CHAT_TIMEOUT
+    aborted = False
+    try:
+        for raw in ev:
+            if time.time() > deadline:
+                emit({"error": "応答がタイムアウトしました"})
+                break
+            line = raw.decode("utf-8", "replace").strip()
+            if not line.startswith("data:"):
+                continue
+            try:
+                o = json.loads(line[5:].strip())
+            except Exception:
+                continue
+            t = o.get("type")
+            p = o.get("properties", {}) or {}
+
+            if t == "message.updated":
+                info = p.get("info", {}) or {}
+                if info.get("sessionID") == sid and info.get("role") == "assistant" and info.get("id"):
+                    assistant_ids.add(info["id"])
+                continue
+
+            if t == "message.part.updated":
+                part = p.get("part", {}) or {}
+                if part.get("sessionID") != sid or part.get("messageID") not in assistant_ids:
+                    continue
+                ptype = part.get("type")
+                pid_ = part.get("id")
+                if ptype == "text":
+                    full = part.get("text") or ""
+                    sent = text_parts.get(pid_, 0)
+                    if len(full) > sent:
+                        emit({"message": {"content": full[sent:]}})
+                        text_parts[pid_] = len(full)
+                elif ptype == "tool":
+                    st = (part.get("state") or {}).get("status")
+                    if st and tool_state.get(pid_) != st:
+                        tool_state[pid_] = st
+                        name = part.get("tool") or "tool"
+                        emit({"message": {"content": "\n> 🔧 %s (%s)\n" % (name, st)}})
+                continue
+
+            if t == "session.error" and p.get("sessionID") == sid:
+                err = p.get("error") or {}
+                msg = (err.get("data") or {}).get("message") or err.get("name") or "不明なエラー"
+                try:
+                    emit({"error": str(msg)})
+                except Exception:
+                    pass
+                break
+
+            if t == "session.idle" and p.get("sessionID") == sid:
+                emit({"done": True})
+                break
+    except (BrokenPipeError, ConnectionResetError):
+        aborted = True
+    except Exception as e:
+        try:
+            emit({"error": str(e)})
+        except Exception:
+            pass
+    finally:
+        try:
+            ev.close()
+        except Exception:
+            pass
+    if aborted:
+        try:
+            upstream("POST", "/session/%s/abort" % sid, timeout=10).close()
+        except Exception:
+            pass
 
 
 # ---------------- HTTP ----------------
 class Handler(BaseHTTPRequestHandler):
-    server_version = "DassaiOllamaHelper/2.0"
+    server_version = "DassaiOpenCodeHelper/1.0"
     protocol_version = "HTTP/1.0"
 
     def _allowed_origin(self):
@@ -519,14 +513,18 @@ class Handler(BaseHTTPRequestHandler):
         self._send(401, {"ok": False, "message": "ログインが必要です"})
         return False
 
-    def _read_body(self):
+    def _read_json(self):
         try:
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             n = 0
         if n <= 0 or n > MAX_BODY:
             return None
-        return self.rfile.read(n)
+        raw = self.rfile.read(n)
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            return False
 
     def do_OPTIONS(self):
         if not self._guard():
@@ -550,9 +548,10 @@ class Handler(BaseHTTPRequestHandler):
             if not self._require():
                 return
             try:
-                return self._send(200, {"ok": True, "models": list_models()})
+                models, default = list_models()
+                return self._send(200, {"ok": True, "models": models, "default": default})
             except Exception:
-                return self._send(502, {"ok": False, "message": "Ollama に接続できません。先に起動してください"})
+                return self._send(502, {"ok": False, "message": "opencode に接続できません。先に起動してください"})
         self._send(404, {"ok": False, "message": "not found"})
 
     def do_POST(self):
@@ -561,10 +560,8 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?")[0]
 
         if path == "/login":
-            raw = self._read_body()
-            try:
-                data = json.loads(raw.decode("utf-8")) if raw else {}
-            except (ValueError, UnicodeDecodeError):
+            data = self._read_json()
+            if data is False or not isinstance(data, dict):
                 return self._send(400, {"ok": False, "message": "リクエストが不正です"})
             result = try_login(str(data.get("id", "")), str(data.get("pw", "")))
             if result == "ok":
@@ -579,31 +576,31 @@ class Handler(BaseHTTPRequestHandler):
             revoke_token(self._bearer())
             return self._send(200, {"ok": True, "message": "ログアウトしました"})
 
-        if path in ("/start", "/stop", "/chat", "/agent"):
+        if path in ("/start", "/stop", "/models", "/new", "/chat"):
             if not self._require():
                 return
 
         if path == "/start":
-            return self._send(200, do_start())
+            data = self._read_json()
+            directory = None
+            if isinstance(data, dict):
+                directory = (data.get("directory") or "").strip() or None
+            return self._send(200, do_start(directory if directory else None))
         if path == "/stop":
             return self._send(200, do_stop())
+        if path == "/new":
+            new_session()
+            return self._send(200, {"ok": True, "message": "新しいチャットを開始しました"})
         if path == "/chat":
-            raw = self._read_body()
-            if raw is None:
-                return self._send(400, {"ok": False, "message": "リクエストサイズが不正です"})
-            try:
-                data = json.loads(raw.decode("utf-8"))
-            except (ValueError, UnicodeDecodeError):
+            data = self._read_json()
+            if not isinstance(data, dict):
                 return self._send(400, {"ok": False, "message": "JSON が不正です"})
-            if not data.get("model") or not isinstance(data.get("messages"), list):
-                return self._send(400, {"ok": False, "message": "model と messages が必要です"})
-            data["stream"] = True
-            return proxy_chat(self, json.dumps(data, ensure_ascii=False).encode("utf-8"))
-        if path == "/agent":
-            raw = self._read_body()
-            if raw is None:
-                return self._send(400, {"ok": False, "message": "リクエストサイズが不正です"})
-            return agent_stream(self, raw)
+            model = str(data.get("model") or "")
+            text = str(data.get("text") or "")
+            system = str(data.get("system") or "")
+            if not model or not text:
+                return self._send(400, {"ok": False, "message": "model と text が必要です"})
+            return proxy_chat(self, model, text, system)
 
         self._send(404, {"ok": False, "message": "not found"})
 
@@ -615,8 +612,10 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     if not LOGIN_PASSWORD:
         print("⚠ DASSAI_LOGIN_PASSWORD が未設定のため、ログインできません。設定してから起動してください。")
+    print("opencode: %s" % OPENCODE_API)
+    print("作業ディレクトリ（既定）: %s" % DEFAULT_CWD)
     srv = ThreadingHTTPServer((HELPER_HOST, HELPER_PORT), Handler)
-    print("獺祭 Ollama ヘルパー起動: http://%s:%d  （停止は Ctrl+C）" % (HELPER_HOST, HELPER_PORT))
+    print("獺祭 OpenCode ヘルパー起動: http://%s:%d  （停止は Ctrl+C）" % (HELPER_HOST, HELPER_PORT))
     print("ログインID: %s" % LOGIN_ID)
     try:
         srv.serve_forever()
