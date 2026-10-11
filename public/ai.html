@@ -795,25 +795,26 @@ function loadQuotaState(){
 }
 function saveQuotaState(){ try { localStorage.setItem('dassai_model_quota_v1', JSON.stringify(quotaState)); } catch(e) {} }
 function quotaMonth(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-function quotaRecord(model, exhausted){
+function quotaRecord(model, exhausted, reason){
   var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
   if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
-  if (exhausted){ q.exhausted = true; q.detectedAt = Date.now(); } else { q.success++; q.exhausted = false; q.detectedAt = 0; }
+  if (exhausted){ q.exhausted = true; q.reason = reason || 'quota'; q.detectedAt = Date.now(); } else { q.success++; q.exhausted = false; q.reason = ''; q.detectedAt = 0; }
   quotaState[model] = q; saveQuotaState(); renderQuotaPanel(model);
 }
-function isQuotaBlocked(model){ var q = quotaState[model] || {}; return !!(q.exhausted && Date.now() - (q.detectedAt || 0) < 60*60*1000); }
+function isQuotaBlocked(model){ var q = quotaState[model] || {}; var ttl = q.reason === 'timeout' ? 2*60*1000 : 60*60*1000; return !!(q.exhausted && Date.now() - (q.detectedAt || 0) < ttl); }
 function renderQuotaPanel(model){
   var box = $('#quotaPanel'); if (!box) return;
   var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
   if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
   var inline = $('#quotaInline');
   if (inline){
-    var state = isQuotaBlocked(model) ? '上限到達' : '未取得';
+    var blocked = isQuotaBlocked(model), timedOut = blocked && q.reason === 'timeout';
+    var state = blocked ? (timedOut ? '応答なし' : '上限到達') : '未取得';
     inline.innerHTML = '無料枠あと <strong>' + state + '</strong> <span>· 今月 ' + q.success + '回利用</span>';
-    inline.title = isQuotaBlocked(model) ? '利用上限を検出したため別モデルへ切り替えます。1時間後に再確認します。' : 'プロバイダーが残量を公開していないため正確な残り回数は不明です。今月の成功回数を併記しています。';
+    inline.title = blocked ? (timedOut ? '60秒間応答がなかったため一時的に候補から除外します。2分後に再確認します。' : '利用上限を検出したため別モデルへ切り替えます。1時間後に再確認します。') : 'プロバイダーが残量を公開していないため正確な残り回数は不明です。今月の成功回数を併記しています。';
   }
   box.innerHTML = '<b>この端末での今月の成功回数：</b>' + q.success + '回' +
-    (isQuotaBlocked(model) ? '<br><span class="quota-out">枠切れを検出・1時間は自動切替候補から除外中</span>' : '<br><span class="quota-warn">プロバイダーの実際の残量・上限は取得できないため、残り回数は表示できません。</span>') +
+    (isQuotaBlocked(model) ? (q.reason === 'timeout' ? '<br><span class="quota-out">応答なしを検出・2分は自動切替候補から除外中</span>' : '<br><span class="quota-out">枠切れを検出・1時間は自動切替候補から除外中</span>') : '<br><span class="quota-warn">プロバイダーの実際の残量・上限は取得できないため、残り回数は表示できません。</span>') +
     '<br><span>回数はこのブラウザー内の目安です。別端末・別ブラウザーとは共有されません。</span>';
 }
 function updateModelChip(){
@@ -849,7 +850,7 @@ function loadModels(){
     function optLabel(m){
       var mi = modelInfo[m] || {};
       var q = quotaState[m] || {};
-      if (isQuotaBlocked(m)) return '⛔ 枠切れ検出 — ' + (mi.name || m);
+      if (isQuotaBlocked(m)) return (q.reason === 'timeout' ? '⚠ 応答なし検出 — ' : '⛔ 枠切れ検出 — ') + (mi.name || m);
       var t = modelTier(m, mi);
       var flags = [];
       if (mi.free) flags.push('無料');
@@ -1183,6 +1184,17 @@ function send(){
   runChat({ text: text, images: sendImages, reset: false });
 }
 
+function freeFallbackCandidates(sourceModel, images){
+  var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== sourceModel && isFreeModel(m) && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
+  var sourceProvider = String(sourceModel).split('/')[0].toLowerCase();
+  candidates.sort(function(a, b){
+    var aOtherProvider = String(a).split('/')[0].toLowerCase() !== sourceProvider;
+    var bOtherProvider = String(b).split('/')[0].toLowerCase() !== sourceProvider;
+    return aOtherProvider === bOtherProvider ? 0 : (aOtherProvider ? -1 : 1);
+  });
+  return candidates;
+}
+
 function runChat(opts){
   if (chatBusy) return;
   var text = opts.text || '';
@@ -1219,12 +1231,23 @@ function runChat(opts){
   var tick = setInterval(function(){ live.textContent = ((Date.now() - started) / 1000).toFixed(1) + '秒'; }, 250);
   var usage = null;
   var quotaFallback = null;
+  var timeoutFallback = false;
   var failureNotice = opts.notice || '';
   var failureNoticeIsError = false;
 
+  var acc = '', ok = false, hasContent = false;
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
-  var acc = '', ok = false, hasContent = false;
+  var activeCtrl = ctrl;
+  var noResponseTimer = setTimeout(function(){
+    if (hasContent || !chatBusy || ctrl !== activeCtrl) return;
+    timeoutFallback = true;
+    var cancelTimer = setTimeout(function(){ if (ctrl === activeCtrl) activeCtrl.abort(); }, 5000);
+    api('/cancel', {method:'POST'}).catch(function(){}).then(function(){
+      clearTimeout(cancelTimer);
+      if (ctrl === activeCtrl) activeCtrl.abort();
+    });
+  }, 60000);
   var segText = '', segEl = null, toolEls = {};
   var curEl = document.createElement('span');
   curEl.className = 'cursor'; curEl.textContent = '▍';
@@ -1296,7 +1319,17 @@ function runChat(opts){
     });
   }).catch(function(err){
     if (curEl.parentNode) curEl.parentNode.removeChild(curEl);
-    if (err && err.name === 'AbortError'){
+    if (timeoutFallback && !hasContent){
+      quotaRecord(model, true, 'timeout');
+      var timeoutCandidates = freeFallbackCandidates(model, images);
+      if (timeoutCandidates.length){
+        quotaFallback = timeoutCandidates[0]; $('#model').value = quotaFallback; updateModelChip();
+        failureNotice = (modelInfo[model] && modelInfo[model].name || model) + ' から60秒応答がなかったため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。';
+      } else {
+        failureNotice = (modelInfo[model] && modelInfo[model].name || model) + ' から60秒応答がなく、利用可能な無料の代替モデルもありません。入力文を戻しました。';
+        failureNoticeIsError = true;
+      }
+    } else if (err && err.name === 'AbortError'){
       if (segEl) segEl.innerHTML = render(segText);
       failureNotice = '生成を中断しました。';
       ok = hasContent;
@@ -1308,15 +1341,8 @@ function runChat(opts){
       // OpenCode/provider error names are often camelCase or snake_case (e.g. FreeUsageLimitError).
       var quotaErr = /quota|free.{0,24}(usage|tier|request|limit)|usage.{0,16}(limit|exceeded)|rate.?limit|too many requests|insufficient.*(credit|fund)|out of (credits|requests)|exhausted|無料枠|利用上限|残高不足|429|402/i.test(errText);
       if (quotaErr && !hasContent){
-        quotaRecord(model, true);
-        var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && isFreeModel(m) && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
-        // Prefer a different provider first; another Zen model may share the exhausted free quota.
-        var sourceProvider = String(model).split('/')[0].toLowerCase();
-        candidates.sort(function(a, b){
-          var aOtherProvider = String(a).split('/')[0].toLowerCase() !== sourceProvider;
-          var bOtherProvider = String(b).split('/')[0].toLowerCase() !== sourceProvider;
-          return aOtherProvider === bOtherProvider ? 0 : (aOtherProvider ? -1 : 1);
-        });
+        quotaRecord(model, true, 'quota');
+        var candidates = freeFallbackCandidates(model, images);
         if (candidates.length){
           quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip();
           failureNotice = (modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。';
@@ -1330,6 +1356,7 @@ function runChat(opts){
       }
     }
   }).then(function(){
+    clearTimeout(noResponseTimer);
     clearInterval(tick);
     if (ok){
       quotaRecord(model, false);
@@ -1354,7 +1381,7 @@ function runChat(opts){
     if (failureNotice && !quotaFallback) note(failureNotice, failureNoticeIsError);
     chatBusy = false; ctrl = null;
     setChatUi();
-    if (quotaFallback){ var ri = session.shown.lastIndexOf(userShown); if (ri >= 0) session.shown.splice(ri,1); if (!session.shown.length){ sessions = sessions.filter(function(x){return x.id !== session.id;}); if (current && current.id === session.id) current = null; } saveStore(); renderSessions(); runChat(Object.assign({}, opts, {notice: failureNotice})); return; }
+    if (quotaFallback){ var ri = session.shown.lastIndexOf(userShown); if (ri >= 0) session.shown.splice(ri,1); if (!session.shown.length){ sessions = sessions.filter(function(x){return x.id !== session.id;}); if (current && current.id === session.id) current = null; } saveStore(); renderSessions(); var retryOpts = Object.assign({}, opts, {notice: failureNotice}); if (timeoutFallback){ retryOpts.reset = true; retryOpts.keep = session.shown.slice(); api('/new', {method:'POST'}).catch(function(){}).then(function(){ runChat(retryOpts); }); } else { runChat(retryOpts); } return; }
     scrollLog();
     notifyDone(ok);
     prompt.focus();

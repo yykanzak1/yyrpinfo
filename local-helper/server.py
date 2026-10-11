@@ -302,6 +302,20 @@ def new_session():
     return True
 
 
+def abort_current_session():
+    with _session_lock:
+        sid = _session_id
+    if not sid:
+        return {"ok": True, "message": "中断するセッションはありません"}
+    try:
+        upstream("POST", "/session/%s/abort" % sid, timeout=10).close()
+        return {"ok": True, "message": "現在の生成を中断しました"}
+    except urllib.error.HTTPError as exc:
+        if exc.code in (404, 409):
+            return {"ok": True, "message": "セッションはすでに終了しています"}
+        raise
+
+
 def _parse_model(s):
     if "/" in s:
         pid, mid = s.split("/", 1)
@@ -708,7 +722,7 @@ class Handler(BaseHTTPRequestHandler):
             revoke_token(self._bearer())
             return self._send(200, {"ok": True, "message": "ログアウトしました"})
 
-        if path in ("/start", "/stop", "/models", "/new", "/chat"):
+        if path in ("/start", "/stop", "/models", "/new", "/chat", "/cancel"):
             if not self._require():
                 return
 
@@ -723,6 +737,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/new":
             new_session()
             return self._send(200, {"ok": True, "message": "新しいチャットを開始しました"})
+        if path == "/cancel":
+            return self._send(200, abort_current_session())
         if path == "/chat":
             data = self._read_json()
             if not isinstance(data, dict):
