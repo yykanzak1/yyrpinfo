@@ -31,6 +31,39 @@ ID は既定で `dassai` ですが、このPCでは環境変数 `DASSAI_LOGIN_ID
 - モデルを使うには opencode でプロバイダの認証が完了している必要があります（`opencode auth list`）。
   - OpenCode Zen を使う場合は**アカウントに残高が必要**です。残高不足だと 402 (Insufficient account funds) になり応答できません。
 
+## 2-A. Gemini APIを無料枠のエージェント候補に加える
+Gemini APIはツール呼び出しに対応しているため、OpenCodeのファイル編集・コマンド実行エージェントとして利用できます。モデル推論はGoogle側で行われるので、ローカルOllamaのようにゲーム中のGPUを使いません。Gemini API無料枠はモデル・アカウントごとに制限があり、無料枠の入力内容はGoogleの製品改善に使用される場合があります。秘密情報を含むコードは送らないでください。
+
+1. [Google AI Studio](https://aistudio.google.com/apikey)でAPIキーを作ります。**APIキーをチャットに貼らないでください。**
+2. OpenCodeのグローバル設定 `~/.config/opencode/opencode.json` に、既存の内容を消さず `provider` の設定を追加します（Windowsでは通常 `%USERPROFILE%\.config\opencode\opencode.json`）。
+   ```json
+   {
+     "$schema": "https://opencode.ai/config.json",
+     "provider": {
+       "google-gemini": {
+         "npm": "@ai-sdk/openai-compatible",
+         "name": "Google Gemini API",
+         "options": {
+           "baseURL": "https://generativelanguage.googleapis.com/v1beta/openai/",
+           "apiKey": "{env:GEMINI_API_KEY}"
+         },
+         "models": {
+           "gemini-3.8-flash": { "name": "Gemini 3.8 Flash" }
+         }
+       }
+     }
+   }
+   ```
+3. ヘルパーを起動するPowerShellウィンドウで、環境変数を設定してから `python server.py` を実行します。キーは自分のPCにだけ入力します。
+   ```powershell
+   $env:GEMINI_API_KEY="（AI Studioで作成したキー）"
+   $env:DASSAI_FREE_MODELS="google-gemini/gemini-3.8-flash"
+   python server.py
+   ```
+4. OpenCodeを再起動し、AI画面の「モデル一覧を再読み込み」を押します。エージェントの無料枠上限エラーを検出すると、接続済みで無料許可された別モデルへ順番に切り替えます。
+
+`DASSAI_FREE_MODELS` へ登録するのは、無料枠超過時に課金されない（拒否される）ことを確認したアカウントだけにしてください。Google AI Studioの無料枠だけを使い、課金設定を有効にしていないことを確認してください。
+
 ## 3. 起動手順
 1. 上記の環境変数を設定して `server.py` を起動します（このウィンドウは閉じないでください）。
 2. 別のターミナルで `index.html` と `ai.html` があるフォルダに移動し、次を実行します。
