@@ -37,6 +37,36 @@ svg.lucide{width:1em;height:1em;vertical-align:-0.14em;stroke-width:2}
 .tool>summary svg.lucide{width:15px;height:15px}
 .settings summary svg.lucide{width:14px;height:14px}
 .model-chip svg.lucide{width:14px;height:14px;color:var(--accent-cyan)}
+.search{margin:0 12px 8px;width:calc(100% - 24px);padding:7px 10px;font-size:.82rem}
+.model-detail{margin:8px 0 4px}
+.md-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--border-color);color:var(--text-dim)}
+.badge.free{color:var(--ok);border-color:rgba(62,207,142,.5)}
+.badge.paid{color:var(--cost-color);border-color:rgba(255,170,0,.45)}
+.badge.info{color:var(--accent-cyan);border-color:rgba(0,210,255,.45)}
+.badge.t-flagship{color:var(--danger);border-color:rgba(255,107,107,.55);font-weight:700}
+.badge.t-high{color:var(--cost-color);border-color:rgba(255,170,0,.55);font-weight:700}
+.badge.t-general{color:var(--accent-blue);border-color:rgba(0,136,255,.55);font-weight:700}
+.badge.t-fast{color:var(--ok);border-color:rgba(62,207,142,.55);font-weight:700}
+.md-desc{font-size:.76rem;color:var(--text-dim);line-height:1.5}
+.md-id{font-size:.68rem;color:var(--text-dim);font-family:var(--mono);margin-top:3px;word-break:break-all}
+.md-none{font-size:.74rem;color:var(--text-dim)}
+.chk{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:.82rem;color:var(--text-dim);cursor:pointer}
+.chk input{width:auto;margin:0}
+.msg-actions{display:flex;gap:6px;margin-top:7px;opacity:.35;transition:opacity .15s}
+.msg:hover .msg-actions{opacity:1}
+.msg-actions button{background:transparent;border:1px solid var(--border-color);color:var(--text-dim);border-radius:6px;padding:2px 8px;font-size:.72rem;display:inline-flex;align-items:center;gap:4px}
+.msg-actions button:hover{border-color:var(--accent-cyan);color:var(--accent-cyan)}
+.msg-actions svg.lucide{width:12px;height:12px}
+.msg-meta{margin-top:5px;font-size:.7rem;color:var(--text-dim);font-family:var(--mono)}
+.msg-meta.live{color:var(--accent-cyan)}
+.edit-area{width:100%;min-height:70px;font:inherit;background:var(--code-bg);color:var(--text-color);border:1px solid var(--accent-blue);border-radius:8px;padding:8px 10px}
+.edit-bar{display:flex;gap:8px;margin-top:8px}
+.sitem .pencil{border:0;background:transparent;color:var(--text-dim);padding:2px;border-radius:6px;display:none;align-items:center}
+.sitem:hover .pencil{display:inline-flex}
+.sitem .pencil:hover{color:var(--accent-cyan)}
+.sitem .pencil svg.lucide{width:13px;height:13px}
+.sitem [contenteditable="true"]{outline:1px solid var(--accent-blue);border-radius:4px;padding:2px 4px}
 input,textarea,select{font:inherit;color:var(--text-color);background:var(--code-bg);border:1px solid var(--border-color);border-radius:8px;padding:9px 11px;width:100%;outline:none}
 input:focus,textarea:focus,select:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px var(--highlight-bg)}
 .btn{background:var(--accent-blue);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:700}
@@ -209,6 +239,7 @@ select option{color:var(--text-color);background:var(--card-bg)}
       <button class="tbtn" id="btnTheme" type="button" title="テーマ切替" aria-label="テーマ切替"><i data-lucide="sun-moon"></i></button>
     </div>
     <button class="newchat" id="btnNew" type="button"><i data-lucide="plus"></i> 新しいチャット</button>
+    <input class="search" id="search" type="search" placeholder="チャットを検索…" aria-label="チャットを検索">
     <div class="slist" id="slist"></div>
 
     <div class="sb-bottom">
@@ -227,9 +258,11 @@ select option{color:var(--text-color);background:var(--card-bg)}
           <h3>MODEL</h3>
           <label for="model">使用するモデル（無料のみ）</label>
           <select id="model"><option value="">（読み込み中）</option></select>
+          <div class="model-detail" id="modelDetail"></div>
           <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
           <label for="sys">システムプロンプト（任意）</label>
           <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
+          <label class="chk"><input type="checkbox" id="optNotify"> 応答完了時に通知（タブが裏のとき）</label>
           <button class="btn sm danger" id="btnClear" type="button" style="margin-top:10px">すべての履歴を消去</button>
           <button class="btn sm ghost" id="btnLogout" type="button" style="margin-top:6px">ログアウト</button>
         </div>
@@ -287,6 +320,7 @@ var opBusy = false;     // 起動・終了中
 var ctrl = null;        // 中断用 AbortController
 var pending = [];       // 添付予定の画像 [{mime,url,name}]
 var visionSet = {};     // 画像対応モデル id -> true
+var modelInfo = {};     // モデル id -> {name, free, reasoning, vision, context, ...}
 var pollTimer = null;
 var running = false;
 
@@ -371,13 +405,51 @@ function appendMsg(role, text){
   }
   $('#log').appendChild(wrap);
   scrollLog();
-  return body;
+  return wrap;
 }
 function note(text, isErr){
-  var b = appendMsg('sys', text);
-  if (isErr) b.innerHTML = '<p class="err">' + esc(text) + '</p>';
+  var wrap = appendMsg('sys', text);
+  if (isErr){ var b = wrap.querySelector('.body'); b.innerHTML = '<p class="err">' + esc(text) + '</p>'; }
+}
+function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function iconBtn(act, lucide, label, cls){
+  var b = el('button'); b.type = 'button'; if (cls) b.className = cls; b.setAttribute('data-act', act);
+  b.innerHTML = icon(lucide);
+  if (label) b.appendChild(document.createTextNode(' ' + label));
+  return b;
+}
+function msgText(m){ return (m && m.text) ? m.text : ''; }
+function addMsgActions(wrap, role, idx){
+  wrap.setAttribute('data-idx', String(idx));
+  var bar = el('div', 'msg-actions');
+  bar.appendChild(iconBtn('copy', 'copy', 'コピー'));
+  if (role === 'user') bar.appendChild(iconBtn('edit', 'pencil', '編集して再送'));
+  else bar.appendChild(iconBtn('regen', 'refresh-cw', '再生成'));
+  wrap.appendChild(bar);
+}
+function addMsgMeta(wrap, meta){
+  if (!meta) return;
+  var parts = [];
+  if (meta.secs != null) parts.push(meta.secs.toFixed(1) + '秒');
+  if (meta.usage && meta.usage.tokens){
+    var tk = meta.usage.tokens;
+    parts.push('入力 ' + (tk.input || 0) + ' / 出力 ' + (tk.output || 0) + ' トークン');
+  }
+  if (meta.usage && typeof meta.usage.cost === 'number') parts.push('$' + meta.usage.cost.toFixed(4));
+  if (!parts.length) return;
+  wrap.appendChild(el('div', 'msg-meta', parts.join('  ·  ')));
 }
 $('#log').addEventListener('click', function(e){
+  var act = e.target.closest('[data-act]');
+  if (act){
+    var wrap = act.closest('.msg');
+    var idx = parseInt(wrap.getAttribute('data-idx'), 10);
+    var a = act.getAttribute('data-act');
+    if (a === 'copy') copyMsg(idx);
+    else if (a === 'edit') editMsg(idx);
+    else if (a === 'regen') regenerateMsg(idx);
+    return;
+  }
   var b = e.target.closest('.copy');
   if (!b || !navigator.clipboard) return;
   var code = b.closest('.code').querySelector('code').textContent;
@@ -385,6 +457,71 @@ $('#log').addEventListener('click', function(e){
     b.textContent = 'コピー済'; setTimeout(function(){ b.textContent = 'コピー'; }, 1200);
   }).catch(function(){});
 });
+function copyMsg(idx){
+  if (!current || !current.shown[idx]) return;
+  if (navigator.clipboard) navigator.clipboard.writeText(msgText(current.shown[idx])).catch(function(){});
+}
+function regenerateMsg(idx){
+  if (chatBusy || !current) return;
+  var shown = current.shown, ui = idx - 1;
+  while (ui >= 0 && shown[ui].role !== 'user') ui--;
+  if (ui < 0){ note('再生成できるユーザー発言が見つかりません。', true); return; }
+  runChat({ text: shown[ui].text, images: [], reset: true, keep: shown.slice(0, ui) });
+}
+function editMsg(idx){
+  if (chatBusy || !current) return;
+  var m = current.shown[idx];
+  if (!m || m.role !== 'user') return;
+  var wrap = document.querySelector('#log .msg[data-idx="' + idx + '"]');
+  if (!wrap) return;
+  var body = wrap.querySelector('.body');
+  var ta = el('textarea', 'edit-area'); ta.value = m.text || '';
+  body.innerHTML = ''; body.appendChild(ta);
+  var bar = el('div', 'edit-bar');
+  var okb = el('button', 'btn sm', '送信'); okb.type = 'button';
+  var cab = el('button', 'btn sm ghost', 'キャンセル'); cab.type = 'button';
+  bar.appendChild(okb); bar.appendChild(cab); body.appendChild(bar);
+  ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {}
+  cab.addEventListener('click', function(){ renderLog(); });
+  okb.addEventListener('click', function(){
+    var t = ta.value.trim(); if (!t) return;
+    runChat({ text: t, images: [], reset: true, keep: current.shown.slice(0, idx) });
+  });
+}
+function buildTranscript(keep, promptText){
+  if (!keep || !keep.length) return promptText;
+  var lines = keep.map(function(m){ return (m.role === 'user' ? 'ユーザー' : 'アシスタント') + ': ' + (m.text || ''); });
+  return '＜これまでの会話＞\n' + lines.join('\n') + '\n＜/これまでの会話＞\n\n' + promptText;
+}
+var _baseTitle = document.title, _titleTimer = null;
+function beep(){
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var c = new AC(), o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime;
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + 0.2);
+    setTimeout(function(){ try { c.close(); } catch (e) {} }, 500);
+  } catch (e) {}
+}
+function stopTitleBlink(){ if (_titleTimer){ clearInterval(_titleTimer); _titleTimer = null; document.title = _baseTitle; } }
+function notifyDone(ok){
+  if (!ok) return;
+  var on = true;
+  try { on = localStorage.getItem('dassai_notify') !== '0'; } catch (e) {}
+  if (!on || !document.hidden) return;
+  beep();
+  if (!_titleTimer){
+    var phase = false;
+    _titleTimer = setInterval(function(){ phase = !phase; document.title = phase ? '● 応答完了' : _baseTitle; }, 900);
+  }
+}
+window.addEventListener('focus', stopTitleBlink);
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) stopTitleBlink(); });
 
 /* ---------- ヘルパー通信 ---------- */
 function api(path, opts){
@@ -527,11 +664,48 @@ function isFreeModel(m){
   for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
   return true;
 }
+function fmtCtx(n){
+  if (!n) return '';
+  if (n >= 1000000) return (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'M';
+  if (n >= 1000) return Math.round(n / 1000) + 'K';
+  return String(n);
+}
+function modelTier(id, mi){
+  var name = (mi && mi.name) ? mi.name : id;
+  var s = (name + ' ' + id + ' ' + ((mi && mi.family) || '')).toLowerCase();
+  var fastHint = /flash|mini|lite|haiku|nano|small|tiny|\bfast\b/.test(s);
+  var score = 0;
+  if (/opus|o3|o4|gpt-6|gpt-7|grok-4|\bmax\b|ultra/.test(s)) score += 3;
+  if (/sonnet|\bpro\b|think|reason/.test(s)) score += 2;
+  if (mi && mi.reasoning) score += 1;
+  if (mi && mi.context && mi.context >= 200000) score += 1;
+  if (score >= 4) return { key: 'flagship', label: '最難関', rank: 4, desc: '最難関クラス。複雑な推論や難しい課題に最も適しています。' };
+  if (score >= 2 && !fastHint) return { key: 'high', label: '高精度', rank: 3, desc: '高精度。複雑なコーディングや多段の推論に強い。' };
+  if (fastHint || score <= -1) return { key: 'fast', label: '高速', rank: 1, desc: '高速・軽量。簡単なタスクや短い応答に最も効率的。' };
+  return { key: 'general', label: '汎用', rank: 2, desc: '汎用バランス型。日常的なタスク全般に使えます。' };
+}
+function renderModelDetail(v, mi){
+  var box = $('#modelDetail');
+  if (!box) return;
+  if (!v || !mi){ box.innerHTML = '<span class="md-none">モデルを選ぶと特徴が表示されます。</span>'; return; }
+  var t = modelTier(v, mi);
+  var b = ['<span class="badge t-' + t.key + '">' + esc(t.label) + '</span>'];
+  b.push(mi.free ? '<span class="badge free">無料</span>' : '<span class="badge paid">有料</span>');
+  if (mi.reasoning) b.push('<span class="badge info">推論</span>');
+  if (mi.vision) b.push('<span class="badge info">画像</span>');
+  if (mi.toolcall) b.push('<span class="badge">ツール</span>');
+  if (mi.context) b.push('<span class="badge">文脈 ' + esc(fmtCtx(mi.context)) + '</span>');
+  box.innerHTML = '<div class="md-badges">' + b.join('') + '</div>' +
+    '<div class="md-desc">' + esc(t.desc) + '</div>' +
+    '<div class="md-id">' + esc(mi.name || v) + '  ' + esc(v) + '</div>';
+  refreshIcons();
+}
 function updateModelChip(){
   var c = $('#modelChip');
-  if (!c) return;
-  var v = $('#model').value;
-  c.innerHTML = esc(v || 'モデル未選択') + (visionSet[v] ? ' ' + icon('image') : '');
+  var v = $('#model') ? $('#model').value : '';
+  var mi = modelInfo[v] || null;
+  if (c) c.innerHTML = esc((mi && mi.name) || v || 'モデル未選択') + (visionSet[v] ? ' ' + icon('image') : '');
+  renderModelDetail(v, mi);
   refreshIcons();
 }
 function loadModels(){
@@ -541,6 +715,7 @@ function loadModels(){
     sel.innerHTML = '';
     visionSet = {};
     (j.vision || []).forEach(function(v){ visionSet[v] = true; });
+    modelInfo = j.info || {};
     if (!j.models.length){
       sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
       updateModelChip();
@@ -548,18 +723,29 @@ function loadModels(){
     }
     var list = j.models.filter(isFreeModel);
     if (!list.length) list = j.models.slice();
-    var vis = list.filter(function(m){ return visionSet[m]; });
-    var novis = list.filter(function(m){ return !visionSet[m]; });
+    function rankOf(m){ return modelTier(m, modelInfo[m]).rank; }
+    function optLabel(m){
+      var mi = modelInfo[m] || {};
+      var t = modelTier(m, mi);
+      var flags = [];
+      if (mi.free) flags.push('無料');
+      if (mi.reasoning) flags.push('推論');
+      if (mi.context) flags.push(fmtCtx(mi.context));
+      return (mi.name || m) + '  —  ' + t.label + (flags.length ? '・' + flags.join('・') : '');
+    }
     function addGroup(label, arr){
       if (!arr.length) return;
+      arr = arr.slice().sort(function(a, b){ return rankOf(b) - rankOf(a); });
       var g = document.createElement('optgroup');
       g.label = label;
       arr.forEach(function(m){
         var o = document.createElement('option');
-        o.value = m; o.textContent = m; g.appendChild(o);
+        o.value = m; o.textContent = optLabel(m); o.title = m; g.appendChild(o);
       });
       sel.appendChild(g);
     }
+    var vis = list.filter(function(m){ return visionSet[m]; });
+    var novis = list.filter(function(m){ return !visionSet[m]; });
     addGroup('画像対応モデル', vis);
     addGroup('画像非対応モデル', novis);
     if (keep && list.indexOf(keep) >= 0) sel.value = keep;
@@ -635,7 +821,14 @@ function renderSessions(){
     list.innerHTML = '<div class="s-empty">まだチャットがありません。<br>「新しいチャット」から始めましょう。</div>';
     return;
   }
+  var q = '';
+  try { q = ($('#search') ? ($('#search').value || '') : '').trim().toLowerCase(); } catch (e) { q = ''; }
   var sorted = sessions.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
+  if (q) sorted = sorted.filter(function(s){ return matchSession(s, q); });
+  if (!sorted.length){
+    list.innerHTML = '<div class="s-empty">「' + esc(q) + '」に一致するチャットがありません。</div>';
+    return;
+  }
   var html = '', lastGroup = null;
   sorted.forEach(function(s){
     var g = groupLabel(s.ts || Date.now());
@@ -644,16 +837,28 @@ function renderSessions(){
     var title = s.title || titleOf(s.shown) || '新しいチャット';
     html += '<div class="sitem' + (active ? ' active' : '') + '" data-id="' + s.id + '">' +
       '<div class="t">' + esc(title) + '</div>' +
+      '<button class="pencil" type="button" data-rename="' + s.id + '" title="名前を変更">' + icon('pencil') + '</button>' +
       '<button class="x" type="button" data-del="' + s.id + '" title="削除">' + icon('x') + '</button>' +
     '</div>';
   });
   list.innerHTML = html;
   refreshIcons();
 }
+function matchSession(s, q){
+  if (s.title && s.title.toLowerCase().indexOf(q) >= 0) return true;
+  var shown = s.shown || [];
+  for (var i=0;i<shown.length;i++){ if ((shown[i].text || '').toLowerCase().indexOf(q) >= 0) return true; }
+  return false;
+}
 function renderLog(){
   $('#log').innerHTML = '';
   if (current && Array.isArray(current.shown) && current.shown.length){
-    current.shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
+    current.shown.forEach(function(m, i){
+      var wrap = appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || '');
+      addMsgMeta(wrap, m.meta);
+      addMsgActions(wrap, m.role === 'user' ? 'user' : 'ai', i);
+    });
+    refreshIcons();
   } else {
     note('新規チャット。下の入力欄からメッセージを送ってください。');
   }
@@ -696,6 +901,13 @@ function newChat(){
 }
 $('#btnNew').addEventListener('click', newChat);
 $('#slist').addEventListener('click', function(e){
+  var ren = e.target.closest('[data-rename]');
+  if (ren){
+    e.stopPropagation();
+    var ri = ren.closest('.sitem');
+    renameTitle(ri.querySelector('.t'), ren.getAttribute('data-rename'));
+    return;
+  }
   var del = e.target.closest('[data-del]');
   if (del){
     e.stopPropagation();
@@ -705,6 +917,32 @@ $('#slist').addEventListener('click', function(e){
   var item = e.target.closest('[data-id]');
   if (item) openSession(item.getAttribute('data-id'));
 });
+function renameTitle(tEl, id){
+  if (!tEl) return;
+  var s = null;
+  for (var i=0;i<sessions.length;i++){ if (sessions[i].id === id){ s = sessions[i]; break; } }
+  if (!s) return;
+  tEl.setAttribute('contenteditable', 'true');
+  tEl.focus();
+  try {
+    var r = document.createRange(); r.selectNodeContents(tEl);
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  } catch (e) {}
+  var done = false;
+  function finish(save){
+    if (done) return; done = true;
+    tEl.setAttribute('contenteditable', 'false');
+    if (save){ var v = tEl.textContent.trim(); if (v) s.title = v; }
+    saveStore(); renderSessions();
+  }
+  tEl.addEventListener('blur', function(){ finish(true); });
+  tEl.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
+    else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
+  });
+}
+var _searchEl = $('#search');
+if (_searchEl) _searchEl.addEventListener('input', renderSessions);
 $('#btnClear').addEventListener('click', function(){
   if (chatBusy) return;
   if (!confirm('保存されているすべてのチャット履歴を消去します。よろしいですか？')) return;
@@ -802,27 +1040,45 @@ function send(){
     note('選択中のモデルは画像に未対応の可能性があります（画像対応モデルを推奨）。', true);
   }
   if (!text) text = 'この画像について説明してください';
-
   prompt.value = ''; autoResize();
   pending = []; renderAttachments();
+  runChat({ text: text, images: sendImages, reset: false });
+}
+
+function runChat(opts){
+  if (chatBusy) return;
+  var text = opts.text || '';
+  var images = opts.images || [];
+  var model = $('#model').value;
+  if (!model){ note('モデルが選択されていません。opencode を起動し、モデルを選んでください。', true); return; }
 
   if (!current){
     current = { id: uid(), title: '', ts: Date.now(), shown: [], sys: $('#sys').value };
     sessions.push(current);
   }
+  if (opts.keep) current.shown = opts.keep.slice();
   current.sys = $('#sys').value;
-  if (!current.title) current.title = text.slice(0, 48);
-  current.ts = Date.now();
 
-  var displayText = text + (sendImages.length ? '\n\n（画像' + sendImages.length + '枚を添付）' : '');
-  appendMsg('user', displayText);
+  var displayText = text + (images.length ? '\n\n（画像' + images.length + '枚を添付）' : '');
   var userShown = { role: 'user', text: displayText };
   current.shown.push(userShown);
-  saveStore(); renderSessions();
-  var aiBody = appendMsg('ai', '');
+  if (!current.title) current.title = text.slice(0, 48);
+  current.ts = Date.now();
+  saveStore();
+  renderLog();
+  renderSessions();
+
+  var aiWrap = appendMsg('ai', '');
+  var aiBody = aiWrap.querySelector('.body');
+  var live = el('div', 'msg-meta live');
+  aiWrap.appendChild(live);
 
   var sysText = $('#sys').value.trim();
   var session = current;
+  var sendText = opts.reset ? buildTranscript(opts.keep, text) : text;
+  var started = Date.now();
+  var tick = setInterval(function(){ live.textContent = ((Date.now() - started) / 1000).toFixed(1) + '秒'; }, 250);
+  var usage = null;
 
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
@@ -837,9 +1093,9 @@ function send(){
     return segEl;
   }
   function handleTool(t){
-    var el = toolEls[t.id];
-    if (!el){ el = buildToolEl(t); toolEls[t.id] = el; aiBody.appendChild(el); segEl = null; segText = ''; }
-    updateToolEl(el, t);
+    var e2 = toolEls[t.id];
+    if (!e2){ e2 = buildToolEl(t); toolEls[t.id] = e2; aiBody.appendChild(e2); segEl = null; segText = ''; }
+    updateToolEl(e2, t);
     hasContent = true;
   }
 
@@ -848,8 +1104,8 @@ function send(){
     signal: ctrl.signal,
     cache: 'no-store',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ model: model, text: text, system: sysText,
-      images: sendImages.map(function(a){ return { mime: a.mime, url: a.url, filename: a.name }; }) })
+    body: JSON.stringify({ model: model, text: sendText, system: sysText, reset: !!opts.reset,
+      images: images.map(function(a){ return { mime: a.mime, url: a.url, filename: a.name }; }) })
   }).then(function(res){
     if (!res.ok){
       return res.json().catch(function(){ return {}; }).then(function(j){
@@ -865,6 +1121,7 @@ function send(){
       if (!line.trim()) return;
       var obj = JSON.parse(line);
       if (obj.error) throw new Error(obj.error);
+      if (obj.usage) usage = obj.usage;
       if (obj.tool){ handleTool(obj.tool); }
       else if (obj.message && obj.message.content){
         segText += obj.message.content;
@@ -911,8 +1168,9 @@ function send(){
       if (hasContent) ok = true;
     }
   }).then(function(){
+    clearInterval(tick);
     if (ok){
-      session.shown.push({ role: 'ai', text: acc });
+      session.shown.push({ role: 'ai', text: acc, meta: { secs: (Date.now() - started) / 1000, usage: usage } });
     } else {
       var j = session.shown.lastIndexOf(userShown); if (j >= 0) session.shown.splice(j, 1);
       if (!session.shown.length){
@@ -921,10 +1179,13 @@ function send(){
       }
     }
     session.ts = Date.now();
-    saveStore(); renderSessions();
+    saveStore();
+    renderLog();
+    renderSessions();
     chatBusy = false; ctrl = null;
     setChatUi();
     scrollLog();
+    notifyDone(ok);
     prompt.focus();
   });
 }
@@ -932,6 +1193,36 @@ $('#btnSend').addEventListener('click', send);
 $('#btnStopChat').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
 $('#sys').addEventListener('input', function(){
   if (current){ current.sys = $('#sys').value; saveStore(); }
+});
+
+/* ---------- 完了通知の設定 ---------- */
+var notifyEl = $('#optNotify');
+if (notifyEl){
+  try { notifyEl.checked = localStorage.getItem('dassai_notify') !== '0'; } catch (e) { notifyEl.checked = true; }
+  notifyEl.addEventListener('change', function(){
+    try { localStorage.setItem('dassai_notify', notifyEl.checked ? '1' : '0'); } catch (e) {}
+  });
+}
+
+/* ---------- キーボードショートカット ---------- */
+document.addEventListener('keydown', function(e){
+  var mod = e.ctrlKey || e.metaKey;
+  if (!mod) return;
+  var k = e.key.toLowerCase();
+  if (k === 'k'){
+    e.preventDefault();
+    var d = $('.settings'); if (d) d.open = true;
+    var m = $('#model'); if (m) m.focus();
+  } else if (k === 'n'){
+    e.preventDefault();
+    newChat();
+  } else if (k === 'f'){
+    e.preventDefault();
+    var s = $('#search'); if (s){ s.focus(); if (s.select) s.select(); }
+  }
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && chatBusy && ctrl) ctrl.abort();
 });
 
 /* ---------- 起動 ---------- */

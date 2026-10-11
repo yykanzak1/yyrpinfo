@@ -235,6 +235,7 @@ def list_models():
         data = json.loads(r.read().decode("utf-8"))
     models = []
     vision = []
+    info = {}
     for p in data.get("providers", []):
         pid = p.get("id")
         for mid, minfo in (p.get("models") or {}).items():
@@ -242,15 +243,36 @@ def list_models():
                 continue
             full = pid + "/" + mid
             models.append(full)
-            caps = (minfo.get("capabilities") or {}) if isinstance(minfo, dict) else {}
-            if (caps.get("input") or {}).get("image") or caps.get("attachment"):
+            if not isinstance(minfo, dict):
+                minfo = {}
+            caps = minfo.get("capabilities") or {}
+            inp = caps.get("input") or {}
+            is_vision = bool(inp.get("image") or caps.get("attachment"))
+            if is_vision:
                 vision.append(full)
+            cost = minfo.get("cost") or {}
+            limit = minfo.get("limit") or {}
+            cin = cost.get("input")
+            cout = cost.get("output")
+            info[full] = {
+                "name": minfo.get("name") or mid,
+                "family": minfo.get("family") or "",
+                "free": (cin == 0 and cout == 0),
+                "costIn": cin,
+                "costOut": cout,
+                "context": limit.get("context"),
+                "maxOutput": limit.get("output"),
+                "reasoning": bool(caps.get("reasoning")),
+                "toolcall": bool(caps.get("toolcall")),
+                "vision": is_vision,
+                "release": minfo.get("release_date") or "",
+            }
     default = ""
     for pid, mid in (data.get("default") or {}).items():
         if pid and mid:
             default = pid + "/" + mid
             break
-    return sorted(set(models)), default, sorted(set(vision))
+    return sorted(set(models)), default, sorted(set(vision)), info
 
 
 def _get_or_create_session():
@@ -371,8 +393,10 @@ def try_login(uid, pw):
 
 
 # ---------------- チャット中継 ----------------
-def proxy_chat(handler, model, text, system, images=None):
-    # 1) セッション作成
+def proxy_chat(handler, model, text, system, images=None, reset=False):
+    # 1) セッション作成（reset 指定時は作り直して文脈をリセット）
+    if reset:
+        new_session()
     try:
         sid = _get_or_create_session()
     except Exception:
@@ -431,6 +455,7 @@ def proxy_chat(handler, model, text, system, images=None):
     assistant_ids = set()
     text_parts = {}     # partID -> 送信済み文字数
     tool_state = {}     # partID -> 最後に通知した status
+    usage = None        # 最後の assistant メッセージの使用量（tokens/cost）
     deadline = time.time() + CHAT_TIMEOUT
     aborted = False
     try:
@@ -452,6 +477,10 @@ def proxy_chat(handler, model, text, system, images=None):
                 info = p.get("info", {}) or {}
                 if info.get("sessionID") == sid and info.get("role") == "assistant" and info.get("id"):
                     assistant_ids.add(info["id"])
+                    tk = info.get("tokens")
+                    if tk:
+                        usage = {"tokens": tk, "cost": info.get("cost"),
+                                 "model": info.get("modelID"), "provider": info.get("providerID")}
                 continue
 
             if t == "message.part.updated":
@@ -495,6 +524,8 @@ def proxy_chat(handler, model, text, system, images=None):
                 break
 
             if t == "session.idle" and p.get("sessionID") == sid:
+                if usage:
+                    emit({"usage": usage})
                 emit({"done": True})
                 break
     except (BrokenPipeError, ConnectionResetError):
@@ -604,8 +635,8 @@ class Handler(BaseHTTPRequestHandler):
             if not self._require():
                 return
             try:
-                models, default, vision = list_models()
-                return self._send(200, {"ok": True, "models": models, "default": default, "vision": vision})
+                models, default, vision, info = list_models()
+                return self._send(200, {"ok": True, "models": models, "default": default, "vision": vision, "info": info})
             except Exception:
                 return self._send(502, {"ok": False, "message": "opencode に接続できません。先に起動してください"})
         self._send(404, {"ok": False, "message": "not found"})
@@ -655,11 +686,12 @@ class Handler(BaseHTTPRequestHandler):
             text = str(data.get("text") or "")
             system = str(data.get("system") or "")
             images = _parse_images(data.get("images"))
+            reset = bool(data.get("reset"))
             if not model or (not text and not images):
                 return self._send(400, {"ok": False, "message": "model と text（または画像）が必要です"})
             if not text:
                 text = "この画像について説明してください"
-            return proxy_chat(self, model, text, system, images)
+            return proxy_chat(self, model, text, system, images, reset)
 
         self._send(404, {"ok": False, "message": "not found"})
 
