@@ -49,7 +49,7 @@ Gemini APIはツール呼び出しに対応しているため、OpenCodeのフ�
 4. 初回だけ獺祭AIのログインID・パスワード、Google AI StudioのAPIキー、既定の作業フォルダーを入力します。キーとパスワードはWindowsユーザー専用DPAPIで暗号化し、`%APPDATA%\DASSAI-AI\helper-secrets.json` に保存します。キーはGemini互換用の `GEMINI_API_KEY` とGoogle標準プロバイダー（`google/...`）用の `GOOGLE_GENERATIVE_AI_API_KEY` の両方にHelperの実行中だけ渡されます。キーは `opencode.json` に平文保存しません。
 5. スクリプトがWindowsタスクスケジューラへログオン時の自動起動を登録し、HelperとOpenCodeを今すぐバックグラウンド起動します。以後は**Windowsにサインインするだけ**で起動します。ターミナルを開いたままにする必要はありません。Helperログは `%LOCALAPPDATA%\DASSAI-AI\helper.log`（エラーは `helper-error.log`）、OpenCodeログは `local-helper\opencode_serve.log` にあります。
 6. AI画面には必要に応じてログインしてください。ブラウザーの認証はセキュリティのため残ります。モデル一覧を再読み込みすると、無料枠切れ時は接続済みの無料候補へ切り替わります。現在セットアップされる無料の代替先はGemini 3.8 Flashです。無料枠を使い切った場合も自動的に有料へは切り替えません。
-7. OpenCode TUIでも無料枠自動切替を使う場合は、初回セットアップの確認で `y` を選びます。無料枠・429・残高不足を検出すると、同じセッションのメッセージをGemini 3.8 Flashへ再送します。
+7. OpenCode TUIでも無料枠自動切替を使う場合は、初回セットアップの確認で `y` を選びます。この選択をするとTUIからキーを読めるよう、APIキーがDPAPIファイルに加えてWindowsユーザー環境変数にも保存され、同じWindowsアカウントのアプリから読み取れる状態になります。**獺祭AIのWeb画面だけ使う場合は `N`（既定）を選んでください**。Helperの自動起動・Web画面でのGemini利用には影響しません。無料枠・429・残高不足を検出すると、同じセッションのメッセージをGemini 3.8 Flashへ再送します。
 
 保存したキーを変更する場合は、AI画面でOpenCodeとHelperを停止した後、`setup-gemini.ps1 -ResetCredentials` を実行します。Windowsの自動起動を解除する場合は、タスクスケジューラでタスク `DASSAI AI Helper` を無効化または削除してください。
 
