@@ -27,6 +27,16 @@ html[data-theme="light"]{
 html,body{margin:0;height:100%;background:var(--bg-color);color:var(--text-color);font-family:'Segoe UI',Roboto,'Helvetica Neue','Hiragino Sans','Noto Sans JP',Arial,sans-serif;font-size:15px;line-height:1.6}
 button{font:inherit;cursor:pointer}
 button:disabled{opacity:.45;cursor:not-allowed}
+svg.lucide{width:1em;height:1em;vertical-align:-0.14em;stroke-width:2}
+.tbtn svg.lucide,.ibtn svg.lucide{width:17px;height:17px}
+.newchat svg.lucide{width:16px;height:16px;color:var(--accent-cyan)}
+.newchat:hover svg.lucide{color:#fff}
+.send svg.lucide{width:18px;height:18px;stroke-width:2.4}
+.stop svg.lucide{width:13px;height:13px;fill:currentColor}
+.sitem .x svg.lucide{width:14px;height:14px}
+.tool>summary svg.lucide{width:15px;height:15px}
+.settings summary svg.lucide{width:14px;height:14px}
+.model-chip svg.lucide{width:14px;height:14px;color:var(--accent-cyan)}
 input,textarea,select{font:inherit;color:var(--text-color);background:var(--code-bg);border:1px solid var(--border-color);border-radius:8px;padding:9px 11px;width:100%;outline:none}
 input:focus,textarea:focus,select:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px var(--highlight-bg)}
 .btn{background:var(--accent-blue);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:700}
@@ -39,7 +49,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent-blue);box-shad
 .mark{width:34px;height:34px;border-radius:9px;flex:none;background:linear-gradient(135deg,#0a2d4d,#0090ff);border:1px solid var(--accent-cyan);display:grid;place-items:center;font-weight:900;color:#fff}
 
 /* ----- gate (login) ----- */
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 25%,#0a2338 0%,var(--bg-color) 65%)}
+#gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 25%,#0a2338 0%,var(--bg-color) 65%)}
 html[data-theme="light"] #gate{background:radial-gradient(circle at 50% 25%,#e3f0fb 0%,var(--bg-color) 65%)}
 .gcard{width:min(400px,100%);background:var(--card-bg);border:1px solid var(--border-color);border-radius:14px;padding:30px;box-shadow:0 0 42px rgba(0,136,255,.14)}
 .gbrand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
@@ -62,8 +72,6 @@ html[data-theme="light"] .sb-brand{color:#0f1723}
 .tbtn:hover{border-color:var(--accent-cyan);color:var(--accent-cyan)}
 .newchat{display:flex;align-items:center;gap:8px;margin:6px 12px 12px;padding:10px 12px;border-radius:20px;border:1px solid var(--accent-blue);background:var(--highlight-bg);color:var(--text-color);font-weight:700;font-size:.88rem}
 .newchat:hover{background:var(--accent-blue);color:#fff}
-.newchat .plus{color:var(--accent-cyan);font-size:1.05rem;line-height:1}
-.newchat:hover .plus{color:#fff}
 .slist{flex:1;min-height:0;overflow:auto;padding:2px 8px 8px}
 .sgroup{font-size:.68rem;color:var(--accent-cyan);font-weight:700;letter-spacing:.06em;padding:14px 10px 5px;font-family:var(--mono)}
 .sgroup:first-child{padding-top:4px}
@@ -95,7 +103,9 @@ html[data-theme="light"] .sb-brand{color:#0f1723}
 .sb-hint{font-size:.68rem;color:var(--text-dim);line-height:1.55;padding:2px 2px 0}
 
 main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-color)}
-.topbar{height:52px;flex:none;display:flex;align-items:center;justify-content:center;border-bottom:2px solid var(--accent-blue);background:var(--header-bg)}
+.topbar{height:52px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;border-bottom:2px solid var(--accent-blue);background:var(--header-bg)}
+.authbar{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--cost-color)}
+.authbar .btn.sm{padding:4px 12px}
 .model-chip{font-size:.82rem;color:var(--text-dim);display:flex;align-items:center;gap:8px;font-family:var(--mono)}
 .model-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent-cyan);box-shadow:0 0 8px var(--accent-cyan)}
 .model-chip b{color:var(--accent-cyan);font-weight:700}
@@ -140,6 +150,23 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
 .attach .rm:hover{background:var(--danger)}
 .ibtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border-color);background:transparent;color:var(--text-dim);font-size:.95rem;padding:0;line-height:1}
 .ibtn:hover{border-color:var(--accent-cyan);color:var(--accent-cyan)}
+select optgroup{color:var(--accent-cyan);font-weight:700;background:var(--card-bg)}
+select option{color:var(--text-color);background:var(--card-bg)}
+.tool{margin:10px 0;border:1px solid var(--border-color);border-radius:8px;background:var(--code-bg);overflow:hidden}
+.tool>summary{cursor:pointer;list-style:none;padding:7px 12px;font-size:.8rem;font-family:var(--mono);color:var(--text-dim);display:flex;align-items:center;gap:8px;user-select:none}
+.tool>summary::-webkit-details-marker{display:none}
+.tool>summary .ico{color:var(--accent-cyan)}
+.tool>summary .tname{color:var(--accent-cyan);font-weight:700}
+.tool>summary .ttitle{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tool>summary .tstat{margin-left:auto;flex:none;font-size:.7rem;padding:1px 8px;border-radius:999px;border:1px solid var(--border-color)}
+.tool[data-status="running"] .tstat{color:var(--cost-color);border-color:rgba(255,170,0,.5)}
+.tool[data-status="completed"] .tstat{color:var(--ok);border-color:rgba(62,207,142,.5)}
+.tool[data-status="error"] .tstat{color:var(--danger);border-color:rgba(255,107,107,.5)}
+.tool .tbody{padding:8px 12px 12px;border-top:1px solid var(--border-color)}
+.tool .tlabel{font-size:.68rem;color:var(--accent-cyan);letter-spacing:.08em;font-family:var(--mono);margin:8px 0 3px}
+.tool .tlabel:first-child{margin-top:0}
+.tool pre{margin:0;padding:8px 10px;overflow:auto;background:var(--header-bg);border:1px solid var(--border-color);border-radius:6px;font-family:var(--mono);font-size:.78rem;line-height:1.5;max-height:340px;white-space:pre-wrap;word-break:break-word}
+.seg{margin:0}
 .send{width:34px;height:34px;border-radius:50%;border:0;background:var(--accent-blue);color:#fff;display:grid;place-items:center;font-size:1.05rem;padding:0}
 .send:not(:disabled):hover{filter:brightness(1.15)}
 .send:disabled{background:var(--border-color)}
@@ -153,6 +180,7 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
   .msg.user .body{max-width:92%}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -178,14 +206,14 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
   <aside>
     <div class="sb-top">
       <div class="sb-brand"><span class="mark">獺</span>獺祭 AI</div>
-      <button class="tbtn" id="btnTheme" type="button" title="テーマ切替" aria-label="テーマ切替">🌓</button>
+      <button class="tbtn" id="btnTheme" type="button" title="テーマ切替" aria-label="テーマ切替"><i data-lucide="sun-moon"></i></button>
     </div>
-    <button class="newchat" id="btnNew" type="button"><span class="plus">＋</span> 新しいチャット</button>
+    <button class="newchat" id="btnNew" type="button"><i data-lucide="plus"></i> 新しいチャット</button>
     <div class="slist" id="slist"></div>
 
     <div class="sb-bottom">
       <details class="settings">
-        <summary>⚙ 設定・サーバー</summary>
+        <summary><i data-lucide="settings"></i> 設定・サーバー</summary>
         <div class="settings-body">
           <span class="pill" id="pill">確認中…</span>
           <div class="btn-row">
@@ -211,7 +239,10 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
   </aside>
 
   <main>
-    <div class="topbar"><div class="model-chip"><span class="dot"></span>opencode · <b id="modelChip">モデル未選択</b></div></div>
+    <div class="topbar">
+      <div class="model-chip"><span class="dot"></span>opencode · <b id="modelChip">モデル未選択</b></div>
+      <div class="authbar" id="authbar" hidden><span id="authMsg"></span><button class="btn sm" id="btnLogin" type="button">ログイン</button></div>
+    </div>
     <div id="log"></div>
     <div class="composer">
       <div class="composer-inner">
@@ -219,13 +250,13 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
         <textarea id="prompt" rows="1" placeholder="返信を入力…（Enterで送信 / Shift+Enterで改行）"></textarea>
         <div class="composer-tools">
           <div class="l">
-            <button class="ibtn" id="btnAttach" type="button" title="画像を添付" aria-label="画像を添付">🖼️</button>
+            <button class="ibtn" id="btnAttach" type="button" title="画像を添付" aria-label="画像を添付"><i data-lucide="image"></i></button>
             <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
             <span id="count">0 文字</span>
           </div>
           <div class="l">
-            <button class="stop" id="btnStopChat" type="button" disabled>■ 停止</button>
-            <button class="send" id="btnSend" type="button" title="送信" aria-label="送信">↑</button>
+            <button class="stop" id="btnStopChat" type="button" disabled><i data-lucide="square"></i> 停止</button>
+            <button class="send" id="btnSend" type="button" title="送信" aria-label="送信"><i data-lucide="arrow-up"></i></button>
           </div>
         </div>
       </div>
@@ -240,7 +271,13 @@ var HELPER = 'http://127.0.0.1:8765';
 var TOKEN_KEY = 'dassai_ai_token';
 var $ = function(s){ return document.querySelector(s); };
 
-var token = sessionStorage.getItem(TOKEN_KEY) || '';
+var token = '';
+try { token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { token = ''; }
+function persistToken(t){
+  token = t || '';
+  try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  try { if (token) sessionStorage.setItem(TOKEN_KEY, token); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) {}
+}
 var SESS_KEY = 'dassai_sessions_v1';
 var CUR_KEY = 'dassai_current_v1';
 var sessions = [];      // [{id,title,ts,shown:[{role,text}],sys}]
@@ -252,6 +289,9 @@ var pending = [];       // 添付予定の画像 [{mime,url,name}]
 var visionSet = {};     // 画像対応モデル id -> true
 var pollTimer = null;
 var running = false;
+
+function refreshIcons(){ if (window.lucide && window.lucide.createIcons){ try { window.lucide.createIcons(); } catch (e) {} } }
+function icon(name){ return '<i data-lucide="' + name + '"></i>'; }
 
 /* ---------- 表示ユーティリティ ---------- */
 function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -275,6 +315,43 @@ function render(md){
   }
   return html;
 }
+function tLabel(txt){ var e = document.createElement('div'); e.className = 'tlabel'; e.textContent = txt; return e; }
+function tPre(txt, cls){ var p = document.createElement('pre'); if (cls) p.className = cls; p.textContent = txt; return p; }
+function buildToolEl(t){
+  var d = document.createElement('details');
+  d.className = 'tool';
+  d.setAttribute('data-status', t.status || '');
+  var s = document.createElement('summary');
+  s.innerHTML = '<span class="ico">' + icon('wrench') + '</span>' +
+    '<span class="tname"></span><span class="ttitle"></span><span class="tstat"></span>';
+  d.appendChild(s);
+  d._body = document.createElement('div');
+  d._body.className = 'tbody';
+  d.appendChild(d._body);
+  return d;
+}
+function updateToolEl(d, t){
+  d.setAttribute('data-status', t.status || '');
+  d.querySelector('.tname').textContent = t.name || 'tool';
+  d.querySelector('.ttitle').textContent = t.title || '';
+  d.querySelector('.tstat').textContent = t.status || '';
+  var body = d._body;
+  body.innerHTML = '';
+  var input = t.input;
+  if (input && typeof input === 'object' && Object.keys(input).length){
+    body.appendChild(tLabel('INPUT'));
+    body.appendChild(tPre(JSON.stringify(input, null, 2)));
+  }
+  if (t.error){
+    body.appendChild(tLabel('ERROR'));
+    body.appendChild(tPre(String(t.error), 'err'));
+  } else if (typeof t.output === 'string' && t.output.length){
+    body.appendChild(tLabel('OUTPUT'));
+    body.appendChild(tPre(t.output));
+  }
+  if (!body.childNodes.length){ body.appendChild(tPre('（詳細なし）')); }
+  refreshIcons();
+}
 function scrollLog(){ var l = $('#log'); l.scrollTop = l.scrollHeight; }
 function appendMsg(role, text){
   var wrap = document.createElement('div');
@@ -284,7 +361,7 @@ function appendMsg(role, text){
   if (role === 'ai'){
     var av = document.createElement('div'); av.className = 'avatar'; av.textContent = '獺';
     wrap.appendChild(av); wrap.appendChild(body);
-    body.innerHTML = text ? render(text) : '<span class="cursor">▍</span>';
+    body.innerHTML = text ? render(text) : '';
   } else if (role === 'user'){
     wrap.appendChild(body);
     body.innerHTML = inline(text);
@@ -335,26 +412,34 @@ function api(path, opts){
 }
 
 /* ---------- ゲート（ログイン） ---------- */
+function setAuthBar(show, msg){
+  var b = $('#authbar');
+  if (!b) return;
+  if (show){ b.hidden = false; $('#authMsg').textContent = msg || 'ログインが必要です'; }
+  else { b.hidden = true; }
+}
 function showGate(msg){
   stopPolling();
-  $('#app').hidden = true;
+  $('#app').hidden = false;   /* 保存済みの履歴は表示したまま、上にログインを重ねる */
   $('#gate').hidden = false;
   $('#gateErr').textContent = msg || '';
+  setAuthBar(true, msg || 'ログインが必要です');
   setTimeout(function(){ $('#gid').focus(); }, 0);
 }
-function showApp(){
+function afterAuth(){
   $('#gate').hidden = true;
   $('#app').hidden = false;
+  setAuthBar(false);
   renderLog();
   renderSessions();
+  refreshIcons();
   startPolling();
   loadModels();
   updateModelChip();
   $('#prompt').focus();
 }
 function expireSession(msg){
-  sessionStorage.removeItem(TOKEN_KEY);
-  token = '';
+  persistToken('');
   showGate(msg);
 }
 
@@ -364,10 +449,9 @@ $('#gateForm').addEventListener('submit', function(e){
   api('/login', { method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ id: $('#gid').value.trim(), pw: $('#gpw').value }) })
     .then(function(j){
-      token = j.token;
-      sessionStorage.setItem(TOKEN_KEY, token);
+      persistToken(j.token);
       $('#gpw').value = '';
-      showApp();
+      afterAuth();
     })
     .catch(function(err){ $('#gateErr').textContent = err.message; });
 });
@@ -377,6 +461,7 @@ $('#btnLogout').addEventListener('click', function(){
     expireSession('ログアウトしました。');
   });
 });
+$('#btnLogin').addEventListener('click', function(){ showGate(''); });
 
 /* ---------- テーマ ---------- */
 $('#btnTheme').addEventListener('click', function(){
@@ -446,7 +531,8 @@ function updateModelChip(){
   var c = $('#modelChip');
   if (!c) return;
   var v = $('#model').value;
-  c.textContent = (v || 'モデル未選択') + (visionSet[v] ? ' 🖼️' : '');
+  c.innerHTML = esc(v || 'モデル未選択') + (visionSet[v] ? ' ' + icon('image') : '');
+  refreshIcons();
 }
 function loadModels(){
   var sel = $('#model');
@@ -462,10 +548,20 @@ function loadModels(){
     }
     var list = j.models.filter(isFreeModel);
     if (!list.length) list = j.models.slice();
-    list.forEach(function(m){
-      var o = document.createElement('option');
-      o.value = m; o.textContent = m + (visionSet[m] ? ' 🖼️' : ''); sel.appendChild(o);
-    });
+    var vis = list.filter(function(m){ return visionSet[m]; });
+    var novis = list.filter(function(m){ return !visionSet[m]; });
+    function addGroup(label, arr){
+      if (!arr.length) return;
+      var g = document.createElement('optgroup');
+      g.label = label;
+      arr.forEach(function(m){
+        var o = document.createElement('option');
+        o.value = m; o.textContent = m; g.appendChild(o);
+      });
+      sel.appendChild(g);
+    }
+    addGroup('画像対応モデル', vis);
+    addGroup('画像非対応モデル', novis);
     if (keep && list.indexOf(keep) >= 0) sel.value = keep;
     else if (j.default && list.indexOf(j.default) >= 0) sel.value = j.default;
     updateModelChip();
@@ -536,7 +632,7 @@ function renderSessions(){
   var list = $('#slist');
   if (!list) return;
   if (!sessions.length){
-    list.innerHTML = '<div class="s-empty">まだチャットがありません。<br>「＋ 新しいチャット」から始めましょう。</div>';
+    list.innerHTML = '<div class="s-empty">まだチャットがありません。<br>「新しいチャット」から始めましょう。</div>';
     return;
   }
   var sorted = sessions.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
@@ -548,10 +644,11 @@ function renderSessions(){
     var title = s.title || titleOf(s.shown) || '新しいチャット';
     html += '<div class="sitem' + (active ? ' active' : '') + '" data-id="' + s.id + '">' +
       '<div class="t">' + esc(title) + '</div>' +
-      '<button class="x" type="button" data-del="' + s.id + '" title="削除">×</button>' +
+      '<button class="x" type="button" data-del="' + s.id + '" title="削除">' + icon('x') + '</button>' +
     '</div>';
   });
   list.innerHTML = html;
+  refreshIcons();
 }
 function renderLog(){
   $('#log').innerHTML = '';
@@ -660,10 +757,11 @@ function renderAttachments(){
   pending.forEach(function(a, i){
     var d = document.createElement('div'); d.className = 'attach';
     var im = document.createElement('img'); im.src = a.url; im.alt = a.name; d.appendChild(im);
-    var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×'; rm.title = '削除';
+    var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.innerHTML = icon('x'); rm.title = '削除';
     rm.addEventListener('click', function(){ pending.splice(i, 1); renderAttachments(); });
     d.appendChild(rm); box.appendChild(d);
   });
+  refreshIcons();
 }
 $('#btnAttach').addEventListener('click', function(){ $('#fileInput').click(); });
 $('#fileInput').addEventListener('change', function(){ var f = this.files; this.value = ''; addFiles(f); });
@@ -701,7 +799,7 @@ function send(){
     return;
   }
   if (sendImages.length && !visionSet[model]){
-    note('選択中のモデルは画像に未対応の可能性があります（🖼️ 付きのモデルを推奨）。', true);
+    note('選択中のモデルは画像に未対応の可能性があります（画像対応モデルを推奨）。', true);
   }
   if (!text) text = 'この画像について説明してください';
 
@@ -716,7 +814,7 @@ function send(){
   if (!current.title) current.title = text.slice(0, 48);
   current.ts = Date.now();
 
-  var displayText = text + (sendImages.length ? '\n\n🖼️ 画像' + sendImages.length + '枚を添付' : '');
+  var displayText = text + (sendImages.length ? '\n\n（画像' + sendImages.length + '枚を添付）' : '');
   appendMsg('user', displayText);
   var userShown = { role: 'user', text: displayText };
   current.shown.push(userShown);
@@ -728,7 +826,22 @@ function send(){
 
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
-  var acc = '', ok = false;
+  var acc = '', ok = false, hasContent = false;
+  var segText = '', segEl = null, toolEls = {};
+  var curEl = document.createElement('span');
+  curEl.className = 'cursor'; curEl.textContent = '▍';
+  aiBody.appendChild(curEl);
+  function placeCursor(){ aiBody.appendChild(curEl); }
+  function ensureSeg(){
+    if (!segEl){ segEl = document.createElement('div'); segEl.className = 'seg'; aiBody.appendChild(segEl); }
+    return segEl;
+  }
+  function handleTool(t){
+    var el = toolEls[t.id];
+    if (!el){ el = buildToolEl(t); toolEls[t.id] = el; aiBody.appendChild(el); segEl = null; segText = ''; }
+    updateToolEl(el, t);
+    hasContent = true;
+  }
 
   fetch(HELPER + '/chat', {
     method: 'POST',
@@ -746,14 +859,20 @@ function send(){
     }
     var reader = res.body.getReader();
     var dec = new TextDecoder('utf-8');
-    var buf = '', finished = false;
+    var buf = '';
 
     function handleLine(line){
       if (!line.trim()) return;
       var obj = JSON.parse(line);
       if (obj.error) throw new Error(obj.error);
-      if (obj.message && obj.message.content) acc += obj.message.content;
-      if (obj.done) finished = true;
+      if (obj.tool){ handleTool(obj.tool); }
+      else if (obj.message && obj.message.content){
+        segText += obj.message.content;
+        acc += obj.message.content;
+        ensureSeg().innerHTML = render(segText);
+        hasContent = true;
+      }
+      placeCursor();
     }
     function pump(){
       return reader.read().then(function(r){
@@ -767,23 +886,29 @@ function send(){
           var line = buf.slice(0, idx); buf = buf.slice(idx + 1);
           handleLine(line);
         }
-        aiBody.innerHTML = render(acc) + '<span class="cursor">▍</span>';
         scrollLog();
         return pump();
       });
     }
     return pump().then(function(){
-      aiBody.innerHTML = render(acc || '（空の応答）');
+      if (curEl.parentNode) curEl.parentNode.removeChild(curEl);
+      if (!hasContent) ensureSeg().innerHTML = render('（空の応答）');
       ok = true;
     });
   }).catch(function(err){
+    if (curEl.parentNode) curEl.parentNode.removeChild(curEl);
     if (err && err.name === 'AbortError'){
-      aiBody.innerHTML = render(acc) + '<p class="warn">（生成を中断しました）</p>';
-      ok = !!acc;
+      if (segEl) segEl.innerHTML = render(segText);
+      var w = document.createElement('p'); w.className = 'warn'; w.textContent = '（生成を中断しました）';
+      aiBody.appendChild(w);
+      ok = hasContent;
     } else if (err instanceof TypeError){
-      aiBody.innerHTML = '<p class="err">ヘルパーに接続できません（server.py を確認してください）</p>';
+      var p = document.createElement('p'); p.className = 'err'; p.textContent = 'ヘルパーに接続できません（server.py を確認してください）';
+      aiBody.appendChild(p);
     } else {
-      aiBody.innerHTML = '<p class="err">エラー: ' + esc(err.message || String(err)) + '</p>';
+      var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = 'エラー: ' + (err.message || String(err));
+      aiBody.appendChild(pe);
+      if (hasContent) ok = true;
     }
   }).then(function(){
     if (ok){
@@ -813,10 +938,25 @@ $('#sys').addEventListener('input', function(){
 function boot(){
   loadStore();
   migrateLegacy();
-  if (!token){ showGate(''); return; }
-  api('/me').then(function(){ showApp(); }).catch(function(err){
-    if (err.status === 401){ showGate('ログインが必要です。'); return; }
-    showGate(err.message);
+  /* まず保存済みの履歴を描画して表示する（ログインの有無に関わらず消さない） */
+  $('#gate').hidden = true;
+  $('#app').hidden = false;
+  renderLog();
+  renderSessions();
+  refreshIcons();
+  if (!token){
+    setAuthBar(true, '未ログイン（履歴はこの端末に保存されています）');
+    if (!sessions.length) showGate('');   /* 履歴が無い初回だけログイン画面を表示 */
+    return;
+  }
+  api('/me').then(function(){
+    afterAuth();
+  }).catch(function(err){
+    if (err.status === 401){
+      setAuthBar(true, 'ログインの有効期限が切れました。再ログインしてください');
+      return;                              /* 履歴は表示したまま */
+    }
+    setAuthBar(true, 'ヘルパー未接続（履歴はこの端末に保存されています）');
   });
 }
 boot();

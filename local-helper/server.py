@@ -467,11 +467,22 @@ def proxy_chat(handler, model, text, system, images=None):
                         emit({"message": {"content": full[sent:]}})
                         text_parts[pid_] = len(full)
                 elif ptype == "tool":
-                    st = (part.get("state") or {}).get("status")
-                    if st and tool_state.get(pid_) != st:
-                        tool_state[pid_] = st
-                        name = part.get("tool") or "tool"
-                        emit({"message": {"content": "\n> 🔧 %s (%s)\n" % (name, st)}})
+                    state = part.get("state") or {}
+                    st = state.get("status")
+                    name = part.get("tool") or "tool"
+                    title = state.get("title") or ""
+                    out = state.get("output")
+                    err = state.get("error")
+                    sig = (st, title, len(out) if isinstance(out, str) else 0, bool(err))
+                    if sig != tool_state.get(pid_):
+                        tool_state[pid_] = sig
+                        info = {"id": pid_, "name": name, "status": st,
+                                "title": title, "input": state.get("input") or {}}
+                        if isinstance(out, str):
+                            info["output"] = out[:50000]
+                        if err:
+                            info["error"] = str(err)[:5000]
+                        emit({"tool": info})
                 continue
 
             if t == "session.error" and p.get("sessionID") == sid:
