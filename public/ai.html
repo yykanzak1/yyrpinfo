@@ -27,6 +27,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
 .card{width:min(380px,100%);background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:0 0 42px rgba(0,200,255,.12)}
 .brand{display:flex;align-items:center;gap:12px}
 .mark{width:42px;height:42px;border-radius:10px;flex:none;background:linear-gradient(135deg,#0a2d4d,#0088ff);display:grid;place-items:center;font-weight:900;color:#fff}
+.mark.sm{width:30px;height:30px;border-radius:8px;font-size:.9rem}
 .brand h1{font-size:1.05rem;margin:0;letter-spacing:.04em}
 .brand small{color:var(--cyan);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em}
 .card label{display:block;font-size:.8rem;color:var(--muted);margin:14px 0 6px}
@@ -34,7 +35,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
 .note{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.6}
 
 /* ----- app ----- */
-#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:260px 1fr}
+#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:272px 1fr}
 header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
 header .ttl{font-family:var(--mono);font-size:.9rem}
 header .ttl b{color:var(--cyan)}
@@ -45,11 +46,36 @@ header .ttl b{color:var(--cyan)}
 .pill.wait{color:var(--yellow);border-color:rgba(250,204,21,.4)}
 .pill.err{color:var(--red);border-color:rgba(255,107,107,.4)}
 
-aside{background:var(--panel);border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:10px;overflow:auto}
-aside h3{margin:6px 0 0;font-family:var(--mono);font-size:.72rem;color:var(--cyan);letter-spacing:.12em;font-weight:600}
-aside label{font-size:.78rem;color:var(--muted);margin-top:4px}
-aside textarea{min-height:90px;resize:vertical}
-.hint{font-size:.7rem;color:var(--muted);line-height:1.55}
+/* ----- sidebar (chat history) ----- */
+aside{background:var(--panel);border-right:1px solid var(--border);min-height:0;display:flex;flex-direction:column}
+.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px}
+.side-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:.9rem}
+.side-brand small{display:block;color:var(--cyan);font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;font-weight:400}
+.side-new{padding:0 14px 10px}
+.side-new .btn{width:100%;text-align:left;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
+.side-new .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.slist{flex:1;min-height:0;overflow:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:2px}
+.s-empty{color:var(--muted);font-size:.74rem;padding:14px 8px;text-align:center;line-height:1.6}
+.sitem{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.83rem;border:1px solid transparent}
+.sitem:hover{background:var(--panel2)}
+.sitem.active{background:var(--panel2);border-color:var(--border)}
+.sitem.active .t{color:var(--cyan)}
+.sitem .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.sitem .d{font-size:.62rem;color:var(--muted);flex:none;font-family:var(--mono)}
+.sitem .x{flex:none;width:20px;height:20px;line-height:18px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);opacity:0;padding:0;font-size:.8rem}
+.sitem:hover .x{opacity:1}
+.sitem .x:hover{color:var(--red);border-color:var(--red)}
+
+.settings{border-top:1px solid var(--border);padding:10px 14px 4px;font-size:.8rem}
+.settings summary{cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;list-style:none;user-select:none;padding:4px 0}
+.settings summary::-webkit-details-marker{display:none}
+.settings summary:hover{color:var(--cyan)}
+.settings-body{padding-top:6px;display:flex;flex-direction:column;gap:4px}
+.settings h3{margin:8px 0 0;font-family:var(--mono);font-size:.68rem;color:var(--cyan);letter-spacing:.12em;font-weight:600}
+.settings label{font-size:.74rem;color:var(--muted);margin-top:4px;display:block}
+.settings textarea{min-height:70px;resize:vertical}
+.side-foot{border-top:1px solid var(--border);padding:10px 14px}
+.hint{font-size:.68rem;color:var(--muted);line-height:1.5;padding:0 14px 12px}
 
 main{display:flex;flex-direction:column;min-width:0;min-height:0}
 #log{flex:1;overflow:auto;padding:18px 22px;font-family:var(--mono);font-size:.88rem;line-height:1.65;background:linear-gradient(180deg,#05090f,#070e18)}
@@ -76,11 +102,6 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
 .copy:hover{color:var(--cyan);border-color:var(--cyan)}
 
 .composer{border-top:1px solid var(--border);background:var(--panel);padding:12px 18px 14px}
-.attachments{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.attachments:empty{display:none}
-.att{position:relative;width:72px;height:72px;border:1px solid var(--cyan);border-radius:8px;overflow:hidden}
-.att img{width:100%;height:100%;object-fit:cover}
-.att button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;padding:0;line-height:20px}
 .prompt-wrap{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:8px}
 .prompt-wrap:focus-within{border-color:var(--cyan)}
 #prompt{border:0;padding:6px;resize:none;min-height:44px;max-height:240px;background:transparent;font-family:var(--mono);line-height:1.5}
@@ -89,7 +110,7 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
 
 @media (max-width:760px){
   #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
-  aside{border-right:0;border-bottom:1px solid var(--border);max-height:260px}
+  aside{border-right:0;border-bottom:1px solid var(--border);max-height:42vh}
   header{grid-column:auto}
   .msg{grid-template-columns:1fr;gap:4px}
 }
@@ -128,22 +149,27 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
   </header>
 
   <aside>
-    <h3>PROJECT</h3>
-    <label for="dir">作業ディレクトリ（opencode の起点）</label>
-    <input id="dir" placeholder="例: C:\projects\my-app">
-    <h3>MODEL</h3>
-    <label for="model">使用するモデル</label>
-    <select id="model"><option value="">（読み込み中）</option></select>
-    <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
-    <label for="sys">システムプロンプト（任意）</label>
-    <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
-    <button class="btn sm ghost" id="btnNew" type="button" style="margin-top:auto">新しいチャット</button>
-    <button class="btn sm ghost" id="btnStopChat" type="button">チャット停止</button>
-    <button class="btn sm ghost" id="btnSave" type="button">チャットを保存</button>
-    <h3>HISTORY</h3>
-    <div id="history" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto"></div>
-    <button class="btn sm danger" id="btnClear" type="button">履歴を消去</button>
-    <div class="hint">「起動」で opencode サーバを開始します。作業ディレクトリを変えるときは入力してから「起動」を押し直してください。</div>
+    <div class="side-head">
+      <div class="side-brand"><span class="mark sm">獺</span><div>獺祭 AI<small>OPENCODE</small></div></div>
+    </div>
+    <div class="side-new"><button class="btn" id="btnNew" type="button">＋ 新しいチャット</button></div>
+    <div class="slist" id="slist"></div>
+    <details class="settings">
+      <summary>⚙ 設定</summary>
+      <div class="settings-body">
+        <h3>PROJECT</h3>
+        <label for="dir">作業ディレクトリ（opencode の起点）</label>
+        <input id="dir" placeholder="例: C:\projects\my-app">
+        <h3>MODEL</h3>
+        <label for="model">使用するモデル（無料のみ）</label>
+        <select id="model"><option value="">（読み込み中）</option></select>
+        <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
+        <label for="sys">システムプロンプト（任意）</label>
+        <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
+      </div>
+    </details>
+    <div class="side-foot"><button class="btn sm danger" id="btnClear" type="button" style="width:100%">すべての履歴を消去</button></div>
+    <div class="hint">「起動」で opencode サーバを開始します。ディレクトリを変えたら「起動」を押し直してください。</div>
   </aside>
 
   <main>
@@ -153,11 +179,9 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
         <textarea id="prompt" rows="1" placeholder="プロンプトを入力（Enterで送信 / Shift+Enterで改行）"></textarea>
       </div>
       <div class="tools">
+        <div class="l"><span id="count">0 文字</span></div>
         <div class="l">
-          <span id="count">0 文字</span>
-        </div>
-        <div class="l">
-          <button class="btn sm danger" id="btnAbort" type="button" hidden>生成を中断</button>
+          <button class="btn sm danger" id="btnStopChat" type="button" disabled>■ 停止</button>
           <button class="btn" id="btnSend" type="button">送信 ▶</button>
         </div>
       </div>
@@ -173,14 +197,15 @@ var TOKEN_KEY = 'dassai_ai_token';
 var $ = function(s){ return document.querySelector(s); };
 
 var token = sessionStorage.getItem(TOKEN_KEY) || '';
-  var STORE_KEY = 'dassai_chat_v1';
-  var HISTORY_KEY = 'dassai_chat_history_v1';
-  var shown = [];         // 表示用履歴 {role,text}（localStorage に保存）
-  var chatBusy = false;   // 生成中
-  var opBusy = false;     // 起動・終了中
-  var ctrl = null;        // 中断用 AbortController
-  var pollTimer = null;
-  var running = false;
+var SESS_KEY = 'dassai_sessions_v1';
+var CUR_KEY = 'dassai_current_v1';
+var sessions = [];      // [{id,title,ts,shown:[{role,text}],sys}]
+var current = null;     // 現在開いているセッション
+var chatBusy = false;   // 生成中
+var opBusy = false;     // 起動・終了中
+var ctrl = null;        // 中断用 AbortController
+var pollTimer = null;
+var running = false;
 
 /* ---------- 表示ユーティリティ ---------- */
 function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -267,15 +292,15 @@ function showGate(msg){
   $('#gateErr').textContent = msg || '';
   setTimeout(function(){ $('#gid').focus(); }, 0);
 }
-  function showApp(){
-    $('#gate').hidden = true;
-    $('#app').hidden = false;
-    if (!$('#log').childElementCount) restoreChat();
-    startPolling();
-    loadModels();
-    renderHistory();
-    $('#prompt').focus();
-  }
+function showApp(){
+  $('#gate').hidden = true;
+  $('#app').hidden = false;
+  renderLog();
+  renderSessions();
+  startPolling();
+  loadModels();
+  $('#prompt').focus();
+}
 function expireSession(msg){
   sessionStorage.removeItem(TOKEN_KEY);
   token = '';
@@ -291,9 +316,7 @@ $('#gateForm').addEventListener('submit', function(e){
       token = j.token;
       sessionStorage.setItem(TOKEN_KEY, token);
       $('#gpw').value = '';
-      if (!restoreChat()) note('ログインしました。プロンプトを入力できます。');
       showApp();
-      renderHistory();
     })
     .catch(function(err){ $('#gateErr').textContent = err.message; });
 });
@@ -333,12 +356,12 @@ function controlServer(path, label, body){
   api(path, { method: 'POST', headers: body ? {'Content-Type': 'application/json'} : {}, body: body ? JSON.stringify(body) : undefined })
     .then(function(j){ note(j.message || '完了'); })
     .catch(function(err){ note('エラー: ' + err.message, true); })
-      .then(function(){
-        opBusy = false;
-        setCtlButtons();
-        return refreshStatus();
-      })
-      .then(function(){ loadModels(); renderHistory(); });
+    .then(function(){
+      opBusy = false;
+      setCtlButtons();
+      return refreshStatus();
+    })
+    .then(function(){ loadModels(); });
 }
 $('#btnStart').addEventListener('click', function(){
   controlServer('/start', '起動中…', { directory: $('#dir').value.trim() });
@@ -347,43 +370,178 @@ $('#btnStop').addEventListener('click', function(){
   if (chatBusy && ctrl) ctrl.abort();
   controlServer('/stop', '終了中…');
 });
-  $('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); renderHistory(); });
+$('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); });
 
-  function startPolling(){ stopPolling(); refreshStatus(); renderHistory(); pollTimer = setInterval(function(){ refreshStatus(); renderHistory(); }, 5000); }
-  function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+function startPolling(){ stopPolling(); refreshStatus(); pollTimer = setInterval(refreshStatus, 5000); }
+function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
-  /* ---------- モデル一覧 ---------- */
-  function isFreeModel(m){
-    var s = String(m).toLowerCase();
-    var paid = ['pro','enterprise','plus','ultra','max','team','turbo','bedrock','vertex','-128k','-200k','gpt-4.1','gpt-5','claude-4','claude-sonnet-4','claude-opus','o3-','o4-','gemini-2.5-pro','gemini-pro-2.5'];
-    for (var i=0;i<paid.length;i++) if (s.indexOf(paid[i])>=0) return false;
-    var freeHints = ['free','local','community','qwen','llama','gemma','deepseek','mistral','phi','hermes','smollm','yi','moonshot','cogito','granite','llava','codellama'];
-    for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
-    return true;
+/* ---------- モデル一覧（無料のみ表示） ---------- */
+function isFreeModel(m){
+  var s = String(m).toLowerCase();
+  var paid = ['pro','enterprise','plus','ultra','max','team','turbo','bedrock','vertex','-128k','-200k','gpt-4.1','gpt-5','claude-4','claude-sonnet-4','claude-opus','o3-','o4-','gemini-2.5-pro','gemini-pro-2.5'];
+  for (var i=0;i<paid.length;i++) if (s.indexOf(paid[i])>=0) return false;
+  var freeHints = ['free','local','community','qwen','llama','gemma','deepseek','mistral','phi','hermes','smollm','yi','moonshot','cogito','granite','llava','codellama'];
+  for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
+  return true;
+}
+function loadModels(){
+  var sel = $('#model');
+  var keep = sel.value;
+  return api('/models').then(function(j){
+    sel.innerHTML = '';
+    if (!j.models.length){
+      sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
+      return;
+    }
+    var list = j.models.filter(isFreeModel);
+    if (!list.length) list = j.models.slice();
+    list.forEach(function(m){
+      var o = document.createElement('option');
+      o.value = m; o.textContent = m; sel.appendChild(o);
+    });
+    if (keep && list.indexOf(keep) >= 0) sel.value = keep;
+    else if (j.default && list.indexOf(j.default) >= 0) sel.value = j.default;
+  }).catch(function(err){
+    if (err.status === 401) return;
+    sel.innerHTML = '<option value="">（opencode 停止中・起動してください）</option>';
+  });
+}
+$('#btnModels').addEventListener('click', loadModels);
+
+/* ---------- セッション（チャット履歴）管理 ---------- */
+function uid(){ return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function titleOf(shown){
+  if (!shown || !shown.length) return '';
+  for (var i=0;i<shown.length;i++){ if (shown[i].role === 'user' && shown[i].text) return shown[i].text.slice(0, 48); }
+  return '';
+}
+function relTime(ts){
+  if (!ts) return '';
+  var d = new Date(ts), n = new Date();
+  function p(x){ return (x < 10 ? '0' : '') + x; }
+  if (d.toDateString() === n.toDateString()) return p(d.getHours()) + ':' + p(d.getMinutes());
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+function loadStore(){
+  try { sessions = JSON.parse(localStorage.getItem(SESS_KEY) || '[]') || []; } catch (e) { sessions = []; }
+  if (!Array.isArray(sessions)) sessions = [];
+  var cid = null;
+  try { cid = localStorage.getItem(CUR_KEY); } catch (e) { cid = null; }
+  current = null;
+  for (var i=0;i<sessions.length;i++){ if (sessions[i].id === cid){ current = sessions[i]; break; } }
+}
+function saveStore(){
+  try {
+    localStorage.setItem(SESS_KEY, JSON.stringify(sessions));
+    if (current) localStorage.setItem(CUR_KEY, current.id);
+    else localStorage.removeItem(CUR_KEY);
+  } catch (e) {
+    note('履歴の保存に失敗しました（容量超過の可能性）。', true);
   }
-  function loadModels(){
-    var sel = $('#model');
-    var keep = sel.value;
-    return api('/models').then(function(j){
-      sel.innerHTML = '';
-      if (!j.models.length){
-        sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
-        return;
-      }
-      var list = j.models.filter(isFreeModel);
-      if (!list.length) list = j.models.slice();
-      list.forEach(function(m){
-        var o = document.createElement('option');
-        o.value = m; o.textContent = m; sel.appendChild(o);
-      });
-      if (keep && list.indexOf(keep) >= 0) sel.value = keep;
-      else if (j.default && list.indexOf(j.default) >= 0) sel.value = j.default;
-    }).catch(function(err){
-      if (err.status === 401) return;
-      sel.innerHTML = '<option value="">（opencode 停止中・起動してください）</option>';
+}
+function migrateLegacy(){
+  if (sessions.length) return;
+  var changed = false;
+  var old = null;
+  try { old = JSON.parse(localStorage.getItem('dassai_chat_history_v1') || 'null'); } catch (e) { old = null; }
+  if (Array.isArray(old)){
+    old.forEach(function(h){
+      sessions.push({ id: uid(), title: h.name || 'チャット', ts: h.ts || Date.now(), shown: h.shown || [], sys: h.sys || '' });
+      changed = true;
     });
   }
-$('#btnModels').addEventListener('click', loadModels);
+  try {
+    var cur = JSON.parse(localStorage.getItem('dassai_chat_v1') || 'null');
+    if (cur && Array.isArray(cur.shown) && cur.shown.length){
+      sessions.push({ id: uid(), title: titleOf(cur.shown) || 'チャット', ts: Date.now(), shown: cur.shown, sys: cur.sys || '' });
+      changed = true;
+    }
+  } catch (e) {}
+  if (changed){ current = sessions[sessions.length - 1]; saveStore(); }
+}
+function renderSessions(){
+  var list = $('#slist');
+  if (!list) return;
+  if (!sessions.length){
+    list.innerHTML = '<div class="s-empty">まだチャットがありません。<br>「＋ 新しいチャット」から始めましょう。</div>';
+    return;
+  }
+  var sorted = sessions.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
+  list.innerHTML = sorted.map(function(s){
+    var active = current && s.id === current.id;
+    var title = s.title || titleOf(s.shown) || '新しいチャット';
+    return '<div class="sitem' + (active ? ' active' : '') + '" data-id="' + s.id + '">' +
+      '<div class="t">' + esc(title) + '</div>' +
+      '<div class="d">' + relTime(s.ts) + '</div>' +
+      '<button class="x" type="button" data-del="' + s.id + '" title="削除">×</button>' +
+    '</div>';
+  }).join('');
+}
+function renderLog(){
+  $('#log').innerHTML = '';
+  if (current && Array.isArray(current.shown) && current.shown.length){
+    current.shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
+  } else {
+    note('新規チャット。下の入力欄からメッセージを送ってください。');
+  }
+}
+function openSession(id){
+  if (chatBusy) return;
+  var s = null;
+  for (var i=0;i<sessions.length;i++){ if (sessions[i].id === id){ s = sessions[i]; break; } }
+  if (!s) return;
+  current = s;
+  $('#sys').value = s.sys || '';
+  renderLog();
+  renderSessions();
+  saveStore();
+  $('#prompt').focus();
+}
+function deleteSession(id){
+  if (chatBusy) return;
+  sessions = sessions.filter(function(x){ return x.id !== id; });
+  if (current && current.id === id){
+    current = null;
+    $('#sys').value = '';
+    renderLog();
+  }
+  saveStore();
+  renderSessions();
+}
+function newChat(){
+  if (chatBusy) return;
+  current = null;
+  $('#sys').value = '';
+  $('#log').innerHTML = '';
+  api('/new', { method: 'POST' }).catch(function(){});
+  renderSessions();
+  saveStore();
+  note('新しいチャットを開始しました。');
+  $('#prompt').focus();
+}
+$('#btnNew').addEventListener('click', newChat);
+$('#slist').addEventListener('click', function(e){
+  var del = e.target.closest('[data-del]');
+  if (del){
+    e.stopPropagation();
+    if (confirm('このチャットを削除しますか？')) deleteSession(del.getAttribute('data-del'));
+    return;
+  }
+  var item = e.target.closest('[data-id]');
+  if (item) openSession(item.getAttribute('data-id'));
+});
+$('#btnClear').addEventListener('click', function(){
+  if (chatBusy) return;
+  if (!confirm('保存されているすべてのチャット履歴を消去します。よろしいですか？')) return;
+  sessions = [];
+  current = null;
+  $('#sys').value = '';
+  $('#log').innerHTML = '';
+  api('/new', { method: 'POST' }).catch(function(){});
+  saveStore();
+  renderSessions();
+  note('すべての履歴を消去しました。');
+});
 
 /* ---------- 入力欄 ---------- */
 var prompt = $('#prompt');
@@ -401,7 +559,7 @@ prompt.addEventListener('keydown', function(e){
 /* ---------- 送信・ストリーミング ---------- */
 function setChatUi(){
   $('#btnSend').disabled = chatBusy;
-  $('#btnAbort').hidden = !chatBusy;
+  $('#btnStopChat').disabled = !chatBusy;
 }
 function send(){
   if (chatBusy) return;
@@ -415,13 +573,22 @@ function send(){
 
   prompt.value = ''; autoResize();
 
+  if (!current){
+    current = { id: uid(), title: '', ts: Date.now(), shown: [], sys: $('#sys').value };
+    sessions.push(current);
+  }
+  current.sys = $('#sys').value;
+  if (!current.title) current.title = text.slice(0, 48);
+  current.ts = Date.now();
+
   appendMsg('user', text);
   var userShown = { role: 'user', text: text };
-  shown.push(userShown);
-  saveChat();
+  current.shown.push(userShown);
+  saveStore(); renderSessions();
   var aiBody = appendMsg('ai', '');
 
   var sysText = $('#sys').value.trim();
+  var session = current;
 
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
@@ -483,12 +650,16 @@ function send(){
     }
   }).then(function(){
     if (ok){
-      shown.push({ role: 'ai', text: acc });
+      session.shown.push({ role: 'ai', text: acc });
     } else {
-      var j = shown.lastIndexOf(userShown); if (j >= 0) shown.splice(j, 1);
+      var j = session.shown.lastIndexOf(userShown); if (j >= 0) session.shown.splice(j, 1);
+      if (!session.shown.length){
+        sessions = sessions.filter(function(x){ return x.id !== session.id; });
+        if (current && current.id === session.id) current = null;
+      }
     }
-    saveChat();
-    renderHistory();
+    session.ts = Date.now();
+    saveStore(); renderSessions();
     chatBusy = false; ctrl = null;
     setChatUi();
     scrollLog();
@@ -496,133 +667,17 @@ function send(){
   });
 }
 $('#btnSend').addEventListener('click', send);
-  $('#btnSave').addEventListener('click', function(){
-    if (shown.length === 0){
-      note('保存するチャットがありません。', true);
-      return;
-    }
-    var name = window.prompt('チャット名を入力してください（空なら日時を使用）');
-    saveToHistory(name || ('chat_' + new Date().toISOString().replace(/[:.]/g,'-')));
-    renderHistory();
-    note('チャットを履歴に保存しました。');
-  });
-  $('#history').addEventListener('click', function(e){
-    var b = e.target.closest('[data-load]');
-    if (b){
-      if (chatBusy) return;
-      var idx = Number(b.getAttribute('data-load'));
-      loadFromHistory(idx);
-      return;
-    }
-    var d = e.target.closest('[data-del]');
-    if (d){
-      var di = Number(d.getAttribute('data-del'));
-      deleteFromHistory(di);
-    }
-  });
-  $('#btnClear').addEventListener('click', function(){
-    if (chatBusy) return;
-    if (!confirm('表示中のチャット履歴を消去します（保存済み履歴は残ります）。よろしいですか？')) return;
-    api('/new', { method: 'POST' }).catch(function(){});
-    clearChat();
-  renderHistory();
-  note('履歴を消去しました。');
+$('#btnStopChat').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
+$('#sys').addEventListener('input', function(){
+  if (current){ current.sys = $('#sys').value; saveStore(); }
 });
-$('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
-
-  $('#btnStopChat').addEventListener('click', function(){
-    if (!chatBusy){ note('現在生成中のチャットはありません。'); return; }
-    if (ctrl) ctrl.abort();
-    note('チャットを停止しました。');
-  });
-  $('#btnNew').addEventListener('click', function(){
-    if (chatBusy) return;
-    api('/new', { method: 'POST' }).catch(function(){});
-    clearChat();
-    note('新しいチャットを開始しました。');
-  });
-
-/* ---------- 履歴の保存・復元（localStorage） ---------- */
-  function getHistory(){
-    var raw = null;
-    try { raw = localStorage.getItem(HISTORY_KEY); } catch (e) { raw = null; }
-    if (!raw) return [];
-    try { return JSON.parse(raw) || []; } catch (e) { return []; }
-  }
-  function saveHistory(list){
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) {}
-  }
-  function saveToHistory(name){
-    var h = getHistory();
-    h.push({ name: name, ts: Date.now(), shown: shown, sys: $('#sys').value });
-    saveHistory(h);
-  }
-  function loadFromHistory(idx){
-    var h = getHistory();
-    if (!h[idx]) return;
-    var d = h[idx];
-    shown = Array.isArray(d.shown) ? d.shown : [];
-    if (typeof d.sys === 'string') $('#sys').value = d.sys;
-    $('#log').innerHTML = '';
-    shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
-    saveChat();
-    scrollLog();
-    note('「' + d.name + '」を読み込みました。');
-  }
-  function deleteFromHistory(idx){
-    var h = getHistory();
-    h.splice(idx,1);
-    saveHistory(h);
-    renderHistory();
-  }
-  function renderHistory(){
-    var h = getHistory();
-    var div = $('#history');
-    if (!div) return;
-    if (h.length === 0){
-      div.innerHTML = '<div style="color:var(--muted);font-size:.7rem">保存されたチャットはありません</div>';
-      return;
-    }
-    div.innerHTML = h.slice(-10).reverse().map(function(item, i){
-      var realIdx = h.length - 1 - i;
-      var date = new Date(item.ts).toLocaleString('ja-JP');
-      return '<div style="display:flex;flex-direction:column;gap:2px;border:1px solid var(--border);border-radius:6px;padding:4px 6px">' +
-        '<button class="btn sm ghost" style="text-align:left" data-load="' + realIdx + '">' + esc(item.name) + '</button>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.65rem;color:var(--muted)">' + date + '</span><button class="btn sm" data-del="' + realIdx + '" style="background:#8b2a2a">削除</button></div></div>';
-    }).join('');
-  }
-  function saveChat(){
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 2, shown: shown, sys: $('#sys').value }));
-    } catch (e) {
-      note('履歴の保存に失敗しました（容量超過の可能性）。古いチャットを消去してください。', true);
-    }
-  }
-function restoreChat(){
-  var raw = null;
-  try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
-  if (!raw) return false;
-  try {
-    var d = JSON.parse(raw);
-    shown = Array.isArray(d.shown) ? d.shown : [];
-    if (typeof d.sys === 'string') $('#sys').value = d.sys;
-  } catch (e) { shown = []; return false; }
-  $('#log').innerHTML = '';
-  shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
-  return shown.length > 0;
-}
-  function clearChat(){
-    shown = [];
-    $('#log').innerHTML = '';
-    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-    renderHistory();
-  }
-  $('#sys').addEventListener('input', function(){ saveChat(); renderHistory(); });
 
 /* ---------- 起動 ---------- */
 function boot(){
+  loadStore();
+  migrateLegacy();
   if (!token){ showGate(''); return; }
-  api('/me').then(function(){ showApp(); renderHistory(); }).catch(function(err){
+  api('/me').then(function(){ showApp(); }).catch(function(err){
     if (err.status === 401){ showGate('ログインが必要です。'); return; }
     showGate(err.message);
   });
