@@ -21,9 +21,10 @@ Ollama の代わりに opencode を操作します。
 - GET  /me       トークンの有効確認（200 / 401）
 - POST /start    opencode serve を起動（要トークン）  body: {"directory"?}
 - POST /stop     起動した opencode を終了（要トークン）
-- GET  /models   利用可能なモデル一覧（要トークン）
+- GET  /models   利用可能なモデル一覧（要トークン, vision対応モデルも返す）
 - POST /new      新しいチャット（セッション）を開始（要トークン）
 - POST /chat     opencode セッションへ送信し応答を NDJSON で中継（要トークン）
+                  body: {"model","text","system"?,"images"?:[{"mime","url"|"data"}]}
 
 【その他の環境変数】
 - HELPER_PORT      既定 8765
@@ -233,17 +234,23 @@ def list_models():
     with upstream("GET", "/config/providers", timeout=10) as r:
         data = json.loads(r.read().decode("utf-8"))
     models = []
+    vision = []
     for p in data.get("providers", []):
         pid = p.get("id")
-        for mid in (p.get("models") or {}):
-            if pid and mid:
-                models.append(pid + "/" + mid)
+        for mid, minfo in (p.get("models") or {}).items():
+            if not (pid and mid):
+                continue
+            full = pid + "/" + mid
+            models.append(full)
+            caps = (minfo.get("capabilities") or {}) if isinstance(minfo, dict) else {}
+            if (caps.get("input") or {}).get("image") or caps.get("attachment"):
+                vision.append(full)
     default = ""
     for pid, mid in (data.get("default") or {}).items():
         if pid and mid:
             default = pid + "/" + mid
             break
-    return sorted(set(models)), default
+    return sorted(set(models)), default, sorted(set(vision))
 
 
 def _get_or_create_session():
@@ -275,6 +282,41 @@ def _parse_model(s):
         pid, mid = s.split("/", 1)
         return {"providerID": pid, "modelID": mid}
     return {"providerID": "opencode", "modelID": s}
+
+
+IMAGE_MIME_RE = re.compile(r"^image/[a-z0-9.+-]+$")
+MAX_IMAGES = 8
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+
+def _parse_images(raw):
+    """画像リストを opencode の file パートに正規化する。
+    各要素: {"mime", "url"(data URL) or "data"(base64), "filename"?}
+    戻り値: proxy に渡す file パートのリスト（不正要素は無視）"""
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for it in raw[:MAX_IMAGES]:
+        if not isinstance(it, dict):
+            continue
+        mime = str(it.get("mime") or "").strip().lower()
+        url = str(it.get("url") or "").strip()
+        if not url and it.get("data"):
+            if not mime:
+                mime = "image/png"
+            url = "data:%s;base64,%s" % (mime, str(it.get("data")))
+        if not url.startswith("data:"):
+            continue
+        if not mime:
+            head = url[5:url.find(";")] if ";" in url else "image/png"
+            mime = head.strip().lower()
+        if not IMAGE_MIME_RE.match(mime):
+            continue
+        if ";base64," in url and len(url) - url.index(";base64,") - 8 > MAX_IMAGE_BYTES * 4 // 3:
+            continue
+        out.append({"type": "file", "mime": mime, "url": url,
+                    "filename": str(it.get("filename") or "image")})
+    return out
 
 
 # ---------------- 認証 ----------------
@@ -329,7 +371,7 @@ def try_login(uid, pw):
 
 
 # ---------------- チャット中継 ----------------
-def proxy_chat(handler, model, text, system):
+def proxy_chat(handler, model, text, system, images=None):
     # 1) セッション作成
     try:
         sid = _get_or_create_session()
@@ -361,7 +403,10 @@ def proxy_chat(handler, model, text, system):
         return
 
     # 4) プロンプト送信
-    body = {"model": _parse_model(model), "parts": [{"type": "text", "text": text}]}
+    parts = [{"type": "text", "text": text}]
+    for img in (images or []):
+        parts.append(img)
+    body = {"model": _parse_model(model), "parts": parts}
     if system:
         body["system"] = system
     try:
@@ -548,8 +593,8 @@ class Handler(BaseHTTPRequestHandler):
             if not self._require():
                 return
             try:
-                models, default = list_models()
-                return self._send(200, {"ok": True, "models": models, "default": default})
+                models, default, vision = list_models()
+                return self._send(200, {"ok": True, "models": models, "default": default, "vision": vision})
             except Exception:
                 return self._send(502, {"ok": False, "message": "opencode に接続できません。先に起動してください"})
         self._send(404, {"ok": False, "message": "not found"})
@@ -598,9 +643,12 @@ class Handler(BaseHTTPRequestHandler):
             model = str(data.get("model") or "")
             text = str(data.get("text") or "")
             system = str(data.get("system") or "")
-            if not model or not text:
-                return self._send(400, {"ok": False, "message": "model と text が必要です"})
-            return proxy_chat(self, model, text, system)
+            images = _parse_images(data.get("images"))
+            if not model or (not text and not images):
+                return self._send(400, {"ok": False, "message": "model と text（または画像）が必要です"})
+            if not text:
+                text = "この画像について説明してください"
+            return proxy_chat(self, model, text, system, images)
 
         self._send(404, {"ok": False, "message": "not found"})
 
