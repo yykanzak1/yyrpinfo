@@ -178,6 +178,7 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
 #prompt:focus{border:0;box-shadow:none}
 .composer-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:4px}
 .composer-tools .l{display:flex;gap:8px;align-items:center;font-size:.72rem;color:var(--text-dim);font-family:var(--mono)}
+.composer-tools .l:first-child{flex-wrap:wrap}
 .composer-tools .quota-inline{font-size:.68rem;line-height:1.3;color:var(--text-dim);font-family:inherit;white-space:nowrap}
 .composer-tools .quota-inline strong{color:var(--cost-color);font-weight:700}
 .attachments{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 10px}
@@ -365,7 +366,8 @@ select option{color:var(--text-color);background:var(--card-bg)}
             <button class="ibtn" id="btnAttach" type="button" title="画像を添付" aria-label="画像を添付"><i data-lucide="image"></i></button>
             <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
             <span id="count">0 文字</span>
-            <span class="quota-inline" id="quotaInline" title="プロバイダー側の実際の残量は、この画面からは取得できません">無料枠あと <strong>未取得</strong></span>
+            <span class="quota-inline" id="quotaInline" title="プロバイダー側の実際の残量は、この画面からは取得できません">無料枠残量 <strong>取得不可</strong></span>
+            <span class="quota-inline" id="tokenInline" title="直近リクエストのusageとモデル上限から算出する目安です。無料枠の残りではありません。">コンテキスト残量 <strong>未取得</strong></span>
           </div>
           <div class="l">
             <button class="stop" id="btnStopChat" type="button" disabled><i data-lucide="square"></i> 停止</button>
@@ -795,10 +797,26 @@ function loadQuotaState(){
 }
 function saveQuotaState(){ try { localStorage.setItem('dassai_model_quota_v1', JSON.stringify(quotaState)); } catch(e) {} }
 function quotaMonth(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-function quotaRecord(model, exhausted, reason){
+function formatTokens(value){ return Math.max(0, Math.floor(Number(value) || 0)).toLocaleString('ja-JP'); }
+function tokenUsageCounts(usage){
+  var tk = usage && usage.tokens;
+  if (!tk || typeof tk !== 'object') return null;
+  var cache = tk.cache && typeof tk.cache === 'object' ? tk.cache : {};
+  var hasCounts = ['input','output','reasoning','cacheRead','cacheWrite'].some(function(k){return tk[k] !== undefined && tk[k] !== null;}) || cache.read !== undefined || cache.write !== undefined;
+  if (!hasCounts) return null;
+  function count(v){ var n = Number(v); return isFinite(n) && n > 0 ? Math.floor(n) : 0; }
+  var parts = {input:count(tk.input), output:count(tk.output), reasoning:count(tk.reasoning), cacheRead:count(cache.read !== undefined ? cache.read : tk.cacheRead), cacheWrite:count(cache.write !== undefined ? cache.write : tk.cacheWrite)};
+  parts.total = parts.input + parts.output + parts.reasoning + parts.cacheRead + parts.cacheWrite;
+  return parts;
+}
+function quotaRecord(model, exhausted, reason, usage){
   var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
   if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
-  if (exhausted){ q.exhausted = true; q.reason = reason || 'quota'; q.detectedAt = Date.now(); } else { q.success++; q.exhausted = false; q.reason = ''; q.detectedAt = 0; }
+  if (exhausted){ q.exhausted = true; q.reason = reason || 'quota'; q.detectedAt = Date.now(); } else {
+    q.success++; q.exhausted = false; q.reason = ''; q.detectedAt = 0;
+    var stats = tokenUsageCounts(usage);
+    if (stats){ q.usedTokens = (Number(q.usedTokens) || 0) + stats.total; q.tokenUsageCount = (Number(q.tokenUsageCount) || 0) + 1; q.lastTokens = stats; q.contextLimit = Number((modelInfo[model] || {}).context) || q.contextLimit || 0; }
+  }
   quotaState[model] = q; saveQuotaState(); renderQuotaPanel(model);
 }
 function isQuotaBlocked(model){ var q = quotaState[model] || {}; var ttl = q.reason === 'timeout' ? 2*60*1000 : 60*60*1000; return !!(q.exhausted && Date.now() - (q.detectedAt || 0) < ttl); }
@@ -806,16 +824,23 @@ function renderQuotaPanel(model){
   var box = $('#quotaPanel'); if (!box) return;
   var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
   if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
+  var contextLimit = Number((modelInfo[model] || {}).context) || Number(q.contextLimit) || 0;
+  var lastTokens = q.lastTokens || null;
+  var contextRemaining = contextLimit > 0 && lastTokens ? Math.max(0, contextLimit - lastTokens.total) : null;
+  var usageDisplay = Number(q.tokenUsageCount) > 0 ? formatTokens(q.usedTokens) + ' tokens' : 'トークン未取得';
   var inline = $('#quotaInline');
   if (inline){
     var blocked = isQuotaBlocked(model), timedOut = blocked && q.reason === 'timeout';
-    var state = blocked ? (timedOut ? '応答なし' : '上限到達') : '未取得';
-    inline.innerHTML = '無料枠あと <strong>' + state + '</strong> <span>· 今月 ' + q.success + '回利用</span>';
-    inline.title = blocked ? (timedOut ? '60秒間応答がなかったため一時的に候補から除外します。2分後に再確認します。' : '利用上限を検出したため別モデルへ切り替えます。1時間後に再確認します。') : 'プロバイダーが残量を公開していないため正確な残り回数は不明です。今月の成功回数を併記しています。';
+    inline.innerHTML = '無料枠残量 <strong>' + (blocked ? (timedOut ? '応答なし' : '枠切れ') : '取得不可') + '</strong> <span>· 今月 ' + usageDisplay + '</span>';
+    inline.title = blocked ? (timedOut ? '60秒間応答がなかったため一時的に候補から除外します。2分後に再確認します。' : '利用上限を検出したため別モデルへ切り替えます。1時間後に再確認します。') : 'プロバイダーはアカウントの無料枠残トークン数を公開していません。今月の消費量はこのブラウザーで成功応答から記録できた分のみです。';
   }
-  box.innerHTML = '<b>この端末での今月の成功回数：</b>' + q.success + '回' +
-    (isQuotaBlocked(model) ? (q.reason === 'timeout' ? '<br><span class="quota-out">応答なしを検出・2分は自動切替候補から除外中</span>' : '<br><span class="quota-out">枠切れを検出・1時間は自動切替候補から除外中</span>') : '<br><span class="quota-warn">プロバイダーの実際の残量・上限は取得できないため、残り回数は表示できません。</span>') +
-    '<br><span>回数はこのブラウザー内の目安です。別端末・別ブラウザーとは共有されません。</span>';
+  if ($('#tokenInline')) $('#tokenInline').innerHTML = 'コンテキスト残量 <strong>' + (contextRemaining === null ? '未取得' : formatTokens(contextRemaining) + ' / ' + formatTokens(contextLimit)) + '</strong>';
+  box.innerHTML = '<b>無料枠の残トークン数：</b><span class="quota-warn">プロバイダーから取得できません</span>' +
+    '<br><b>このブラウザーで今月記録した消費：</b>' + usageDisplay + '（成功 ' + q.success + '回中、トークン量取得 ' + (Number(q.tokenUsageCount) || 0) + '回）' +
+    '<br><b>モデルのコンテキスト上限：</b>' + (contextLimit > 0 ? formatTokens(contextLimit) + ' tokens' : '未取得') +
+    '<br><b>直近リクエスト後のコンテキスト残量目安：</b>' + (contextRemaining === null ? '未取得（OpenCodeがトークン使用量を返していません）' : formatTokens(contextRemaining) + ' / ' + formatTokens(contextLimit) + ' tokens') +
+    (isQuotaBlocked(model) ? (q.reason === 'timeout' ? '<br><span class="quota-out">応答なしを検出・2分は自動切替候補から除外中</span>' : '<br><span class="quota-out">枠切れを検出・1時間は自動切替候補から除外中</span>') : '') +
+    '<br><span>消費量はこのブラウザー内で記録した値です。別端末の利用や、プロバイダー側の残り無料枠は含みません。</span>';
 }
 function updateModelChip(){
   var c = $('#modelChip');
@@ -1359,7 +1384,7 @@ function runChat(opts){
     clearTimeout(noResponseTimer);
     clearInterval(tick);
     if (ok){
-      quotaRecord(model, false);
+      quotaRecord(model, false, '', usage);
       session.shown.push({ role: 'ai', text: acc, meta: { secs: (Date.now() - started) / 1000, usage: usage } });
     } else {
       var j = session.shown.lastIndexOf(userShown); if (j >= 0) session.shown.splice(j, 1);
