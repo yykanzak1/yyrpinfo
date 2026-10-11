@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 function Convert-SecureStringToPlainText {
     param([System.Security.SecureString]$Value)
