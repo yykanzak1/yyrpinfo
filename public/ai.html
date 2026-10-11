@@ -501,7 +501,7 @@ $('#btnSend').addEventListener('click', send);
       note('保存するチャットがありません。', true);
       return;
     }
-    var name = prompt('チャット名を入力してください（空なら日時を使用）');
+    var name = window.prompt('チャット名を入力してください（空なら日時を使用）');
     saveToHistory(name || ('chat_' + new Date().toISOString().replace(/[:.]/g,'-')));
     renderHistory();
     note('チャットを履歴に保存しました。');
@@ -531,11 +531,9 @@ $('#btnSend').addEventListener('click', send);
 $('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
 
   $('#btnStopChat').addEventListener('click', function(){
+    if (!chatBusy){ note('現在生成中のチャットはありません。'); return; }
     if (ctrl) ctrl.abort();
-    chatBusy = false;
-    setChatUi();
     note('チャットを停止しました。');
-    prompt.focus();
   });
   $('#btnNew').addEventListener('click', function(){
     if (chatBusy) return;
