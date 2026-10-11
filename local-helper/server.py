@@ -397,18 +397,33 @@ def try_login(uid, pw):
 
 # ---------------- チャット中継 ----------------
 def _event_error_text(error):
-    """OpenCode のエラー構造から本文だけを安全に取り出す。"""
+    """OpenCode の入れ子になったエラーから判定に必要な情報を取り出す。"""
     if isinstance(error, str):
         return error[:1200]
-    if isinstance(error, dict):
-        data = error.get("data")
-        candidates = (
-            data.get("message") if isinstance(data, dict) else None,
-            error.get("message"), error.get("name"), error.get("code"),
-        )
-        for value in candidates:
-            if isinstance(value, (str, int, float)) and str(value).strip():
-                return str(value)[:1200]
+    pieces = []
+    seen = set()
+    priority = ("statusCode", "status_code", "status", "type", "name", "code",
+                "message", "detail", "error", "data", "cause")
+
+    def collect(value, depth=0):
+        if depth > 6 or len(pieces) >= 24:
+            return
+        if isinstance(value, dict):
+            for key in priority:
+                if key in value:
+                    collect(value[key], depth + 1)
+        elif isinstance(value, (list, tuple)):
+            for item in value[:12]:
+                collect(item, depth + 1)
+        elif isinstance(value, (str, int, float)):
+            text = str(value).strip()
+            if text and text not in seen:
+                seen.add(text)
+                pieces.append(text)
+
+    collect(error)
+    if pieces:
+        return " | ".join(pieces)[:1200]
     return "OpenCode から詳細不明のエラーが返されました"
 
 

@@ -1310,6 +1310,13 @@ function runChat(opts){
       if (quotaErr && !hasContent){
         quotaRecord(model, true);
         var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && isFreeModel(m) && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
+        // Prefer a different provider first; another Zen model may share the exhausted free quota.
+        var sourceProvider = String(model).split('/')[0].toLowerCase();
+        candidates.sort(function(a, b){
+          var aOtherProvider = String(a).split('/')[0].toLowerCase() !== sourceProvider;
+          var bOtherProvider = String(b).split('/')[0].toLowerCase() !== sourceProvider;
+          return aOtherProvider === bOtherProvider ? 0 : (aOtherProvider ? -1 : 1);
+        });
         if (candidates.length){
           quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip();
           failureNotice = (modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。';
