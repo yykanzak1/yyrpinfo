@@ -53,8 +53,18 @@ ID は既定で `dassai` ですが、このPCでは環境変数 `DASSAI_LOGIN_ID
 | `OPENCODE_SERVER_PASSWORD` | （なし） | 設定時は opencode サーバへ Basic 認証で接続 |
 | `DASSAI_LOGIN_ID` | `dassai` | コンソールのログインID |
 | `DASSAI_LOGIN_PASSWORD` | （なし） | コンソールのログインパスワード（未設定はログイン不可） |
+| `DASSAI_FREE_MODELS` | （なし） | カタログ価格が0でない「無料枠専用」モデルを明示許可するID（完全一致・カンマ区切り） |
 | `ALLOWED_ORIGINS` | （なし） | ページからヘルパーを呼べるオリジンを追加（カンマ区切り） |
 | `DASSAI_TOKEN_TTL` | `28800` | トークンの有効秒数（8時間） |
+
+`DASSAI_FREE_MODELS` は、プロバイダー側で**無料枠を超えると課金されず拒否される**と確認できたモデルだけを指定してください。モデルIDはAI画面のモデル詳細に出る `プロバイダー/モデルID` を完全一致で記載します。無料枠のない有料アカウントや、上限後に自動課金されるアカウントのモデルを登録しないでください。指定モデルも通常の無料判定モデルと同じく、利用上限エラー時に次の無料モデルへ切り替わります。
+
+Windows PowerShellでの例（モデルIDは実際に表示される値へ置き換えます）:
+```powershell
+$env:DASSAI_FREE_MODELS="google/gemini-3.8-flash,another-provider/model-id"
+python server.py
+```
+この変数はヘルパー起動時に読み込まれるため、変更後は `server.py` を再起動してください。APIキーは `DASSAI_FREE_MODELS` に書かず、OpenCodeの `/connect` またはプロバイダーの認証設定へ登録します。
 
 ## 5. キーの注意
 - Ctrl + Alt + K は、AltGr を使うキーボード配列（ドイツ語・フランス語など）では AltGr と競合する場合があります。その場合は index.html 内の `e.code==='KeyK'` の条件を変更してください。

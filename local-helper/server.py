@@ -64,6 +64,7 @@ LOGIN_PASSWORD = os.environ.get("DASSAI_LOGIN_PASSWORD", "")
 SRV_USER = os.environ.get("OPENCODE_SERVER_USERNAME", "opencode")
 SRV_PASSWORD = os.environ.get("OPENCODE_SERVER_PASSWORD", "")
 TOKEN_TTL = int(os.environ.get("DASSAI_TOKEN_TTL", str(8 * 3600)))
+FREE_MODEL_ALLOWLIST = {m.strip().lower() for m in os.environ.get("DASSAI_FREE_MODELS", "").split(",") if m.strip()}
 MAX_FAILS = 5
 LOCK_SECONDS = 300
 MAX_BODY = 25 * 1024 * 1024
@@ -257,7 +258,9 @@ def list_models():
             info[full] = {
                 "name": minfo.get("name") or mid,
                 "family": minfo.get("family") or "",
-                "free": (cin == 0 and cout == 0),
+                # Costs of free-tier services can be non-zero in the public catalog.
+                # Only treat them as free when explicitly allowlisted by the local operator.
+                "free": (cin == 0 and cout == 0) or full.lower() in FREE_MODEL_ALLOWLIST,
                 "costIn": cin,
                 "costOut": cout,
                 "context": limit.get("context"),
