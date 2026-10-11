@@ -396,6 +396,22 @@ def try_login(uid, pw):
 
 
 # ---------------- チャット中継 ----------------
+def _event_error_text(error):
+    """OpenCode のエラー構造から本文だけを安全に取り出す。"""
+    if isinstance(error, str):
+        return error[:1200]
+    if isinstance(error, dict):
+        data = error.get("data")
+        candidates = (
+            data.get("message") if isinstance(data, dict) else None,
+            error.get("message"), error.get("name"), error.get("code"),
+        )
+        for value in candidates:
+            if isinstance(value, (str, int, float)) and str(value).strip():
+                return str(value)[:1200]
+    return "OpenCode から詳細不明のエラーが返されました"
+
+
 def proxy_chat(handler, model, text, system, images=None, reset=False):
     # 1) セッション作成（reset 指定時は作り直して文脈をリセット）
     if reset:
@@ -484,6 +500,17 @@ def proxy_chat(handler, model, text, system, images=None, reset=False):
                     if tk:
                         usage = {"tokens": tk, "cost": info.get("cost"),
                                  "model": info.get("modelID"), "provider": info.get("providerID")}
+                    error = info.get("error")
+                    if error or info.get("status") == "error":
+                        provider_model = "/".join(
+                            str(v) for v in (info.get("providerID"), info.get("modelID")) if v
+                        )
+                        message = _event_error_text(error)
+                        try:
+                            emit({"error": (provider_model + ": " if provider_model else "") + message})
+                        except Exception:
+                            pass
+                        break
                 continue
 
             if t == "message.part.updated":
@@ -519,9 +546,9 @@ def proxy_chat(handler, model, text, system, images=None, reset=False):
 
             if t == "session.error" and p.get("sessionID") == sid:
                 err = p.get("error") or {}
-                msg = (err.get("data") or {}).get("message") or err.get("name") or "不明なエラー"
+                msg = _event_error_text(err)
                 try:
-                    emit({"error": str(msg)})
+                    emit({"error": msg})
                 except Exception:
                     pass
                 break

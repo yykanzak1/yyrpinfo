@@ -8,6 +8,7 @@
 </script>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0088ff">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%2300d2ff'/%3E%3Cstop offset='1' stop-color='%230088ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='15' fill='%230f1115'/%3E%3Cpath d='M15 16h18c12 0 20 7 20 16s-8 16-20 16H15zm10 9v14h7c6 0 10-3 10-7s-4-7-10-7z' fill='url(%23g)'/%3E%3C/svg%3E">
 <title>獺祭 AI コンソール ｜Blue Gang</title>
 <style>
 :root{
@@ -209,11 +210,77 @@ select option{color:var(--text-color);background:var(--card-bg)}
 .stop{height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);font-size:.8rem;font-weight:700}
 .stop:not(:disabled):hover{border-color:var(--danger);color:var(--danger)}
 
+/* ----- アイコン付きワークスペース ----- */
+.side-nav{display:flex;gap:5px;margin:0 12px 12px;padding:4px;border:1px solid var(--border-color);border-radius:11px;background:var(--code-bg)}
+.side-nav a{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:8px 6px;border-radius:8px;color:var(--text-dim);text-decoration:none;font-size:.78rem;font-weight:650;transition:background .16s,color .16s,border-color .16s}
+.side-nav a:hover{background:var(--highlight-bg);color:var(--text-color)}
+.side-nav a[aria-current="page"]{color:var(--accent-cyan);background:var(--highlight-bg);box-shadow:inset 0 0 0 1px rgba(0,210,255,.18)}
+.side-nav svg.lucide{width:15px;height:15px;flex:none}
+.search-wrap{position:relative;margin:0 12px 8px}
+.search-wrap>svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-dim);pointer-events:none}
+.search-wrap .search{display:block;width:100%;margin:0;padding-left:34px}
+.topbar{height:60px;padding:0 18px;justify-content:space-between;gap:14px;border-bottom-width:1px;box-shadow:0 4px 22px rgba(0,136,255,.06)}
+.topbar-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar-icon{width:34px;height:34px;display:grid;place-items:center;border:1px solid rgba(0,210,255,.35);border-radius:10px;background:linear-gradient(145deg,rgba(0,210,255,.18),rgba(0,136,255,.08));color:var(--accent-cyan)}
+.topbar-icon svg.lucide{width:18px;height:18px}
+.topbar-copy{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.topbar-copy small{font:600 .58rem/1.4 var(--mono);letter-spacing:.12em;color:var(--accent-cyan)}
+.topbar-copy strong{font-size:.86rem;letter-spacing:.02em}
+.topbar-status{display:flex;align-items:center;gap:7px;min-width:0}
+.topbar-status .status-pip{width:7px;height:7px;flex:none;border-radius:50%;background:var(--ok);box-shadow:0 0 9px rgba(62,207,142,.6)}
+.topbar-status .pill{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;font-size:.7rem;padding:3px 9px}
+.topbar-status .status-pip.off{background:var(--text-dim);box-shadow:none}
+.topbar-status .status-pip.wait{background:var(--cost-color);box-shadow:0 0 9px rgba(255,170,0,.45)}
+.topbar-status .status-pip.err{background:var(--danger);box-shadow:0 0 9px rgba(255,107,107,.5)}
+.model-chip{max-width:46%;min-width:0;padding:7px 11px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);font-size:.75rem}
+.model-chip .cpu-icon{width:14px;height:14px;flex:none;color:var(--accent-cyan)}
+.model-chip b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.authbar{position:static;transform:none;flex:none}
+.settings h3{display:flex;align-items:center;gap:6px}
+.settings h3 svg.lucide{width:13px;height:13px;color:var(--accent-cyan)}
+.settings-body>.btn,.settings-body>.btn-row .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.settings-body>.btn svg.lucide,.settings-body>.btn-row svg.lucide{width:14px;height:14px}
+.empty-state{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 18px;color:var(--text-dim)}
+.empty-mark{width:58px;height:58px;display:grid;place-items:center;margin-bottom:16px;border:1px solid rgba(0,210,255,.35);border-radius:18px;background:radial-gradient(circle at 35% 25%,rgba(0,210,255,.2),rgba(0,136,255,.05));color:var(--accent-cyan);box-shadow:0 0 36px rgba(0,136,255,.1)}
+.empty-mark svg.lucide{width:27px;height:27px}
+.empty-kicker{margin:0 0 5px!important;font:600 .64rem/1.5 var(--mono);letter-spacing:.14em;color:var(--accent-cyan)}
+.empty-state h2{margin:0 0 7px;font-size:clamp(1.2rem,2.4vw,1.65rem);color:var(--text-color);letter-spacing:.01em}
+.empty-copy{max-width:480px;margin:0!important;font-size:.86rem}
+.suggestions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:20px}
+.suggestion{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);color:var(--text-dim);font-size:.76rem;transition:border-color .16s,color .16s,transform .16s}
+.suggestion:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);transform:translateY(-1px)}
+.suggestion svg.lucide{width:14px;height:14px}
+.composer-inner{border-radius:16px;box-shadow:0 5px 24px rgba(0,0,0,.22)}
+.composer-inner:focus-within{box-shadow:0 0 0 2px var(--highlight-bg),0 8px 28px rgba(0,136,255,.12)}
+.ibtn,.tbtn{display:inline-grid;place-items:center}
+.ibtn svg.lucide,.tbtn svg.lucide{display:block}
+.btn:focus-visible,.ibtn:focus-visible,.tbtn:focus-visible,.newchat:focus-visible,.side-nav a:focus-visible,.suggestion:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}
+
 @media (max-width:760px){
   #app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
-  aside{flex-direction:column;border-right:0;border-bottom:1px solid var(--border-color);max-height:44vh}
-  .topbar{height:44px}
+  aside{flex-direction:column;border-right:0;border-bottom:1px solid var(--border-color);max-height:32vh;overflow:auto}
+  .sb-hint{display:none}
+  .sb-bottom{padding:4px 12px 8px}
+  .settings summary{padding:5px 4px}
+  .topbar{height:52px;padding:0 10px;gap:7px}
+  .topbar-status .pill{max-width:150px}
+  .model-chip{max-width:48%;padding:6px 8px;font-size:.68rem}
+  #log{padding:18px 14px 8px}
+  .composer{padding:8px 10px 12px}
   .msg.user .body{max-width:92%}
+}
+@media (max-width:480px){
+  .topbar{display:flex;height:48px;gap:7px}
+  .topbar-brand{flex:none;gap:0}
+  .topbar-copy{display:none}
+  .topbar-icon{width:30px;height:30px}
+  .topbar-status .pill{max-width:90px;padding:3px 6px;font-size:.62rem}
+  .model-chip{flex:1;max-width:none;gap:5px;overflow:hidden;font-size:.66rem}
+  .model-chip span,.model-chip b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .model-chip b{max-width:46vw}
+  .model-chip .cpu-icon{display:none}
+  .side-nav a{font-size:.73rem;padding:7px 4px}
+  .suggestion{font-size:.71rem;padding:7px 9px}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -244,34 +311,37 @@ select option{color:var(--text-color);background:var(--card-bg)}
       <div class="sb-brand"><span class="mark">獺</span>獺祭 AI</div>
       <button class="tbtn" id="btnTheme" type="button" title="テーマ切替" aria-label="テーマ切替"><i data-lucide="sun-moon"></i></button>
     </div>
+    <nav class="side-nav" aria-label="ページ">
+      <a href="./index.html"><i data-lucide="house"></i><span>ホーム</span></a>
+      <a href="./ai.html" aria-current="page"><i data-lucide="bot"></i><span>AIチャット</span></a>
+    </nav>
     <button class="newchat" id="btnNew" type="button"><i data-lucide="plus"></i> 新しいチャット</button>
-    <input class="search" id="search" type="search" placeholder="チャットを検索…" aria-label="チャットを検索">
+    <label class="search-wrap"><i data-lucide="search" aria-hidden="true"></i><input class="search" id="search" type="search" placeholder="チャットを検索…" aria-label="チャットを検索"></label>
     <div class="slist" id="slist"></div>
 
     <div class="sb-bottom">
       <details class="settings">
         <summary><i data-lucide="settings"></i> 設定・サーバー</summary>
         <div class="settings-body">
-          <span class="pill" id="pill">確認中…</span>
           <div class="btn-row">
-            <button class="btn sm" id="btnStart" type="button">起動</button>
-            <button class="btn sm ghost" id="btnStop" type="button">終了</button>
-            <button class="btn sm ghost" id="btnRefresh" type="button">更新</button>
+            <button class="btn sm" id="btnStart" type="button"><i data-lucide="play"></i>起動</button>
+            <button class="btn sm ghost" id="btnStop" type="button"><i data-lucide="square"></i>終了</button>
+            <button class="btn sm ghost" id="btnRefresh" type="button"><i data-lucide="refresh-cw"></i>更新</button>
           </div>
-          <h3>PROJECT</h3>
+          <h3><i data-lucide="folder-open"></i>PROJECT</h3>
           <label for="dir">作業ディレクトリ（opencode の起点）</label>
           <input id="dir" placeholder="例: C:\projects\my-app">
-          <h3>MODEL</h3>
+          <h3><i data-lucide="cpu"></i>MODEL</h3>
           <label for="model">使用するモデル（無料のみ）</label>
           <select id="model"><option value="">（読み込み中）</option></select>
           <div class="model-detail" id="modelDetail"></div>
           <div class="quota-panel" id="quotaPanel" aria-live="polite">利用状況を読み込み中…</div>
-          <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
+          <button class="btn sm ghost" id="btnModels" type="button"><i data-lucide="refresh-cw"></i>モデル一覧を再読み込み</button>
           <label for="sys">システムプロンプト（任意）</label>
           <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
           <label class="chk"><input type="checkbox" id="optNotify"> 応答完了時に通知（タブが裏のとき）</label>
-          <button class="btn sm danger" id="btnClear" type="button" style="margin-top:10px">すべての履歴を消去</button>
-          <button class="btn sm ghost" id="btnLogout" type="button" style="margin-top:6px">ログアウト</button>
+          <button class="btn sm danger" id="btnClear" type="button" style="margin-top:10px"><i data-lucide="trash-2"></i>すべての履歴を消去</button>
+          <button class="btn sm ghost" id="btnLogout" type="button" style="margin-top:6px"><i data-lucide="log-out"></i>ログアウト</button>
         </div>
       </details>
       <div class="sb-hint">「起動」で opencode サーバを開始します。ディレクトリを変えたら再起動してください。</div>
@@ -280,7 +350,9 @@ select option{color:var(--text-color);background:var(--card-bg)}
 
   <main>
     <div class="topbar">
-      <div class="model-chip"><span class="dot"></span>opencode · <b id="modelChip">モデル未選択</b></div>
+      <div class="topbar-brand"><span class="topbar-icon"><i data-lucide="bot"></i></span><span class="topbar-copy"><small>BLUE GANG / WORKSPACE</small><strong>AI コンソール</strong></span></div>
+      <div class="topbar-status"><span class="status-pip" aria-hidden="true"></span><span class="pill wait" id="pill">確認中…</span></div>
+      <div class="model-chip"><span class="dot"></span><i class="cpu-icon" data-lucide="cpu"></i><span>opencode</span> · <b id="modelChip">モデル未選択</b></div>
       <div class="authbar" id="authbar" hidden><span id="authMsg"></span><button class="btn sm" id="btnLogin" type="button">ログイン</button></div>
     </div>
     <div id="log"></div>
@@ -324,6 +396,7 @@ var CUR_KEY = 'dassai_current_v1';
 var sessions = [];      // [{id,title,ts,shown:[{role,text}],sys}]
 var current = null;     // 現在開いているセッション
 var chatBusy = false;   // 生成中
+var busyNoticeAt = 0;   // 生成中にEnterを連打したときの案内を抑制
 var opBusy = false;     // 起動・終了中
 var ctrl = null;        // 中断用 AbortController
 var pending = [];       // 添付予定の画像 [{mime,url,name}]
@@ -449,6 +522,8 @@ function addMsgMeta(wrap, meta){
   wrap.appendChild(el('div', 'msg-meta', parts.join('  ·  ')));
 }
 $('#log').addEventListener('click', function(e){
+  var suggestion = e.target.closest('[data-suggest]');
+  if (suggestion){ prompt.value = suggestion.getAttribute('data-suggest') || ''; autoResize(); prompt.focus(); return; }
   var act = e.target.closest('[data-act]');
   if (act){
     var wrap = act.closest('.msg');
@@ -617,7 +692,11 @@ $('#btnTheme').addEventListener('click', function(){
 });
 
 /* ---------- opencode 起動・終了・状態 ---------- */
-function setPill(cls, text){ var p = $('#pill'); p.className = 'pill ' + cls; p.textContent = text; }
+function setPill(cls, text){
+  var p = $('#pill'); p.className = 'pill ' + cls; p.textContent = text;
+  var dot = p.parentNode && p.parentNode.querySelector('.status-pip');
+  if (dot) dot.className = 'status-pip ' + cls;
+}
 function setCtlButtons(){
   var busy = opBusy;
   $('#btnStart').disabled = busy || running;
@@ -905,7 +984,15 @@ function renderLog(){
     });
     refreshIcons();
   } else {
-    note('新規チャット。下の入力欄からメッセージを送ってください。');
+    $('#log').innerHTML = '<div class="empty-state"><div class="empty-mark">' + icon('sparkles') + '</div>' +
+      '<p class="empty-kicker">DASSAI AI / READY</p><h2>何を一緒に進めますか？</h2>' +
+      '<p class="empty-copy">下の入力欄から相談できます。送信に失敗した場合は、入力文を戻して原因を表示します。</p>' +
+      '<div class="suggestions">' +
+      '<button class="suggestion" type="button" data-suggest="このコードの処理を初心者にもわかるように説明して">' + icon('code-xml') + 'コードを説明</button>' +
+      '<button class="suggestion" type="button" data-suggest="この文章を自然で短い日本語に整えて">' + icon('pencil-line') + '文章を整える</button>' +
+      '<button class="suggestion" type="button" data-suggest="このエラーの原因と解決手順を教えて">' + icon('search') + 'エラーを調べる</button>' +
+      '</div></div>';
+    refreshIcons();
   }
 }
 function openSession(id){
@@ -941,7 +1028,7 @@ function newChat(){
   api('/new', { method: 'POST' }).catch(function(){});
   renderSessions();
   saveStore();
-  note('新しいチャットを開始しました。');
+  renderLog();
   $('#prompt').focus();
 }
 $('#btnNew').addEventListener('click', newChat);
@@ -1072,7 +1159,13 @@ function setChatUi(){
   $('#btnStopChat').disabled = !chatBusy;
 }
 function send(){
-  if (chatBusy) return;
+  if (chatBusy){
+    if ((prompt.value.trim() || pending.length) && Date.now() - busyNoticeAt > 3000){
+      busyNoticeAt = Date.now();
+      note('応答中です。入力内容は送信完了まで入力欄に残ります。');
+    }
+    return;
+  }
   var text = prompt.value.trim();
   var sendImages = pending.slice();
   if (!text && !sendImages.length) return;
@@ -1112,6 +1205,7 @@ function runChat(opts){
   saveStore();
   renderLog();
   renderSessions();
+  if (opts.notice) note(opts.notice);
 
   var aiWrap = appendMsg('ai', '');
   var aiBody = aiWrap.querySelector('.body');
@@ -1125,6 +1219,8 @@ function runChat(opts){
   var tick = setInterval(function(){ live.textContent = ((Date.now() - started) / 1000).toFixed(1) + '秒'; }, 250);
   var usage = null;
   var quotaFallback = null;
+  var failureNotice = opts.notice || '';
+  var failureNoticeIsError = false;
 
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
@@ -1195,19 +1291,18 @@ function runChat(opts){
     }
     return pump().then(function(){
       if (curEl.parentNode) curEl.parentNode.removeChild(curEl);
-      if (!hasContent) ensureSeg().innerHTML = render('（空の応答）');
+      if (!hasContent) throw new Error('モデルから応答内容が届きませんでした。入力文を戻しました。設定・サーバーで opencode_serve.log を確認してください。');
       ok = true;
     });
   }).catch(function(err){
     if (curEl.parentNode) curEl.parentNode.removeChild(curEl);
     if (err && err.name === 'AbortError'){
       if (segEl) segEl.innerHTML = render(segText);
-      var w = document.createElement('p'); w.className = 'warn'; w.textContent = '（生成を中断しました）';
-      aiBody.appendChild(w);
+      failureNotice = '生成を中断しました。';
       ok = hasContent;
     } else if (err instanceof TypeError){
-      var p = document.createElement('p'); p.className = 'err'; p.textContent = 'ヘルパーに接続できません（server.py を確認してください）';
-      aiBody.appendChild(p);
+      failureNotice = 'ヘルパーに接続できません（server.py を確認してください）。入力文を戻しました。';
+      failureNoticeIsError = true;
     } else {
       var errText = err.message || String(err);
       // OpenCode/provider error names are often camelCase or snake_case (e.g. FreeUsageLimitError).
@@ -1215,10 +1310,17 @@ function runChat(opts){
       if (quotaErr && !hasContent){
         quotaRecord(model, true);
         var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && isFreeModel(m) && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
-        if (candidates.length){ quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip(); note((modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。'); }
+        if (candidates.length){
+          quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip();
+          failureNotice = (modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。';
+        }
         else { quotaFallback = ''; }
       }
-      if (!quotaFallback){ var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = (quotaErr ? 'このプロバイダーで利用可能な無料モデルがありません。有料モデルへは切り替えません。別の無料プロバイダーをOpenCodeに接続してください。\n' : 'エラー: ') + errText; aiBody.appendChild(pe); if (hasContent) ok = true; }
+      if (!quotaFallback){
+        failureNotice = (quotaErr ? 'このプロバイダーで利用可能な無料モデルがありません。有料モデルへは切り替えません。別の無料プロバイダーをOpenCodeに接続してください。\n' : 'エラー: ') + errText;
+        failureNoticeIsError = true;
+        if (hasContent) ok = true;
+      }
     }
   }).then(function(){
     clearInterval(tick);
@@ -1242,9 +1344,10 @@ function runChat(opts){
     saveStore();
     renderLog();
     renderSessions();
+    if (failureNotice && !quotaFallback) note(failureNotice, failureNoticeIsError);
     chatBusy = false; ctrl = null;
     setChatUi();
-    if (quotaFallback){ var ri = session.shown.lastIndexOf(userShown); if (ri >= 0) session.shown.splice(ri,1); if (!session.shown.length){ sessions = sessions.filter(function(x){return x.id !== session.id;}); if (current && current.id === session.id) current = null; } saveStore(); renderSessions(); runChat(opts); return; }
+    if (quotaFallback){ var ri = session.shown.lastIndexOf(userShown); if (ri >= 0) session.shown.splice(ri,1); if (!session.shown.length){ sessions = sessions.filter(function(x){return x.id !== session.id;}); if (current && current.id === session.id) current = null; } saveStore(); renderSessions(); runChat(Object.assign({}, opts, {notice: failureNotice})); return; }
     scrollLog();
     notifyDone(ok);
     prompt.focus();
