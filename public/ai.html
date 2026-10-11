@@ -6,113 +6,129 @@
 <meta name="robots" content="noindex, nofollow">
 <title>獺祭 AI コンソール ｜Blue Gang</title>
 <style>
-:root{--bg:#060b12;--panel:#0a1420;--panel2:#0e1c2c;--border:#15324a;--cyan:#00c8ff;--text:#d7e6f2;--muted:#6f8aa0;--green:#4ade80;--red:#ff6b6b;--yellow:#facc15;--code:#050c15;
---mono:"Cascadia Code",Consolas,Menlo,"Noto Sans Mono CJK JP",monospace}
+:root{
+  --bg:#FAF9F5; --sidebar:#F0EEE6; --sidebar-h:#E8E6DC; --bubble:#F0EEE6;
+  --panel:#FFFFFF; --text:#1F1E1D; --muted:#73726C; --border:#E9E7DD; --border2:#DAD8CE;
+  --accent:#D97757; --accent-h:#C96442; --accent-soft:#F6E7E0;
+  --code-bg:#FFFFFF; --code-h:#F5F4EF;
+  --red:#B4342A; --green:#3B7A57; --yellow:#A9701A;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+  --serif:"Georgia","Times New Roman","Hiragino Mincho ProN",serif;
+  --mono:"Cascadia Code",Consolas,Menlo,"Noto Sans Mono CJK JP",monospace;
+}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px}
 button{font:inherit;cursor:pointer}
-button:disabled{opacity:.4;cursor:not-allowed}
-input,textarea,select{font:inherit;color:var(--text);background:var(--code);border:1px solid var(--border);border-radius:8px;padding:9px 11px;width:100%;outline:none}
-input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
-.btn{background:linear-gradient(135deg,#0070d8,#00b4ff);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:700}
-.btn:not(:disabled):hover{filter:brightness(1.12)}
-.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
-.btn.ghost:not(:disabled):hover{border-color:var(--cyan);color:var(--cyan)}
-.btn.danger{background:#8b2a2a}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{font:inherit;color:var(--text);background:#fff;border:1px solid var(--border2);border-radius:9px;padding:9px 11px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600}
+.btn:not(:disabled):hover{background:var(--accent-h)}
+.btn.ghost{background:#fff;border:1px solid var(--border2);color:var(--text);font-weight:600}
+.btn.ghost:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}
+.btn.danger{background:#fff;border:1px solid var(--border2);color:var(--red)}
+.btn.danger:not(:disabled):hover{border-color:var(--red);background:#FBF0EE}
 .btn.sm{padding:6px 10px;font-size:.8rem}
 
 /* ----- gate (login) ----- */
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 25%,#06243a 0%,#060b12 65%)}
-.card{width:min(380px,100%);background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:0 0 42px rgba(0,200,255,.12)}
-.brand{display:flex;align-items:center;gap:12px}
-.mark{width:42px;height:42px;border-radius:10px;flex:none;background:linear-gradient(135deg,#0a2d4d,#0088ff);display:grid;place-items:center;font-weight:900;color:#fff}
-.mark.sm{width:30px;height:30px;border-radius:8px;font-size:.9rem}
-.brand h1{font-size:1.05rem;margin:0;letter-spacing:.04em}
-.brand small{color:var(--cyan);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em}
-.card label{display:block;font-size:.8rem;color:var(--muted);margin:14px 0 6px}
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.gcard{width:min(400px,100%);background:#fff;border:1px solid var(--border);border-radius:18px;padding:34px 30px;box-shadow:0 10px 40px rgba(40,35,25,.08)}
+.gbrand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.star{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;color:var(--accent);font-size:1.3rem}
+.gbrand h1{font-family:var(--serif);font-size:1.35rem;margin:0;font-weight:600;letter-spacing:.01em}
+.gbrand small{display:block;color:var(--muted);font-size:.68rem;letter-spacing:.14em}
+.gcard label{display:block;font-size:.8rem;color:var(--muted);margin:14px 0 6px}
+.gcard .btn{width:100%;margin-top:20px;padding:11px}
 .err{color:var(--red);font-size:.82rem;min-height:1.2em;margin-top:10px;word-break:break-all}
-.note{font-size:.72rem;color:var(--muted);margin-top:14px;line-height:1.6}
+.gnote{font-size:.72rem;color:var(--muted);margin-top:16px;line-height:1.65}
 
 /* ----- app ----- */
-#app{height:100vh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:272px 1fr}
-header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
-header .ttl{font-family:var(--mono);font-size:.9rem}
-header .ttl b{color:var(--cyan)}
-.ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.pill{font-family:var(--mono);font-size:.75rem;padding:5px 10px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
-.pill.on{color:var(--green);border-color:rgba(74,222,128,.4)}
-.pill.off{color:var(--muted)}
-.pill.wait{color:var(--yellow);border-color:rgba(250,204,21,.4)}
-.pill.err{color:var(--red);border-color:rgba(255,107,107,.4)}
-
-/* ----- sidebar (chat history) ----- */
-aside{background:var(--panel);border-right:1px solid var(--border);min-height:0;display:flex;flex-direction:column}
-.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px}
-.side-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:.9rem}
-.side-brand small{display:block;color:var(--cyan);font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;font-weight:400}
-.side-new{padding:0 14px 10px}
-.side-new .btn{width:100%;text-align:left;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
-.side-new .btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.slist{flex:1;min-height:0;overflow:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:2px}
-.s-empty{color:var(--muted);font-size:.74rem;padding:14px 8px;text-align:center;line-height:1.6}
-.sitem{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.83rem;border:1px solid transparent}
-.sitem:hover{background:var(--panel2)}
-.sitem.active{background:var(--panel2);border-color:var(--border)}
-.sitem.active .t{color:var(--cyan)}
-.sitem .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
-.sitem .d{font-size:.62rem;color:var(--muted);flex:none;font-family:var(--mono)}
-.sitem .x{flex:none;width:20px;height:20px;line-height:18px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);opacity:0;padding:0;font-size:.8rem}
+#app{height:100vh;display:grid;grid-template-columns:270px 1fr}
+aside{background:var(--sidebar);border-right:1px solid var(--border);min-height:0;display:flex;flex-direction:column}
+.sb-top{padding:16px 16px 8px;display:flex;align-items:center;gap:10px}
+.sb-brand{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-size:1.05rem;font-weight:600}
+.sb-brand .star{width:26px;height:26px;font-size:1.05rem}
+.newchat{display:flex;align-items:center;gap:8px;margin:6px 12px 10px;padding:10px 12px;border-radius:11px;border:1px solid var(--border2);background:#fff;color:var(--text);font-weight:600;font-size:.88rem}
+.newchat:hover{border-color:var(--accent);color:var(--accent)}
+.newchat .plus{color:var(--accent);font-size:1.05rem;line-height:1}
+.slist{flex:1;min-height:0;overflow:auto;padding:2px 8px 8px}
+.sgroup{font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.03em;padding:14px 10px 5px}
+.sgroup:first-child{padding-top:4px}
+.s-empty{color:var(--muted);font-size:.78rem;padding:16px 10px;line-height:1.6;text-align:center}
+.sitem{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--text)}
+.sitem:hover{background:var(--sidebar-h)}
+.sitem.active{background:var(--sidebar-h);font-weight:600}
+.sitem .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sitem .x{flex:none;width:20px;height:20px;line-height:18px;border-radius:6px;border:0;background:transparent;color:var(--muted);opacity:0;padding:0;font-size:.9rem}
 .sitem:hover .x{opacity:1}
-.sitem .x:hover{color:var(--red);border-color:var(--red)}
+.sitem .x:hover{color:var(--red);background:rgba(0,0,0,.05)}
 
-.settings{border-top:1px solid var(--border);padding:10px 14px 4px;font-size:.8rem}
-.settings summary{cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;list-style:none;user-select:none;padding:4px 0}
+.sb-bottom{border-top:1px solid var(--border);padding:8px 12px 12px}
+.settings{font-size:.82rem}
+.settings summary{cursor:pointer;color:var(--muted);font-size:.76rem;list-style:none;user-select:none;padding:8px 4px;display:flex;align-items:center;gap:7px}
 .settings summary::-webkit-details-marker{display:none}
-.settings summary:hover{color:var(--cyan)}
-.settings-body{padding-top:6px;display:flex;flex-direction:column;gap:4px}
-.settings h3{margin:8px 0 0;font-family:var(--mono);font-size:.68rem;color:var(--cyan);letter-spacing:.12em;font-weight:600}
+.settings summary:hover{color:var(--text)}
+.settings-body{display:flex;flex-direction:column;gap:4px;padding:4px 2px 2px}
+.settings h3{margin:10px 0 0;font-size:.68rem;color:var(--muted);letter-spacing:.1em;font-weight:700}
 .settings label{font-size:.74rem;color:var(--muted);margin-top:4px;display:block}
-.settings textarea{min-height:70px;resize:vertical}
-.side-foot{border-top:1px solid var(--border);padding:10px 14px}
-.hint{font-size:.68rem;color:var(--muted);line-height:1.5;padding:0 14px 12px}
+.settings textarea{min-height:68px;resize:vertical}
+.settings select{padding:8px 10px}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border2);color:var(--muted);display:inline-block}
+.pill.on{color:var(--green);border-color:rgba(59,122,87,.45);background:rgba(59,122,87,.08)}
+.pill.off{color:var(--muted)}
+.pill.wait{color:var(--yellow);border-color:rgba(169,112,26,.45);background:rgba(169,112,26,.08)}
+.pill.err{color:var(--red);border-color:rgba(180,52,42,.45);background:rgba(180,52,42,.07)}
+.sb-hint{font-size:.68rem;color:var(--muted);line-height:1.55;padding:2px 2px 0}
 
-main{display:flex;flex-direction:column;min-width:0;min-height:0}
-#log{flex:1;overflow:auto;padding:18px 22px;font-family:var(--mono);font-size:.88rem;line-height:1.65;background:linear-gradient(180deg,#05090f,#070e18)}
-.msg{display:grid;grid-template-columns:78px 1fr;gap:12px;margin-bottom:16px}
-.tag{font-size:.75rem;font-weight:700;padding-top:2px;white-space:nowrap}
-.msg.user .tag{color:var(--green)}
-.msg.ai .tag{color:var(--cyan)}
-.msg.sys .tag{color:var(--muted)}
-.body{min-width:0;overflow-wrap:anywhere}
-.msg.user .body{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
-.msg.ai .body{border-left:2px solid var(--cyan);padding-left:12px}
-.body p{margin:0 0 8px}
+main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.topbar{height:52px;flex:none;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);background:var(--bg)}
+.model-chip{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:7px}
+.model-chip b{color:var(--text);font-weight:600}
+#log{flex:1;overflow:auto;padding:26px 24px 8px}
+.msg{max-width:760px;margin:0 auto 24px;display:flex;gap:14px;line-height:1.7}
+.msg.user{justify-content:flex-end}
+.msg.user .body{background:var(--bubble);border-radius:16px;padding:10px 16px;max-width:82%;overflow-wrap:anywhere}
+.msg.ai .body{flex:1;min-width:0;overflow-wrap:anywhere}
+.msg.sys{justify-content:center}
+.msg.sys .body{font-size:.8rem;color:var(--muted);text-align:center}
+.avatar{width:28px;height:28px;flex:none;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:1rem;margin-top:2px}
+.body p{margin:0 0 10px}
+.body p:last-child{margin-bottom:0}
 .body p.err{color:var(--red)}
 .body p.warn{color:var(--yellow)}
-code.inline{background:var(--code);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#7dd3fc}
-.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.thumbs img{width:110px;height:82px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
-.cursor{color:var(--cyan);animation:blink 1s steps(2) infinite}
+.body h1,.body h2,.body h3{font-family:var(--serif);font-weight:600;margin:16px 0 8px}
+.body ul,.body ol{margin:0 0 10px;padding-left:22px}
+.body strong{font-weight:700}
+.msg.ai .body a{color:var(--accent)}
+code.inline{background:var(--code-h);border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-family:var(--mono);font-size:.85em;color:#9B3D2A}
+.cursor{display:inline-block;width:2px;color:var(--accent);animation:blink 1s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
-.code{margin:10px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--code)}
-.code-head{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:#0a1826;border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted)}
-.code pre{margin:0;padding:12px;overflow:auto;color:#cbe7ff;font-size:.82rem;line-height:1.5}
-.copy{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;font-size:.7rem}
-.copy:hover{color:var(--cyan);border-color:var(--cyan)}
+.code{margin:12px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--code-bg)}
+.code-head{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:var(--code-h);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.code pre{margin:0;padding:14px;overflow:auto;color:#2B2B2B;font-family:var(--mono);font-size:.82rem;line-height:1.55}
+.copy{background:#fff;border:1px solid var(--border2);color:var(--muted);border-radius:6px;padding:2px 9px;font-size:.7rem}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
 
-.composer{border-top:1px solid var(--border);background:var(--panel);padding:12px 18px 14px}
-.prompt-wrap{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:8px}
-.prompt-wrap:focus-within{border-color:var(--cyan)}
-#prompt{border:0;padding:6px;resize:none;min-height:44px;max-height:240px;background:transparent;font-family:var(--mono);line-height:1.5}
-.tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:.72rem;color:var(--muted);font-family:var(--mono);flex-wrap:wrap}
-.tools .l{display:flex;gap:8px;align-items:center}
+.composer{flex:none;padding:8px 24px 18px;background:var(--bg)}
+.composer-inner{max-width:760px;margin:0 auto;background:#fff;border:1px solid var(--border2);border-radius:18px;box-shadow:0 2px 10px rgba(40,35,25,.05);padding:10px 10px 8px 16px;transition:border-color .15s,box-shadow .15s}
+.composer-inner:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#prompt{border:0;background:transparent;resize:none;min-height:26px;max-height:220px;padding:4px 6px 4px 0;font-size:.95rem;line-height:1.55;box-shadow:none!important}
+#prompt:focus{border:0}
+.composer-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:4px}
+.composer-tools .l{display:flex;gap:8px;align-items:center;font-size:.72rem;color:var(--muted)}
+.send{width:34px;height:34px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:1.05rem;padding:0}
+.send:not(:disabled):hover{background:var(--accent-h)}
+.send:disabled{background:var(--border2)}
+.stop{height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--border2);background:#fff;color:var(--text);font-size:.8rem;font-weight:600}
+.stop:not(:disabled):hover{border-color:var(--red);color:var(--red)}
 
 @media (max-width:760px){
-  #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
-  aside{border-right:0;border-bottom:1px solid var(--border);max-height:42vh}
-  header{grid-column:auto}
-  .msg{grid-template-columns:1fr;gap:4px}
+  #app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  aside{flex-direction:column;border-right:0;border-bottom:1px solid var(--border);max-height:44vh}
+  .topbar{height:44px}
+  .msg.user .body{max-width:92%}
 }
 </style>
 </head>
@@ -120,69 +136,69 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
 
 <!-- ===== ログイン（ゲート） ===== -->
 <section id="gate">
-  <form class="card" id="gateForm" autocomplete="on">
-    <div class="brand">
-      <div class="mark">獺</div>
-      <div><h1>獺祭 AI コンソール</h1><small>BLUE GANG / SECURE ACCESS</small></div>
+  <form class="gcard" id="gateForm" autocomplete="on">
+    <div class="gbrand">
+      <div class="star">✳</div>
+      <div><h1>獺祭 AI</h1><small>BLUE GANG / SECURE ACCESS</small></div>
     </div>
     <label for="gid">ログインID</label>
     <input id="gid" name="username" autocomplete="username" required>
     <label for="gpw">パスワード</label>
     <input id="gpw" name="password" type="password" autocomplete="current-password" required>
-    <button class="btn" type="submit" style="width:100%;margin-top:18px">ログイン</button>
+    <button class="btn" type="submit">ログイン</button>
     <div class="err" id="gateErr"></div>
-    <div class="note">ヘルパー（server.py）が起動している必要があります。ログイン後の操作はすべてヘルパーが認証を確認します。opencode のモデルを使用します。</div>
+    <div class="gnote">ヘルパー（server.py）が起動している必要があります。ログイン後の操作はすべてヘルパーが認証を確認します。opencode のモデルを使用します。</div>
   </form>
 </section>
 
 <!-- ===== 操作画面 ===== -->
 <section id="app" hidden>
-  <header>
-    <div class="ttl"><b>$</b> dassai-ai · opencode</div>
-    <div class="ctrls">
-      <span class="pill" id="pill">確認中…</span>
-      <button class="btn sm" id="btnStart" type="button">起動</button>
-      <button class="btn sm danger" id="btnStop" type="button">終了</button>
-      <button class="btn sm ghost" id="btnRefresh" type="button">更新</button>
-      <button class="btn sm ghost" id="btnLogout" type="button">ログアウト</button>
-    </div>
-  </header>
-
   <aside>
-    <div class="side-head">
-      <div class="side-brand"><span class="mark sm">獺</span><div>獺祭 AI<small>OPENCODE</small></div></div>
+    <div class="sb-top">
+      <div class="sb-brand"><span class="star">✳</span>獺祭 AI</div>
     </div>
-    <div class="side-new"><button class="btn" id="btnNew" type="button">＋ 新しいチャット</button></div>
+    <button class="newchat" id="btnNew" type="button"><span class="plus">＋</span> 新しいチャット</button>
     <div class="slist" id="slist"></div>
-    <details class="settings">
-      <summary>⚙ 設定</summary>
-      <div class="settings-body">
-        <h3>PROJECT</h3>
-        <label for="dir">作業ディレクトリ（opencode の起点）</label>
-        <input id="dir" placeholder="例: C:\projects\my-app">
-        <h3>MODEL</h3>
-        <label for="model">使用するモデル（無料のみ）</label>
-        <select id="model"><option value="">（読み込み中）</option></select>
-        <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
-        <label for="sys">システムプロンプト（任意）</label>
-        <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
-      </div>
-    </details>
-    <div class="side-foot"><button class="btn sm danger" id="btnClear" type="button" style="width:100%">すべての履歴を消去</button></div>
-    <div class="hint">「起動」で opencode サーバを開始します。ディレクトリを変えたら「起動」を押し直してください。</div>
+
+    <div class="sb-bottom">
+      <details class="settings">
+        <summary>⚙ 設定・サーバー</summary>
+        <div class="settings-body">
+          <span class="pill" id="pill">確認中…</span>
+          <div class="btn-row">
+            <button class="btn sm" id="btnStart" type="button">起動</button>
+            <button class="btn sm ghost" id="btnStop" type="button">終了</button>
+            <button class="btn sm ghost" id="btnRefresh" type="button">更新</button>
+          </div>
+          <h3>PROJECT</h3>
+          <label for="dir">作業ディレクトリ（opencode の起点）</label>
+          <input id="dir" placeholder="例: C:\projects\my-app">
+          <h3>MODEL</h3>
+          <label for="model">使用するモデル（無料のみ）</label>
+          <select id="model"><option value="">（読み込み中）</option></select>
+          <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
+          <label for="sys">システムプロンプト（任意）</label>
+          <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
+          <button class="btn sm danger" id="btnClear" type="button" style="margin-top:10px">すべての履歴を消去</button>
+          <button class="btn sm ghost" id="btnLogout" type="button" style="margin-top:6px">ログアウト</button>
+        </div>
+      </details>
+      <div class="sb-hint">「起動」で opencode サーバを開始します。ディレクトリを変えたら再起動してください。</div>
+    </div>
   </aside>
 
   <main>
+    <div class="topbar"><div class="model-chip">✳ <b id="modelChip">opencode</b></div></div>
     <div id="log"></div>
     <div class="composer">
-      <div class="prompt-wrap">
-        <textarea id="prompt" rows="1" placeholder="プロンプトを入力（Enterで送信 / Shift+Enterで改行）"></textarea>
-      </div>
-      <div class="tools">
-        <div class="l"><span id="count">0 文字</span></div>
-        <div class="l">
-          <button class="btn sm danger" id="btnStopChat" type="button" disabled>■ 停止</button>
-          <button class="btn" id="btnSend" type="button">送信 ▶</button>
+      <div class="composer-inner">
+        <textarea id="prompt" rows="1" placeholder="返信を入力…（Enterで送信 / Shift+Enterで改行）"></textarea>
+        <div class="composer-tools">
+          <div class="l"><span id="count">0 文字</span></div>
+          <div class="l">
+            <button class="stop" id="btnStopChat" type="button" disabled>■ 停止</button>
+            <button class="send" id="btnSend" type="button" title="送信" aria-label="送信">↑</button>
+          </div>
         </div>
       </div>
     </div>
@@ -212,6 +228,7 @@ function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'
 function inline(t){
   return esc(t).replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>')
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<h3>$1</h3>')
     .split(/\n{2,}/).map(function(p){ return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
 }
 function codeBlock(lang, code){
@@ -232,14 +249,17 @@ function scrollLog(){ var l = $('#log'); l.scrollTop = l.scrollHeight; }
 function appendMsg(role, text){
   var wrap = document.createElement('div');
   wrap.className = 'msg ' + role;
-  var tag = role === 'user' ? 'you ›' : (role === 'sys' ? 'sys' : 'ai ›');
-  wrap.innerHTML = '<div class="tag">' + tag + '</div><div class="body"></div>';
-  var body = wrap.querySelector('.body');
-  if (role === 'user'){
+  var body = document.createElement('div');
+  body.className = 'body';
+  if (role === 'ai'){
+    var av = document.createElement('div'); av.className = 'avatar'; av.textContent = '✳';
+    wrap.appendChild(av); wrap.appendChild(body);
+    body.innerHTML = text ? render(text) : '<span class="cursor">▍</span>';
+  } else if (role === 'user'){
+    wrap.appendChild(body);
     body.innerHTML = inline(text);
-  } else if (role === 'ai'){
-    body.innerHTML = text ? render(text) : '<span class="cursor">▌</span>';
   } else {
+    wrap.appendChild(body);
     body.innerHTML = render(text);
   }
   $('#log').appendChild(wrap);
@@ -299,6 +319,7 @@ function showApp(){
   renderSessions();
   startPolling();
   loadModels();
+  updateModelChip();
   $('#prompt').focus();
 }
 function expireSession(msg){
@@ -384,6 +405,7 @@ function isFreeModel(m){
   for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
   return true;
 }
+function updateModelChip(){ var c = $('#modelChip'); if (c) c.textContent = $('#model').value || 'モデル未選択'; }
 function loadModels(){
   var sel = $('#model');
   var keep = sel.value;
@@ -391,6 +413,7 @@ function loadModels(){
     sel.innerHTML = '';
     if (!j.models.length){
       sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
+      updateModelChip();
       return;
     }
     var list = j.models.filter(isFreeModel);
@@ -401,12 +424,15 @@ function loadModels(){
     });
     if (keep && list.indexOf(keep) >= 0) sel.value = keep;
     else if (j.default && list.indexOf(j.default) >= 0) sel.value = j.default;
+    updateModelChip();
   }).catch(function(err){
     if (err.status === 401) return;
     sel.innerHTML = '<option value="">（opencode 停止中・起動してください）</option>';
+    updateModelChip();
   });
 }
 $('#btnModels').addEventListener('click', loadModels);
+$('#model').addEventListener('change', updateModelChip);
 
 /* ---------- セッション（チャット履歴）管理 ---------- */
 function uid(){ return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -415,12 +441,15 @@ function titleOf(shown){
   for (var i=0;i<shown.length;i++){ if (shown[i].role === 'user' && shown[i].text) return shown[i].text.slice(0, 48); }
   return '';
 }
-function relTime(ts){
-  if (!ts) return '';
-  var d = new Date(ts), n = new Date();
-  function p(x){ return (x < 10 ? '0' : '') + x; }
-  if (d.toDateString() === n.toDateString()) return p(d.getHours()) + ':' + p(d.getMinutes());
-  return (d.getMonth() + 1) + '/' + d.getDate();
+function groupLabel(ts){
+  var n = new Date();
+  var d0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+  if (ts >= d0) return '今日';
+  if (ts >= d0 - 86400000) return '昨日';
+  if (ts >= d0 - 6 * 86400000) return '過去7日間';
+  var d = new Date(ts);
+  if (d.getFullYear() === n.getFullYear()) return 'それ以前';
+  return d.getFullYear() + '年';
 }
 function loadStore(){
   try { sessions = JSON.parse(localStorage.getItem(SESS_KEY) || '[]') || []; } catch (e) { sessions = []; }
@@ -467,15 +496,18 @@ function renderSessions(){
     return;
   }
   var sorted = sessions.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
-  list.innerHTML = sorted.map(function(s){
+  var html = '', lastGroup = null;
+  sorted.forEach(function(s){
+    var g = groupLabel(s.ts || Date.now());
+    if (g !== lastGroup){ html += '<div class="sgroup">' + esc(g) + '</div>'; lastGroup = g; }
     var active = current && s.id === current.id;
     var title = s.title || titleOf(s.shown) || '新しいチャット';
-    return '<div class="sitem' + (active ? ' active' : '') + '" data-id="' + s.id + '">' +
+    html += '<div class="sitem' + (active ? ' active' : '') + '" data-id="' + s.id + '">' +
       '<div class="t">' + esc(title) + '</div>' +
-      '<div class="d">' + relTime(s.ts) + '</div>' +
       '<button class="x" type="button" data-del="' + s.id + '" title="削除">×</button>' +
     '</div>';
-  }).join('');
+  });
+  list.innerHTML = html;
 }
 function renderLog(){
   $('#log').innerHTML = '';
@@ -548,7 +580,7 @@ var prompt = $('#prompt');
 
 function autoResize(){
   prompt.style.height = 'auto';
-  prompt.style.height = Math.min(prompt.scrollHeight, 240) + 'px';
+  prompt.style.height = Math.min(prompt.scrollHeight, 220) + 'px';
   $('#count').textContent = prompt.value.length + ' 文字';
 }
 prompt.addEventListener('input', autoResize);
@@ -630,7 +662,7 @@ function send(){
           var line = buf.slice(0, idx); buf = buf.slice(idx + 1);
           handleLine(line);
         }
-        aiBody.innerHTML = render(acc) + '<span class="cursor">▌</span>';
+        aiBody.innerHTML = render(acc) + '<span class="cursor">▍</span>';
         scrollLog();
         return pump();
       });
