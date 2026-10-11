@@ -667,11 +667,12 @@ function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = nu
 /* ---------- モデル一覧（無料のみ表示） ---------- */
 function isFreeModel(m){
   var s = String(m).toLowerCase();
-  var paid = ['pro','enterprise','plus','ultra','max','team','turbo','bedrock','vertex','-128k','-200k','gpt-4.1','gpt-5','claude-4','claude-sonnet-4','claude-opus','o3-','o4-','gemini-2.5-pro','gemini-pro-2.5'];
-  for (var i=0;i<paid.length;i++) if (s.indexOf(paid[i])>=0) return false;
-  var freeHints = ['free','local','community','qwen','llama','gemma','deepseek','mistral','phi','hermes','smollm','yi','moonshot','cogito','granite','llava','codellama'];
-  for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
-  return true;
+  var mi = modelInfo[m] || {};
+  // Never infer that a model is free from its name alone: only zero-priced catalog entries,
+  // explicitly free variants, and local inference are eligible for automatic fallback.
+  if (mi.free === true) return true;
+  if (/:free(?:$|\/)/i.test(s)) return true;
+  return /^(ollama|lmstudio|lm-studio|local)\//i.test(s);
 }
 function fmtCtx(n){
   if (!n) return '';
@@ -759,7 +760,12 @@ function loadModels(){
       return;
     }
     var list = j.models.filter(isFreeModel);
-    if (!list.length) list = j.models.slice();
+    if (!list.length){
+      sel.innerHTML = '<option value="">（無料と確認できるモデルがありません）</option>';
+      updateModelChip();
+      note('無料と確認できるモデルがありません。有料モデルには自動で切り替えません。OpenCode に無料プロバイダーを接続してから「モデル一覧を再読み込み」してください。', true);
+      return;
+    }
     function rankOf(m){ return modelTier(m, modelInfo[m]).rank; }
     function optLabel(m){
       var mi = modelInfo[m] || {};
@@ -1208,10 +1214,11 @@ function runChat(opts){
       var quotaErr = /quota|free.{0,24}(usage|tier|request|limit)|usage.{0,16}(limit|exceeded)|rate.?limit|too many requests|insufficient.*(credit|fund)|out of (credits|requests)|exhausted|無料枠|利用上限|残高不足|429|402/i.test(errText);
       if (quotaErr && !hasContent){
         quotaRecord(model, true);
-        var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
+        var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && isFreeModel(m) && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
         if (candidates.length){ quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip(); note((modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。'); }
+        else { quotaFallback = ''; }
       }
-      if (!quotaFallback){ var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = 'エラー: ' + errText; aiBody.appendChild(pe); if (hasContent) ok = true; }
+      if (!quotaFallback){ var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = (quotaErr ? 'このプロバイダーで利用可能な無料モデルがありません。有料モデルへは切り替えません。別の無料プロバイダーをOpenCodeに接続してください。\n' : 'エラー: ') + errText; aiBody.appendChild(pe); if (hasContent) ok = true; }
     }
   }).then(function(){
     clearInterval(tick);
