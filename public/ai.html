@@ -1231,6 +1231,12 @@ function runChat(opts){
         sessions = sessions.filter(function(x){ return x.id !== session.id; });
         if (current && current.id === session.id) current = null;
       }
+      if (!quotaFallback && !prompt.value.trim() && !pending.length){
+        prompt.value = text;
+        pending = images.slice();
+        renderAttachments();
+        autoResize();
+      }
     }
     session.ts = Date.now();
     saveStore();

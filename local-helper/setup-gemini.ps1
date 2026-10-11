@@ -11,6 +11,12 @@ function Convert-SecureStringToPlainText {
     }
 }
 
+function Write-JsonNoBom {
+    param([Parameter(Mandatory = $true)][object]$Value, [Parameter(Mandatory = $true)][string]$Path)
+    $json = $Value | ConvertTo-Json -Depth 100
+    [System.IO.File]::WriteAllText($Path, $json, [System.Text.UTF8Encoding]::new($false))
+}
+
 if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) {
     throw 'OpenCodeが見つかりません。OpenCodeをインストールし、opencodeコマンドが使える状態にしてから再実行してください。'
 }
@@ -63,7 +69,7 @@ $geminiProvider = [pscustomobject]@{
     }
 }
 $config.provider | Add-Member -NotePropertyName 'google-gemini' -NotePropertyValue $geminiProvider -Force
-$config | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $configPath -Encoding UTF8
+Write-JsonNoBom -Value $config -Path $configPath
 
 $env:DASSAI_FREE_MODELS = 'google-gemini/gemini-3.8-flash'
 if (-not $env:DASSAI_LOGIN_ID) {
@@ -84,9 +90,32 @@ $env:GEMINI_API_KEY = Convert-SecureStringToPlainText $secureKey
 if ([string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) { throw 'APIキーが空です。処理を中止しました。' }
 
 Write-Host ''
-Write-Host 'Gemini設定を保存しました。APIキーは設定ファイルに保存していません。'
-Write-Host "無料枠の自動切替対象: $env:DASSAI_FREE_MODELS"
+Write-Host 'OpenCodeのTUI/CLIでも無料枠切れ時にGeminiへ自動切替する場合、APIキーをWindowsのユーザー環境変数に保存する必要があります。'
+Write-Host '保存すると、同じWindowsアカウントで起動するアプリからこのキーを読み取れます（opencode.jsonにはキーを書きません）。'
+$saveForTui = Read-Host 'OpenCode TUI用にWindowsユーザー環境変数へ保存しますか？ [y/N]'
+if ($saveForTui -match '^(y|yes)$') {
+    [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $env:GEMINI_API_KEY, 'User')
+    $pluginDir = Join-Path $configDir 'plugins'
+    New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+    $pluginSource = Join-Path $PSScriptRoot 'dassai-free-fallback.js'
+    if (-not (Test-Path -LiteralPath $pluginSource)) {
+        throw "OpenCode自動切替プラグインが見つかりません: $pluginSource"
+    }
+    Copy-Item -LiteralPath $pluginSource -Destination (Join-Path $pluginDir 'dassai-free-fallback.js') -Force
+    Write-Host 'Gemini APIキーをWindowsユーザー環境変数へ保存し、OpenCodeの自動切替プラグインを導入しました。'
+    Write-Host '新しく起動したOpenCode TUIで有効になります。'
+}
+else {
+    Write-Host 'キーはこのPowerShellの実行中だけ使用します。OpenCode TUIへの自動切替は有効化せず、獺祭AIのWeb画面でのみGeminiを利用します。'
+}
+
+Write-Host ''
+Write-Host 'Gemini設定を保存しました。APIキーはOpenCode設定ファイルには書いていません。'
+Write-Host "Web画面の無料枠候補: $env:DASSAI_FREE_MODELS"
 Write-Host 'ローカルヘルパーを起動します。このウィンドウは開いたままにしてください。'
+# The browser UI already retries with its own free-model list; disable the native
+# plugin in this child process so both mechanisms do not retry the same prompt.
+$env:DASSAI_DISABLE_OPENCODE_FALLBACK = '1'
 Push-Location $PSScriptRoot
 try {
     & python (Join-Path $PSScriptRoot 'server.py')
@@ -96,4 +125,5 @@ finally {
     Remove-Item Env:\GEMINI_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:\DASSAI_FREE_MODELS -ErrorAction SilentlyContinue
     Remove-Item Env:\DASSAI_LOGIN_PASSWORD -ErrorAction SilentlyContinue
+    Remove-Item Env:\DASSAI_DISABLE_OPENCODE_FALLBACK -ErrorAction SilentlyContinue
 }
