@@ -51,6 +51,10 @@ svg.lucide{width:1em;height:1em;vertical-align:-0.14em;stroke-width:2}
 .md-desc{font-size:.76rem;color:var(--text-dim);line-height:1.5}
 .md-id{font-size:.68rem;color:var(--text-dim);font-family:var(--mono);margin-top:3px;word-break:break-all}
 .md-none{font-size:.74rem;color:var(--text-dim)}
+.quota-panel{margin:8px 0;padding:9px 10px;border:1px solid var(--border-color);border-radius:8px;background:var(--code-bg);font-size:.75rem;color:var(--text-dim);line-height:1.55}
+.quota-panel b{color:var(--text-color)}
+.quota-panel .quota-warn{color:var(--cost-color)}
+.quota-panel .quota-out{color:var(--danger);font-weight:700}
 .chk{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:.82rem;color:var(--text-dim);cursor:pointer}
 .chk input{width:auto;margin:0}
 .msg-actions{display:flex;gap:6px;margin-top:7px;opacity:.35;transition:opacity .15s}
@@ -173,6 +177,8 @@ html[data-theme="light"] .composer-inner{box-shadow:0 2px 12px rgba(40,60,90,.08
 #prompt:focus{border:0;box-shadow:none}
 .composer-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:4px}
 .composer-tools .l{display:flex;gap:8px;align-items:center;font-size:.72rem;color:var(--text-dim);font-family:var(--mono)}
+.composer-tools .quota-inline{font-size:.68rem;line-height:1.3;color:var(--text-dim);font-family:inherit;white-space:nowrap}
+.composer-tools .quota-inline strong{color:var(--cost-color);font-weight:700}
 .attachments{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 10px}
 .attach{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);background:var(--code-bg)}
 .attach img{width:100%;height:100%;object-fit:cover;display:block}
@@ -259,6 +265,7 @@ select option{color:var(--text-color);background:var(--card-bg)}
           <label for="model">使用するモデル（無料のみ）</label>
           <select id="model"><option value="">（読み込み中）</option></select>
           <div class="model-detail" id="modelDetail"></div>
+          <div class="quota-panel" id="quotaPanel" aria-live="polite">利用状況を読み込み中…</div>
           <button class="btn sm ghost" id="btnModels" type="button">モデル一覧を再読み込み</button>
           <label for="sys">システムプロンプト（任意）</label>
           <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
@@ -286,6 +293,7 @@ select option{color:var(--text-color);background:var(--card-bg)}
             <button class="ibtn" id="btnAttach" type="button" title="画像を添付" aria-label="画像を添付"><i data-lucide="image"></i></button>
             <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
             <span id="count">0 文字</span>
+            <span class="quota-inline" id="quotaInline" title="プロバイダー側の実際の残量は、この画面からは取得できません">無料枠あと <strong>未取得</strong></span>
           </div>
           <div class="l">
             <button class="stop" id="btnStopChat" type="button" disabled><i data-lucide="square"></i> 停止</button>
@@ -321,6 +329,7 @@ var ctrl = null;        // 中断用 AbortController
 var pending = [];       // 添付予定の画像 [{mime,url,name}]
 var visionSet = {};     // 画像対応モデル id -> true
 var modelInfo = {};     // モデル id -> {name, free, reasoning, vision, context, ...}
+var quotaState = {};    // APIの実残量ではなく、このブラウザーでの成功回数と枠切れ検出
 var pollTimer = null;
 var running = false;
 
@@ -700,12 +709,40 @@ function renderModelDetail(v, mi){
     '<div class="md-id">' + esc(mi.name || v) + '  ' + esc(v) + '</div>';
   refreshIcons();
 }
+function loadQuotaState(){
+  try { quotaState = JSON.parse(localStorage.getItem('dassai_model_quota_v1') || '{}') || {}; } catch(e) { quotaState = {}; }
+  if (!quotaState || typeof quotaState !== 'object') quotaState = {};
+}
+function saveQuotaState(){ try { localStorage.setItem('dassai_model_quota_v1', JSON.stringify(quotaState)); } catch(e) {} }
+function quotaMonth(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function quotaRecord(model, exhausted){
+  var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
+  if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
+  if (exhausted){ q.exhausted = true; q.detectedAt = Date.now(); } else { q.success++; q.exhausted = false; q.detectedAt = 0; }
+  quotaState[model] = q; saveQuotaState(); renderQuotaPanel(model);
+}
+function isQuotaBlocked(model){ var q = quotaState[model] || {}; return !!(q.exhausted && Date.now() - (q.detectedAt || 0) < 60*60*1000); }
+function renderQuotaPanel(model){
+  var box = $('#quotaPanel'); if (!box) return;
+  var q = quotaState[model] || {month:quotaMonth(),success:0,exhausted:false};
+  if (q.month !== quotaMonth()) q = {month:quotaMonth(),success:0,exhausted:false};
+  var inline = $('#quotaInline');
+  if (inline){
+    var state = isQuotaBlocked(model) ? '上限到達' : '未取得';
+    inline.innerHTML = '無料枠あと <strong>' + state + '</strong> <span>· 今月 ' + q.success + '回利用</span>';
+    inline.title = isQuotaBlocked(model) ? '利用上限を検出したため別モデルへ切り替えます。1時間後に再確認します。' : 'プロバイダーが残量を公開していないため正確な残り回数は不明です。今月の成功回数を併記しています。';
+  }
+  box.innerHTML = '<b>この端末での今月の成功回数：</b>' + q.success + '回' +
+    (isQuotaBlocked(model) ? '<br><span class="quota-out">枠切れを検出・1時間は自動切替候補から除外中</span>' : '<br><span class="quota-warn">プロバイダーの実際の残量・上限は取得できないため、残り回数は表示できません。</span>') +
+    '<br><span>回数はこのブラウザー内の目安です。別端末・別ブラウザーとは共有されません。</span>';
+}
 function updateModelChip(){
   var c = $('#modelChip');
   var v = $('#model') ? $('#model').value : '';
   var mi = modelInfo[v] || null;
   if (c) c.innerHTML = esc((mi && mi.name) || v || 'モデル未選択') + (visionSet[v] ? ' ' + icon('image') : '');
   renderModelDetail(v, mi);
+  renderQuotaPanel(v);
   refreshIcons();
 }
 function loadModels(){
@@ -726,6 +763,8 @@ function loadModels(){
     function rankOf(m){ return modelTier(m, modelInfo[m]).rank; }
     function optLabel(m){
       var mi = modelInfo[m] || {};
+      var q = quotaState[m] || {};
+      if (isQuotaBlocked(m)) return '⛔ 枠切れ検出 — ' + (mi.name || m);
       var t = modelTier(m, mi);
       var flags = [];
       if (mi.free) flags.push('無料');
@@ -1079,6 +1118,7 @@ function runChat(opts){
   var started = Date.now();
   var tick = setInterval(function(){ live.textContent = ((Date.now() - started) / 1000).toFixed(1) + '秒'; }, 250);
   var usage = null;
+  var quotaFallback = null;
 
   chatBusy = true; setChatUi();
   ctrl = new AbortController();
@@ -1163,13 +1203,19 @@ function runChat(opts){
       var p = document.createElement('p'); p.className = 'err'; p.textContent = 'ヘルパーに接続できません（server.py を確認してください）';
       aiBody.appendChild(p);
     } else {
-      var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = 'エラー: ' + (err.message || String(err));
-      aiBody.appendChild(pe);
-      if (hasContent) ok = true;
+      var errText = err.message || String(err);
+      var quotaErr = /quota|rate.?limit|insufficient.*(credit|fund)|out of (credits|requests)|無料枠|利用上限|残高不足|429|402/i.test(errText);
+      if (quotaErr && !hasContent){
+        quotaRecord(model, true);
+        var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
+        if (candidates.length){ quotaFallback = candidates[0]; $('#model').value = quotaFallback; updateModelChip(); note((modelInfo[model] && modelInfo[model].name || model) + ' の利用上限を検出したため、' + (modelInfo[quotaFallback] && modelInfo[quotaFallback].name || quotaFallback) + ' に切り替えて再試行します。'); }
+      }
+      if (!quotaFallback){ var pe = document.createElement('p'); pe.className = 'err'; pe.textContent = 'エラー: ' + errText; aiBody.appendChild(pe); if (hasContent) ok = true; }
     }
   }).then(function(){
     clearInterval(tick);
     if (ok){
+      quotaRecord(model, false);
       session.shown.push({ role: 'ai', text: acc, meta: { secs: (Date.now() - started) / 1000, usage: usage } });
     } else {
       var j = session.shown.lastIndexOf(userShown); if (j >= 0) session.shown.splice(j, 1);
@@ -1184,6 +1230,7 @@ function runChat(opts){
     renderSessions();
     chatBusy = false; ctrl = null;
     setChatUi();
+    if (quotaFallback){ var ri = session.shown.lastIndexOf(userShown); if (ri >= 0) session.shown.splice(ri,1); if (!session.shown.length){ sessions = sessions.filter(function(x){return x.id !== session.id;}); if (current && current.id === session.id) current = null; } saveStore(); renderSessions(); runChat(opts); return; }
     scrollLog();
     notifyDone(ok);
     prompt.focus();
@@ -1227,6 +1274,7 @@ document.addEventListener('keydown', function(e){
 
 /* ---------- 起動 ---------- */
 function boot(){
+  loadQuotaState();
   loadStore();
   migrateLegacy();
   /* まず保存済みの履歴を描画して表示する（ログインの有無に関わらず消さない） */
