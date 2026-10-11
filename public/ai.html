@@ -138,6 +138,10 @@ code.inline{background:var(--code);border:1px solid var(--border);border-radius:
     <label for="sys">システムプロンプト（任意）</label>
     <textarea id="sys" placeholder="例: 日本語で簡潔に答えてください。"></textarea>
     <button class="btn sm ghost" id="btnNew" type="button" style="margin-top:auto">新しいチャット</button>
+    <button class="btn sm ghost" id="btnStopChat" type="button">チャット停止</button>
+    <button class="btn sm ghost" id="btnSave" type="button">チャットを保存</button>
+    <h3>HISTORY</h3>
+    <div id="history" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto"></div>
     <button class="btn sm danger" id="btnClear" type="button">履歴を消去</button>
     <div class="hint">「起動」で opencode サーバを開始します。作業ディレクトリを変えるときは入力してから「起動」を押し直してください。</div>
   </aside>
@@ -169,13 +173,14 @@ var TOKEN_KEY = 'dassai_ai_token';
 var $ = function(s){ return document.querySelector(s); };
 
 var token = sessionStorage.getItem(TOKEN_KEY) || '';
-var STORE_KEY = 'dassai_chat_v1';
-var shown = [];         // 表示用履歴 {role,text}（localStorage に保存）
-var chatBusy = false;   // 生成中
-var opBusy = false;     // 起動・終了中
-var ctrl = null;        // 中断用 AbortController
-var pollTimer = null;
-var running = false;
+  var STORE_KEY = 'dassai_chat_v1';
+  var HISTORY_KEY = 'dassai_chat_history_v1';
+  var shown = [];         // 表示用履歴 {role,text}（localStorage に保存）
+  var chatBusy = false;   // 生成中
+  var opBusy = false;     // 起動・終了中
+  var ctrl = null;        // 中断用 AbortController
+  var pollTimer = null;
+  var running = false;
 
 /* ---------- 表示ユーティリティ ---------- */
 function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -262,14 +267,15 @@ function showGate(msg){
   $('#gateErr').textContent = msg || '';
   setTimeout(function(){ $('#gid').focus(); }, 0);
 }
-function showApp(){
-  $('#gate').hidden = true;
-  $('#app').hidden = false;
-  if (!$('#log').childElementCount) restoreChat();
-  startPolling();
-  loadModels();
-  $('#prompt').focus();
-}
+  function showApp(){
+    $('#gate').hidden = true;
+    $('#app').hidden = false;
+    if (!$('#log').childElementCount) restoreChat();
+    startPolling();
+    loadModels();
+    renderHistory();
+    $('#prompt').focus();
+  }
 function expireSession(msg){
   sessionStorage.removeItem(TOKEN_KEY);
   token = '';
@@ -287,6 +293,7 @@ $('#gateForm').addEventListener('submit', function(e){
       $('#gpw').value = '';
       if (!restoreChat()) note('ログインしました。プロンプトを入力できます。');
       showApp();
+      renderHistory();
     })
     .catch(function(err){ $('#gateErr').textContent = err.message; });
 });
@@ -326,12 +333,12 @@ function controlServer(path, label, body){
   api(path, { method: 'POST', headers: body ? {'Content-Type': 'application/json'} : {}, body: body ? JSON.stringify(body) : undefined })
     .then(function(j){ note(j.message || '完了'); })
     .catch(function(err){ note('エラー: ' + err.message, true); })
-    .then(function(){
-      opBusy = false;
-      setCtlButtons();
-      return refreshStatus();
-    })
-    .then(function(){ loadModels(); });
+      .then(function(){
+        opBusy = false;
+        setCtlButtons();
+        return refreshStatus();
+      })
+      .then(function(){ loadModels(); renderHistory(); });
 }
 $('#btnStart').addEventListener('click', function(){
   controlServer('/start', '起動中…', { directory: $('#dir').value.trim() });
@@ -340,32 +347,42 @@ $('#btnStop').addEventListener('click', function(){
   if (chatBusy && ctrl) ctrl.abort();
   controlServer('/stop', '終了中…');
 });
-$('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); });
+  $('#btnRefresh').addEventListener('click', function(){ refreshStatus(); loadModels(); renderHistory(); });
 
-function startPolling(){ stopPolling(); refreshStatus(); pollTimer = setInterval(refreshStatus, 5000); }
-function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+  function startPolling(){ stopPolling(); refreshStatus(); renderHistory(); pollTimer = setInterval(function(){ refreshStatus(); renderHistory(); }, 5000); }
+  function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
-/* ---------- モデル一覧 ---------- */
-function loadModels(){
-  var sel = $('#model');
-  var keep = sel.value;
-  return api('/models').then(function(j){
-    sel.innerHTML = '';
-    if (!j.models.length){
-      sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
-      return;
-    }
-    j.models.forEach(function(m){
-      var o = document.createElement('option');
-      o.value = m; o.textContent = m; sel.appendChild(o);
+  /* ---------- モデル一覧 ---------- */
+  function isFreeModel(m){
+    var s = String(m).toLowerCase();
+    var paid = ['pro','enterprise','plus','ultra','max','team','turbo','bedrock','vertex','-128k','-200k','gpt-4.1','gpt-5','claude-4','claude-sonnet-4','claude-opus','o3-','o4-','gemini-2.5-pro','gemini-pro-2.5'];
+    for (var i=0;i<paid.length;i++) if (s.indexOf(paid[i])>=0) return false;
+    var freeHints = ['free','local','community','qwen','llama','gemma','deepseek','mistral','phi','hermes','smollm','yi','moonshot','cogito','granite','llava','codellama'];
+    for (var j=0;j<freeHints.length;j++) if (s.indexOf(freeHints[j])>=0) return true;
+    return true;
+  }
+  function loadModels(){
+    var sel = $('#model');
+    var keep = sel.value;
+    return api('/models').then(function(j){
+      sel.innerHTML = '';
+      if (!j.models.length){
+        sel.innerHTML = '<option value="">（モデルなし: opencode の認証を確認）</option>';
+        return;
+      }
+      var list = j.models.filter(isFreeModel);
+      if (!list.length) list = j.models.slice();
+      list.forEach(function(m){
+        var o = document.createElement('option');
+        o.value = m; o.textContent = m; sel.appendChild(o);
+      });
+      if (keep && list.indexOf(keep) >= 0) sel.value = keep;
+      else if (j.default && list.indexOf(j.default) >= 0) sel.value = j.default;
+    }).catch(function(err){
+      if (err.status === 401) return;
+      sel.innerHTML = '<option value="">（opencode 停止中・起動してください）</option>';
     });
-    if (keep && j.models.indexOf(keep) >= 0) sel.value = keep;
-    else if (j.default && j.models.indexOf(j.default) >= 0) sel.value = j.default;
-  }).catch(function(err){
-    if (err.status === 401) return;
-    sel.innerHTML = '<option value="">（opencode 停止中・起動してください）</option>';
-  });
-}
+  }
 $('#btnModels').addEventListener('click', loadModels);
 
 /* ---------- 入力欄 ---------- */
@@ -471,6 +488,7 @@ function send(){
       var j = shown.lastIndexOf(userShown); if (j >= 0) shown.splice(j, 1);
     }
     saveChat();
+    renderHistory();
     chatBusy = false; ctrl = null;
     setChatUi();
     scrollLog();
@@ -478,30 +496,110 @@ function send(){
   });
 }
 $('#btnSend').addEventListener('click', send);
-$('#btnClear').addEventListener('click', function(){
-  if (chatBusy) return;
-  if (!confirm('保存されているチャット履歴をすべて消去します。よろしいですか？')) return;
-  api('/new', { method: 'POST' }).catch(function(){});
-  clearChat();
+  $('#btnSave').addEventListener('click', function(){
+    if (shown.length === 0){
+      note('保存するチャットがありません。', true);
+      return;
+    }
+    var name = prompt('チャット名を入力してください（空なら日時を使用）');
+    saveToHistory(name || ('chat_' + new Date().toISOString().replace(/[:.]/g,'-')));
+    renderHistory();
+    note('チャットを履歴に保存しました。');
+  });
+  $('#history').addEventListener('click', function(e){
+    var b = e.target.closest('[data-load]');
+    if (b){
+      if (chatBusy) return;
+      var idx = Number(b.getAttribute('data-load'));
+      loadFromHistory(idx);
+      return;
+    }
+    var d = e.target.closest('[data-del]');
+    if (d){
+      var di = Number(d.getAttribute('data-del'));
+      deleteFromHistory(di);
+    }
+  });
+  $('#btnClear').addEventListener('click', function(){
+    if (chatBusy) return;
+    if (!confirm('表示中のチャット履歴を消去します（保存済み履歴は残ります）。よろしいですか？')) return;
+    api('/new', { method: 'POST' }).catch(function(){});
+    clearChat();
+  renderHistory();
   note('履歴を消去しました。');
 });
 $('#btnAbort').addEventListener('click', function(){ if (ctrl) ctrl.abort(); });
 
-$('#btnNew').addEventListener('click', function(){
-  if (chatBusy) return;
-  api('/new', { method: 'POST' }).catch(function(){});
-  clearChat();
-  note('新しいチャットを開始しました。');
-});
+  $('#btnStopChat').addEventListener('click', function(){
+    if (ctrl) ctrl.abort();
+    chatBusy = false;
+    setChatUi();
+    note('チャットを停止しました。');
+    prompt.focus();
+  });
+  $('#btnNew').addEventListener('click', function(){
+    if (chatBusy) return;
+    api('/new', { method: 'POST' }).catch(function(){});
+    clearChat();
+    note('新しいチャットを開始しました。');
+  });
 
 /* ---------- 履歴の保存・復元（localStorage） ---------- */
-function saveChat(){
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 2, shown: shown, sys: $('#sys').value }));
-  } catch (e) {
-    note('履歴の保存に失敗しました（容量超過の可能性）。古いチャットを消去してください。', true);
+  function getHistory(){
+    var raw = null;
+    try { raw = localStorage.getItem(HISTORY_KEY); } catch (e) { raw = null; }
+    if (!raw) return [];
+    try { return JSON.parse(raw) || []; } catch (e) { return []; }
   }
-}
+  function saveHistory(list){
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+  function saveToHistory(name){
+    var h = getHistory();
+    h.push({ name: name, ts: Date.now(), shown: shown, sys: $('#sys').value });
+    saveHistory(h);
+  }
+  function loadFromHistory(idx){
+    var h = getHistory();
+    if (!h[idx]) return;
+    var d = h[idx];
+    shown = Array.isArray(d.shown) ? d.shown : [];
+    if (typeof d.sys === 'string') $('#sys').value = d.sys;
+    $('#log').innerHTML = '';
+    shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
+    saveChat();
+    scrollLog();
+    note('「' + d.name + '」を読み込みました。');
+  }
+  function deleteFromHistory(idx){
+    var h = getHistory();
+    h.splice(idx,1);
+    saveHistory(h);
+    renderHistory();
+  }
+  function renderHistory(){
+    var h = getHistory();
+    var div = $('#history');
+    if (!div) return;
+    if (h.length === 0){
+      div.innerHTML = '<div style="color:var(--muted);font-size:.7rem">保存されたチャットはありません</div>';
+      return;
+    }
+    div.innerHTML = h.slice(-10).reverse().map(function(item, i){
+      var realIdx = h.length - 1 - i;
+      var date = new Date(item.ts).toLocaleString('ja-JP');
+      return '<div style="display:flex;flex-direction:column;gap:2px;border:1px solid var(--border);border-radius:6px;padding:4px 6px">' +
+        '<button class="btn sm ghost" style="text-align:left" data-load="' + realIdx + '">' + esc(item.name) + '</button>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.65rem;color:var(--muted)">' + date + '</span><button class="btn sm" data-del="' + realIdx + '" style="background:#8b2a2a">削除</button></div></div>';
+    }).join('');
+  }
+  function saveChat(){
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 2, shown: shown, sys: $('#sys').value }));
+    } catch (e) {
+      note('履歴の保存に失敗しました（容量超過の可能性）。古いチャットを消去してください。', true);
+    }
+  }
 function restoreChat(){
   var raw = null;
   try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
@@ -515,17 +613,18 @@ function restoreChat(){
   shown.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.text || ''); });
   return shown.length > 0;
 }
-function clearChat(){
-  shown = [];
-  $('#log').innerHTML = '';
-  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-}
-$('#sys').addEventListener('input', saveChat);
+  function clearChat(){
+    shown = [];
+    $('#log').innerHTML = '';
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+    renderHistory();
+  }
+  $('#sys').addEventListener('input', function(){ saveChat(); renderHistory(); });
 
 /* ---------- 起動 ---------- */
 function boot(){
   if (!token){ showGate(''); return; }
-  api('/me').then(function(){ showApp(); }).catch(function(err){
+  api('/me').then(function(){ showApp(); renderHistory(); }).catch(function(err){
     if (err.status === 401){ showGate('ログインが必要です。'); return; }
     showGate(err.message);
   });
