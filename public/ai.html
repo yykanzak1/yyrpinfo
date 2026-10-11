@@ -1204,7 +1204,8 @@ function runChat(opts){
       aiBody.appendChild(p);
     } else {
       var errText = err.message || String(err);
-      var quotaErr = /quota|rate.?limit|insufficient.*(credit|fund)|out of (credits|requests)|無料枠|利用上限|残高不足|429|402/i.test(errText);
+      // OpenCode/provider error names are often camelCase or snake_case (e.g. FreeUsageLimitError).
+      var quotaErr = /quota|free.{0,24}(usage|tier|request|limit)|usage.{0,16}(limit|exceeded)|rate.?limit|too many requests|insufficient.*(credit|fund)|out of (credits|requests)|exhausted|無料枠|利用上限|残高不足|429|402/i.test(errText);
       if (quotaErr && !hasContent){
         quotaRecord(model, true);
         var candidates = Array.prototype.slice.call($('#model').options).map(function(o){return o.value;}).filter(function(m){return m && m !== model && !isQuotaBlocked(m) && (!images.length || visionSet[m]);});
