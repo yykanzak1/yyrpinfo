@@ -738,6 +738,14 @@ def main():
     srv = ThreadingHTTPServer((HELPER_HOST, HELPER_PORT), Handler)
     print("獺祭 OpenCode ヘルパー起動: http://%s:%d  （停止は Ctrl+C）" % (HELPER_HOST, HELPER_PORT))
     print("ログインID: %s" % LOGIN_ID)
+    if os.environ.get("DASSAI_AUTO_START_OPENCODE", "").strip().lower() in ("1", "true", "yes"):
+        def start_opencode_in_background():
+            try:
+                result = do_start()
+                print("[auto-start] %s" % result.get("message", "OpenCode自動起動処理が完了しました"), flush=True)
+            except Exception as exc:
+                print("[auto-start] OpenCode自動起動に失敗しました: %s" % exc, flush=True)
+        threading.Thread(target=start_opencode_in_background, name="OpenCodeAutoStart", daemon=True).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

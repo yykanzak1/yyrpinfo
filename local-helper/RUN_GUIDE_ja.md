@@ -1,6 +1,6 @@
 # 獺祭 AI コンソール / OpenCode 操作ガイド
 
-`local-helper/server.py` が、ローカルの **opencode**（コードエージェント）を操作する中継役になりました。
+`local-helper/server.py` は、ブラウザーからローカルの **opencode**（コードエージェント）を操作する中継役です。AI画面にPC上の作業フォルダーを編集・実行させる構成ではHelperが必要です。ログオン時に自動起動する設定を一度行えば、毎回手動でHelperを設定・起動する必要はありません。
 以前の Ollama 版と違い、モデルはローカルではなく opencode が接続しているプロバイダ（OpenCode Zen など）を使います。
 
 ## ファイル構成
@@ -8,8 +8,10 @@
 - `ai.html`（AIコンソール）: ヘルパーでログインしていないと表示されません
 - `server.py`（ヘルパー）: opencode サーバ(`opencode serve`)の起動・終了・チャット中継と、ログイン認証を担当します
 
-## 1. ログインID・パスワードの設定
-パスワードはコードに書かず、起動時の環境変数で指定します。未設定の場合はログインできません。
+## 1. ログインID・パスワード
+Windowsの一度だけセットアップでは、AI画面のログインID・パスワードを入力し、Helperがログオン時に使えるよう現在のWindowsユーザー専用DPAPIで暗号化保存します。設定したログインIDとパスワードは、ブラウザーでAI画面にサインインするときにも使います。
+
+**手動運用する場合のみ**、パスワードはコードへ書かず、起動時の環境変数で指定します。未設定の場合はログインできません。
 
 - Windows PowerShell:
   ```
@@ -24,7 +26,7 @@
   python3 server.py
   ```
 
-ID は既定で `dassai` ですが、このPCでは環境変数 `DASSAI_LOGIN_ID=kanzaki` が既に設定されているため `kanzaki` でログインします。
+IDの既定値は `dassai` です。Windowsのセットアップでは、AI画面に設定済みのログインIDを入力してください。
 
 ## 2. opencode の確認
 - `opencode` コマンドが使えることを確認してください（`opencode --version`）。
@@ -34,21 +36,27 @@ ID は既定で `dassai` ですが、このPCでは環境変数 `DASSAI_LOGIN_ID
 ## 2-A. Gemini APIを無料枠のエージェント候補に加える
 Gemini APIはツール呼び出しに対応しているため、OpenCodeのファイル編集・コマンド実行エージェントとして利用できます。モデル推論はGoogle側で行われるので、ローカルOllamaのようにゲーム中のGPUを使いません。Gemini API無料枠はモデル・アカウントごとに制限があり、無料枠の入力内容はGoogleの製品改善に使用される場合があります。秘密情報を含むコードは送らないでください。
 
-**Windowsの簡易手順:**
-1. [Google AI Studio](https://aistudio.google.com/apikey)でAPIキーを作ります。キーはチャットに貼らず、Google AI Studioの無料枠だけを使い、課金を有効にしないでください。
-2. 既に起動しているローカルヘルパーのPowerShell画面で `Ctrl+C` を押して停止します。
-3. `local-helper` フォルダで次を実行します。
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\setup-gemini.ps1
+**Windowsの一度だけのセットアップ:**
+1. [Google AI Studio](https://aistudio.google.com/apikey)でAPIキーを用意します。キーはチャットに貼らず、Google AI Studioの無料枠だけを使い、課金を有効にしないでください。
+2. 作業中のAI生成があれば保存し、既に起動しているOpenCodeサーバーはAI画面の「設定・サーバー」から停止します。Helperのウィンドウがあれば `Ctrl+C` で停止します。
+3. **コマンドプロンプト（CMD）**で、次をまとめて貼り付けて実行します。
+   ```bat
+   cd /d "%USERPROFILE%\yyrpinfo"
+   git pull --ff-only
+   cd /d "%USERPROFILE%\yyrpinfo\local-helper"
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".\setup-gemini.ps1"
    ```
-4. スクリプトがOpenCode設定をバックアップしてGeminiを追加し、APIキーを伏せ字入力で受け付けます。OpenCode TUIでも自動切替を使う場合は、表示される確認で `y` を選びます。APIキーはOpenCode設定ファイルではなくWindowsのユーザー環境変数に保存され、同じユーザーで起動するアプリから読み取れます。保存しない場合、Geminiはこのヘルパーの実行中だけ利用でき、TUIの自動切替は導入されません。未設定なら獺祭AI画面のログインID・パスワードも入力します。ヘルパーが起動したらPowerShellウィンドウは開いたままにします。
-5. OpenCode TUI/CLIで使う場合は、既存のOpenCodeを終了してから**新しいターミナル**で起動します。無料枠・429・残高不足を検出すると、同じセッションのメッセージをGemini 3.8 Flashへ再送します。現在設定している無料の代替先はGeminiだけです。ほかのAIも使うには、無料枠で課金されないことを確認したプロバイダーを接続してから、プラグインの候補モデルを追加してください。
-6. AI画面で「モデル一覧を再読み込み」を押します。Web画面側もOpenCodeプラグインとは別に、接続済みで無料許可された候補へ切り替えます（競合を避けるため、ヘルパー経由のOpenCodeではプラグイン切替を無効にします）。
+4. 初回だけ獺祭AIのログインID・パスワード、Google AI StudioのAPIキー、既定の作業フォルダーを入力します。キーとパスワードはWindowsユーザー専用DPAPIで暗号化し、`%APPDATA%\DASSAI-AI\helper-secrets.json` に保存します。キーはGemini互換用の `GEMINI_API_KEY` とGoogle標準プロバイダー（`google/...`）用の `GOOGLE_GENERATIVE_AI_API_KEY` の両方にHelperの実行中だけ渡されます。キーは `opencode.json` に平文保存しません。
+5. スクリプトがWindowsタスクスケジューラへログオン時の自動起動を登録し、HelperとOpenCodeを今すぐバックグラウンド起動します。以後は**Windowsにサインインするだけ**で起動します。ターミナルを開いたままにする必要はありません。Helperログは `%LOCALAPPDATA%\DASSAI-AI\helper.log`（エラーは `helper-error.log`）、OpenCodeログは `local-helper\opencode_serve.log` にあります。
+6. AI画面には必要に応じてログインしてください。ブラウザーの認証はセキュリティのため残ります。モデル一覧を再読み込みすると、無料枠切れ時は接続済みの無料候補へ切り替わります。現在セットアップされる無料の代替先はGemini 3.8 Flashです。無料枠を使い切った場合も自動的に有料へは切り替えません。
+7. OpenCode TUIでも無料枠自動切替を使う場合は、初回セットアップの確認で `y` を選びます。無料枠・429・残高不足を検出すると、同じセッションのメッセージをGemini 3.8 Flashへ再送します。
+
+保存したキーを変更する場合は、AI画面でOpenCodeとHelperを停止した後、`setup-gemini.ps1 -ResetCredentials` を実行します。Windowsの自動起動を解除する場合は、タスクスケジューラでタスク `DASSAI AI Helper` を無効化または削除してください。
 
 無料枠を超えると拒否され、課金されないアカウントだけを追加してください。Gemini無料枠では入力内容がGoogleの製品改善に使われる場合があるため、秘密情報を含むコードは送らないでください。
 
 ## 3. 起動手順
-1. 上記の環境変数を設定して `server.py` を起動します（このウィンドウは閉じないでください）。
+1. 初回セットアップ後は、WindowsへサインインするとHelperとOpenCodeが自動起動します。PCの電源投入後、Windowsへサインインする前に起動する設定ではありません。
 2. 別のターミナルで `index.html` と `ai.html` があるフォルダに移動し、次を実行します。
    ```
    python -m http.server 8000

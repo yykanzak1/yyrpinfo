@@ -1,62 +1,64 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param(
+    [switch]$ResetCredentials,
+    [string]$WorkingDirectory
+)
+$ErrorActionPreference = 'Stop'
 
 function Convert-SecureStringToPlainText {
     param([System.Security.SecureString]$Value)
     $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Value)
-    try {
-        return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-    }
-    finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
-    }
+    try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
 }
-
 function Write-JsonNoBom {
     param([Parameter(Mandatory = $true)][object]$Value, [Parameter(Mandatory = $true)][string]$Path)
-    $json = $Value | ConvertTo-Json -Depth 100
+    $json = $Value | ConvertTo-Json -Depth 10
     [System.IO.File]::WriteAllText($Path, $json, [System.Text.UTF8Encoding]::new($false))
 }
 
 if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) {
-    throw 'OpenCodeが見つかりません。OpenCodeをインストールし、opencodeコマンドが使える状態にしてから再実行してください。'
+    throw 'OpenCodeが見つかりません。OpenCodeをインストールし、opencodeコマンドが使える状態にしてから実行してください。'
 }
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    throw 'Pythonが見つかりません。Pythonをインストールし、pythonコマンドが使える状態にしてから再実行してください。'
+    throw 'Pythonが見つかりません。Pythonをインストールし、pythonコマンドが使える状態にしてから実行してください。'
+}
+if (-not (Get-Command Register-ScheduledTask -ErrorAction SilentlyContinue)) {
+    throw 'Windowsタスクスケジューラを利用できません。Windows PowerShellから実行してください。'
 }
 
 $helperPort = 8765
 if ($env:HELPER_PORT) { $helperPort = [int]$env:HELPER_PORT }
-$listener = Get-NetTCPConnection -LocalPort $helperPort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($listener) {
-    throw "ポート $helperPort を既存のヘルパーが使用中です。既存のヘルパーを起動したPowerShellウィンドウで Ctrl+C を押して停止し、このスクリプトを再実行してください。"
+$helperListener = Get-NetTCPConnection -LocalPort $helperPort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($helperListener) {
+    throw "Helperのポート $helperPort が使用中です。AI画面でサーバーを停止するか、稼働中Helperのウィンドウで Ctrl+C を押してから再実行してください。"
+}
+$opencodePort = 4096
+if ($env:OPENCODE_API) {
+    try { $apiUri = [Uri]$env:OPENCODE_API; if (-not $apiUri.IsDefaultPort) { $opencodePort = $apiUri.Port } }
+    catch { throw 'OPENCODE_API のURLを解釈できません。値を確認してください。' }
+}
+$opencodeListener = Get-NetTCPConnection -LocalPort $opencodePort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($opencodeListener) {
+    throw "OpenCodeのポート $opencodePort が使用中です。稼働中のOpenCodeサーバーをAI画面の［設定・サーバー］から停止し、既存のOpenCode TUIも終了してから再実行してください。作業中の変更を先に保存してください。"
 }
 
 $configDir = Join-Path $env:USERPROFILE '.config\opencode'
 $configPath = Join-Path $configDir 'opencode.json'
 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-
-if (Test-Path $configPath) {
-    try {
-        $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    }
-    catch {
-        throw "既存のOpenCode設定を通常のJSONとして読み込めませんでした。ファイルは変更していません。手動設定について local-helper/RUN_GUIDE_ja.md を確認してください。設定ファイル: $configPath"
-    }
+if (Test-Path -LiteralPath $configPath) {
+    try { $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json }
+    catch { throw "既存のOpenCode設定をJSONとして読めませんでした。ファイルは変更していません: $configPath" }
     $backupPath = "$configPath.bak-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     Copy-Item -LiteralPath $configPath -Destination $backupPath
     Write-Host "既存設定のバックアップ: $backupPath"
 }
-else {
-    $config = [pscustomobject]@{}
-}
-
+else { $config = [pscustomobject]@{} }
 if (-not ($config.PSObject.Properties.Name -contains '$schema')) {
     $config | Add-Member -NotePropertyName '$schema' -NotePropertyValue 'https://opencode.ai/config.json'
 }
 if (-not ($config.PSObject.Properties.Name -contains 'provider') -or $null -eq $config.provider) {
     $config | Add-Member -NotePropertyName 'provider' -NotePropertyValue ([pscustomobject]@{}) -Force
 }
-
 $geminiProvider = [pscustomobject]@{
     npm = '@ai-sdk/openai-compatible'
     name = 'Google Gemini API (free tier)'
@@ -71,59 +73,114 @@ $geminiProvider = [pscustomobject]@{
 $config.provider | Add-Member -NotePropertyName 'google-gemini' -NotePropertyValue $geminiProvider -Force
 Write-JsonNoBom -Value $config -Path $configPath
 
-$env:DASSAI_FREE_MODELS = 'google-gemini/gemini-3.8-flash'
-if (-not $env:DASSAI_LOGIN_ID) {
-    $loginId = Read-Host '獺祭AIのログインID（空欄ならdassai）'
-    if ([string]::IsNullOrWhiteSpace($loginId)) { $loginId = 'dassai' }
-    $env:DASSAI_LOGIN_ID = $loginId
+$stateDir = Join-Path $env:APPDATA 'DASSAI-AI'
+$statePath = Join-Path $stateDir 'helper-secrets.json'
+New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+$savedState = $null
+$secureApiKey = $null
+$securePassword = $null
+$needNewCredentials = $ResetCredentials -or (-not (Test-Path -LiteralPath $statePath))
+
+if (-not $needNewCredentials) {
+    try {
+        $savedState = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $secureApiKey = ConvertTo-SecureString -String ([string]$savedState.GeminiApiKey) -ErrorAction Stop
+        $securePassword = ConvertTo-SecureString -String ([string]$savedState.LoginPassword) -ErrorAction Stop
+        if (-not $savedState.LoginId) { throw 'ログインIDがありません。' }
+        Write-Host '既存のDPAPI暗号化設定を再利用します。APIキーやパスワードの再入力は不要です。'
+    }
+    catch {
+        throw '保存済み設定をこのWindowsユーザーで復号できません。設定を残したままです。必要なら -ResetCredentials を付けて再設定してください。'
+    }
 }
-if (-not $env:DASSAI_LOGIN_PASSWORD) {
-    Write-Host '獺祭AI画面にログインするための任意のパスワードを入力してください。入力内容は保存されません。'
-    $securePassword = Read-Host '獺祭AI login password' -AsSecureString
-    $env:DASSAI_LOGIN_PASSWORD = Convert-SecureStringToPlainText $securePassword
-    if ([string]::IsNullOrWhiteSpace($env:DASSAI_LOGIN_PASSWORD)) { throw 'ログインパスワードが空です。処理を中止しました。' }
+else {
+    if (Test-Path -LiteralPath $statePath) {
+        Copy-Item -LiteralPath $statePath -Destination ($statePath + '.bak-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    }
+    $defaultLoginId = if ($env:DASSAI_LOGIN_ID) { $env:DASSAI_LOGIN_ID } else { 'dassai' }
+    $loginId = Read-Host "獺祭AIのログインID [$defaultLoginId]（同じIDを使うなら空欄）"
+    if ([string]::IsNullOrWhiteSpace($loginId)) { $loginId = $defaultLoginId }
+    $securePassword = Read-Host '獺祭AIのログインパスワード（入力は表示されません）' -AsSecureString
+    if ($securePassword.Length -eq 0) { throw 'ログインパスワードが空です。処理を中止しました。' }
+    $secureApiKey = Read-Host 'Google AI StudioのAPIキー（入力は表示されません）' -AsSecureString
+    if ($secureApiKey.Length -eq 0) { throw 'APIキーが空です。Google AI Studioのキーを入力してください。' }
+
+    $defaultWorkDir = Join-Path $env:USERPROFILE 'yyrpinfo'
+    if (-not (Test-Path -LiteralPath $defaultWorkDir)) { $defaultWorkDir = $env:USERPROFILE }
+    if ($WorkingDirectory) { $workDir = $WorkingDirectory }
+    else {
+        $workDirInput = Read-Host "OpenCodeの既定作業フォルダー [$defaultWorkDir]"
+        $workDir = if ([string]::IsNullOrWhiteSpace($workDirInput)) { $defaultWorkDir } else { $workDirInput }
+    }
+    if (-not (Test-Path -LiteralPath $workDir -PathType Container)) { throw "作業フォルダーが見つかりません: $workDir" }
+    $workDir = (Resolve-Path -LiteralPath $workDir).Path
+
+    Write-Host ''
+    Write-Host 'OpenCode TUIでも無料枠自動切替を使う場合だけ、APIキーをWindowsユーザー環境変数に保存します。'
+    $enableTui = (Read-Host 'OpenCode TUI用の追加設定も有効にしますか？ [y/N]') -match '^(y|yes)$'
+    $encryptedApiKey = ConvertFrom-SecureString -SecureString $secureApiKey
+    $encryptedPassword = ConvertFrom-SecureString -SecureString $securePassword
+    $savedState = [pscustomobject]@{
+        Version = 1
+        LoginId = $loginId
+        LoginPassword = $encryptedPassword
+        GeminiApiKey = $encryptedApiKey
+        WorkingDirectory = $workDir
+        EnableTuiFallback = [bool]$enableTui
+    }
+    Write-JsonNoBom -Value $savedState -Path $statePath
+    Write-Host 'キーとパスワードをWindowsユーザー専用のDPAPIで暗号化して保存しました。平文では保存していません。'
 }
 
-Write-Host 'Google AI Studioで作成したGemini APIキーを入力してください。入力内容は画面に表示されず、このPowerShellの実行中だけ使用します。'
-$secureKey = Read-Host 'Gemini API key' -AsSecureString
-$env:GEMINI_API_KEY = Convert-SecureStringToPlainText $secureKey
-if ([string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) { throw 'APIキーが空です。処理を中止しました。' }
+if ($WorkingDirectory) {
+    if (-not (Test-Path -LiteralPath $WorkingDirectory -PathType Container)) { throw "作業フォルダーが見つかりません: $WorkingDirectory" }
+    $savedState.WorkingDirectory = (Resolve-Path -LiteralPath $WorkingDirectory).Path
+    Write-JsonNoBom -Value $savedState -Path $statePath
+}
+if (-not (Test-Path -LiteralPath ([string]$savedState.WorkingDirectory) -PathType Container)) {
+    throw '保存済みの作業フォルダーがありません。-WorkingDirectory "C:\path\to\project" を指定してください。'
+}
 
-Write-Host ''
-Write-Host 'OpenCodeのTUI/CLIでも無料枠切れ時にGeminiへ自動切替する場合、APIキーをWindowsのユーザー環境変数に保存する必要があります。'
-Write-Host '保存すると、同じWindowsアカウントで起動するアプリからこのキーを読み取れます（opencode.jsonにはキーを書きません）。'
-$saveForTui = Read-Host 'OpenCode TUI用にWindowsユーザー環境変数へ保存しますか？ [y/N]'
-if ($saveForTui -match '^(y|yes)$') {
-    [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $env:GEMINI_API_KEY, 'User')
+if ([bool]$savedState.EnableTuiFallback) {
+    $plainApiKey = Convert-SecureStringToPlainText $secureApiKey
+    [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $plainApiKey, 'User')
+    [Environment]::SetEnvironmentVariable('GOOGLE_GENERATIVE_AI_API_KEY', $plainApiKey, 'User')
     $pluginDir = Join-Path $configDir 'plugins'
     New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
     $pluginSource = Join-Path $PSScriptRoot 'dassai-free-fallback.js'
-    if (-not (Test-Path -LiteralPath $pluginSource)) {
-        throw "OpenCode自動切替プラグインが見つかりません: $pluginSource"
-    }
+    if (-not (Test-Path -LiteralPath $pluginSource)) { throw "自動切替プラグインが見つかりません: $pluginSource" }
     Copy-Item -LiteralPath $pluginSource -Destination (Join-Path $pluginDir 'dassai-free-fallback.js') -Force
-    Write-Host 'Gemini APIキーをWindowsユーザー環境変数へ保存し、OpenCodeの自動切替プラグインを導入しました。'
-    Write-Host '新しく起動したOpenCode TUIで有効になります。'
-}
-else {
-    Write-Host 'キーはこのPowerShellの実行中だけ使用します。OpenCode TUIへの自動切替は有効化せず、獺祭AIのWeb画面でのみGeminiを利用します。'
 }
 
-Write-Host ''
-Write-Host 'Gemini設定を保存しました。APIキーはOpenCode設定ファイルには書いていません。'
-Write-Host "Web画面の無料枠候補: $env:DASSAI_FREE_MODELS"
-Write-Host 'ローカルヘルパーを起動します。このウィンドウは開いたままにしてください。'
-# The browser UI already retries with its own free-model list; disable the native
-# plugin in this child process so both mechanisms do not retry the same prompt.
-$env:DASSAI_DISABLE_OPENCODE_FALLBACK = '1'
-Push-Location $PSScriptRoot
-try {
-    & python (Join-Path $PSScriptRoot 'server.py')
+$launcherPath = Join-Path $PSScriptRoot 'start-helper.ps1'
+if (-not (Test-Path -LiteralPath $launcherPath)) { throw "自動起動スクリプトが見つかりません: $launcherPath" }
+$taskName = 'DASSAI AI Helper'
+$userIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+$powerShellExe = Join-Path $PSHOME 'powershell.exe'
+$arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $launcherPath + '"'
+$action = New-ScheduledTaskAction -Execute $powerShellExe -Argument $arguments -WorkingDirectory $PSScriptRoot
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $userIdentity
+$principal = New-ScheduledTaskPrincipal -UserId $userIdentity -LogonType Interactive -RunLevel Limited
+$settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'Starts the local DASSAI AI helper and OpenCode after this Windows user signs in.' -Force | Out-Null
+Start-ScheduledTask -TaskName $taskName
+
+$ready = $false
+for ($i = 0; $i -lt 20; $i++) {
+    try {
+        $status = Invoke-RestMethod -Uri "http://127.0.0.1:$helperPort/status" -TimeoutSec 2
+        if ($status.helper) { $ready = $true; break }
+    }
+    catch { Start-Sleep -Seconds 1 }
 }
-finally {
-    Pop-Location
-    Remove-Item Env:\GEMINI_API_KEY -ErrorAction SilentlyContinue
-    Remove-Item Env:\DASSAI_FREE_MODELS -ErrorAction SilentlyContinue
-    Remove-Item Env:\DASSAI_LOGIN_PASSWORD -ErrorAction SilentlyContinue
-    Remove-Item Env:\DASSAI_DISABLE_OPENCODE_FALLBACK -ErrorAction SilentlyContinue
+if ($ready) {
+    Write-Host '設定完了: Helperを起動し、Windowsサインイン時の自動起動タスクも登録しました。'
+    Write-Host "既定の作業フォルダー: $($savedState.WorkingDirectory)"
+    Write-Host 'OpenCodeもバックグラウンドで自動起動します。次回以降はPCにサインインするだけです。'
 }
+else {
+    Write-Warning '自動起動タスクは登録しましたが、Helperの起動確認ができません。ログを確認してください。'
+}
+Write-Host "Helperログ: $(Join-Path $env:LOCALAPPDATA 'DASSAI-AI\helper.log')"
+Write-Host "OpenCodeログ: $(Join-Path $PSScriptRoot 'opencode_serve.log')"
+Write-Host 'AI画面のログインは引き続き必要です（セキュリティ保護のため）。'
