@@ -34,41 +34,17 @@ ID は既定で `dassai` ですが、このPCでは環境変数 `DASSAI_LOGIN_ID
 ## 2-A. Gemini APIを無料枠のエージェント候補に加える
 Gemini APIはツール呼び出しに対応しているため、OpenCodeのファイル編集・コマンド実行エージェントとして利用できます。モデル推論はGoogle側で行われるので、ローカルOllamaのようにゲーム中のGPUを使いません。Gemini API無料枠はモデル・アカウントごとに制限があり、無料枠の入力内容はGoogleの製品改善に使用される場合があります。秘密情報を含むコードは送らないでください。
 
-**Windowsの簡易手順:** 既に起動しているローカルヘルパーのPowerShell画面で `Ctrl+C` を押して停止し、`local-helper` フォルダで次を実行します。スクリプトが設定をバックアップし、APIキーは伏せ字で入力を受け付け、キーそのものは設定ファイルに保存しません。
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\setup-gemini.ps1
-```
-実行中にAI StudioのAPIキーと、未設定なら獺祭AI画面のログインID・パスワードを入力します。ウィンドウは閉じずにおきます。
-
-1. [Google AI Studio](https://aistudio.google.com/apikey)でAPIキーを作ります。**APIキーをチャットに貼らないでください。**
-2. OpenCodeのグローバル設定 `~/.config/opencode/opencode.json` に、既存の内容を消さず `provider` の設定を追加します（Windowsでは通常 `%USERPROFILE%\.config\opencode\opencode.json`）。
-   ```json
-   {
-     "$schema": "https://opencode.ai/config.json",
-     "provider": {
-       "google-gemini": {
-         "npm": "@ai-sdk/openai-compatible",
-         "name": "Google Gemini API",
-         "options": {
-           "baseURL": "https://generativelanguage.googleapis.com/v1beta/openai/",
-           "apiKey": "{env:GEMINI_API_KEY}"
-         },
-         "models": {
-           "gemini-3.8-flash": { "name": "Gemini 3.8 Flash" }
-         }
-       }
-     }
-   }
-   ```
-3. ヘルパーを起動するPowerShellウィンドウで、環境変数を設定してから `python server.py` を実行します。キーは自分のPCにだけ入力します。
+**Windowsの簡易手順:**
+1. [Google AI Studio](https://aistudio.google.com/apikey)でAPIキーを作ります。キーはチャットに貼らず、Google AI Studioの無料枠だけを使い、課金を有効にしないでください。
+2. 既に起動しているローカルヘルパーのPowerShell画面で `Ctrl+C` を押して停止します。
+3. `local-helper` フォルダで次を実行します。
    ```powershell
-   $env:GEMINI_API_KEY="（AI Studioで作成したキー）"
-   $env:DASSAI_FREE_MODELS="google-gemini/gemini-3.8-flash"
-   python server.py
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\setup-gemini.ps1
    ```
-4. OpenCodeを再起動し、AI画面の「モデル一覧を再読み込み」を押します。エージェントの無料枠上限エラーを検出すると、接続済みで無料許可された別モデルへ順番に切り替えます。
+4. スクリプトがOpenCode設定をバックアップしてGeminiを追加し、APIキーを伏せ字入力で受け付けます。キーは設定ファイルに保存しません。未設定なら獺祭AI画面のログインID・パスワードも入力します。ヘルパーが起動したらPowerShellウィンドウは開いたままにします。
+5. AI画面で「モデル一覧を再読み込み」を押します。無料枠の上限エラーを検出すると、接続済みで無料許可された次のモデルへ順番に切り替えます。
 
-`DASSAI_FREE_MODELS` へ登録するのは、無料枠超過時に課金されない（拒否される）ことを確認したアカウントだけにしてください。Google AI Studioの無料枠だけを使い、課金設定を有効にしていないことを確認してください。
+無料枠を超えると拒否され、課金されないアカウントだけを追加してください。Gemini無料枠では入力内容がGoogleの製品改善に使われる場合があるため、秘密情報を含むコードは送らないでください。
 
 ## 3. 起動手順
 1. 上記の環境変数を設定して `server.py` を起動します（このウィンドウは閉じないでください）。
@@ -100,7 +76,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\setup-gemini.ps1
 
 Windows PowerShellでの例（モデルIDは実際に表示される値へ置き換えます）:
 ```powershell
-$env:DASSAI_FREE_MODELS="google/gemini-3.8-flash,another-provider/model-id"
+$env:DASSAI_FREE_MODELS="google-gemini/gemini-3.8-flash,another-provider/model-id"
 python server.py
 ```
 この変数はヘルパー起動時に読み込まれるため、変更後は `server.py` を再起動してください。APIキーは `DASSAI_FREE_MODELS` に書かず、OpenCodeの `/connect` またはプロバイダーの認証設定へ登録します。
