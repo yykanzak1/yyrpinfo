@@ -860,26 +860,27 @@
         }
 
 
-        /* 換金所：品目を2列カードで表示し、縦スクロールを軽減 */
+        /* 換金所：2列のすっきりした一覧で、品名と価格を見比べやすく */
         .table-wrapper.exchange-price-wrapper { width: 100%; max-width: 760px !important; overflow: visible; }
         table.exchange-price-table { display: block; width: 100%; max-width: 100%; min-width: 0; border-collapse: separate; }
         table.exchange-price-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-        table.exchange-price-table tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-        table.exchange-price-table tbody tr { display: flex; min-width: 0; flex-direction: column; justify-content: space-between; padding: 9px 11px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--card-bg); }
-        table.exchange-price-table tbody td { display: block; min-width: 0; padding: 4px 0; border: 0; background: transparent; font-size: .86rem; }
-        table.exchange-price-table tbody td:first-child { display: flex; align-items: center; gap: 8px; min-width: 0; position: static; text-align: left; }
+        table.exchange-price-table tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+        table.exchange-price-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px; min-width: 0; padding: 9px 5px; border: 0; border-bottom: 1px solid var(--border-color); border-radius: 0; background: transparent; }
+        table.exchange-price-table tbody td { display: block; min-width: 0; padding: 0; border: 0; background: transparent; font-size: .82rem; }
+        table.exchange-price-table tbody td:first-child { display: flex; align-items: center; gap: 7px; position: static; text-align: left; }
         table.exchange-price-table .item-name-cell { gap: 7px; }
-        table.exchange-price-table .item-icon { width: 30px; height: 30px; flex-basis: 30px; }
+        table.exchange-price-table .item-icon { width: 28px; height: 28px; flex: 0 0 28px; }
         table.exchange-price-table .item-name-cell span { min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }
-        table.exchange-price-table tbody td.val-cost { padding-top: 6px; border-top: 1px solid var(--border-color); color: var(--cost-color); font-size: .83rem; text-align: right; font-weight: 850; font-variant-numeric: tabular-nums; }
-        table.exchange-price-table tbody td.val-cost::before { content: "単価"; float: left; color: var(--text-dim); font-size: .73rem; font-weight: 600; }
-        @media (max-width: 600px) {
+        table.exchange-price-table tbody td.val-cost { color: var(--cost-color); font-size: .78rem; text-align: right; font-weight: 850; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        table.exchange-price-table tbody td.val-cost::before { content: "単価 "; color: var(--text-dim); font-size: .68rem; font-weight: 600; }
+        @media (max-width: 420px) {
             .table-wrapper.exchange-price-wrapper { width: 100%; max-width: 100% !important; }
-            table.exchange-price-table tbody { gap: 7px; }
-            table.exchange-price-table tbody tr { padding: 8px; }
-            table.exchange-price-table tbody td { font-size: .78rem; }
-            table.exchange-price-table .item-icon { width: 26px; height: 26px; flex-basis: 26px; }
-            table.exchange-price-table tbody td.val-cost { font-size: .76rem; }
+            table.exchange-price-table tbody { column-gap: 10px; }
+            table.exchange-price-table tbody tr { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 8px 3px; }
+            table.exchange-price-table tbody td { font-size: .76rem; }
+            table.exchange-price-table .item-icon { width: 24px; height: 24px; flex-basis: 24px; }
+            table.exchange-price-table tbody td.val-cost { text-align: right; font-size: .74rem; }
+            table.exchange-price-table tbody td.val-cost::before { float: left; }
         }
 
         /* スマホ：タブを2段にして全メニューを常時表示 */
