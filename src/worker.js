@@ -127,7 +127,10 @@ export default {
 
     const session = await verify(env, getCookie(request, SESSION));
     if (path.startsWith('/assets/')) {
-      return session ? secure(await env.ASSETS.fetch(request)) : redirect('/');
+      if (!session) return redirect('/');
+      const response = secure(await env.ASSETS.fetch(request));
+      response.headers.set('Cache-Control', 'private, max-age=86400');
+      return response;
     }
     if (path === '/' || path === '/index.html') {
       return session ? secure(await asset(env, url, '/_app/index.html')) : loginPage(url, env);
