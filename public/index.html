@@ -868,14 +868,38 @@
         table.exchange-price-table tr.exchange-universal-row td { background: rgba(217, 167, 67, .12); font-weight: 800; }
         table.exchange-price-table tr.exchange-universal-row td:first-child { border-left: 4px solid #d9a743; }
         @media (max-width: 700px) {
-            .table-wrapper.exchange-price-wrapper { max-width: 100% !important; }
-            table.exchange-price-table { min-width: 0; font-size: .76rem; }
-            table.exchange-price-table th, table.exchange-price-table td { padding: 7px 4px; }
-            table.exchange-price-table thead th:nth-child(1), table.exchange-price-table thead th:nth-child(3) { width: 31%; }
-            table.exchange-price-table thead th:nth-child(2), table.exchange-price-table thead th:nth-child(4) { width: 19%; }
-            table.exchange-price-table td.item-name-cell { gap: 5px; }
-            table.exchange-price-table td.item-name-cell .item-icon { width: 24px; height: 24px; flex-basis: 24px; }
-            table.exchange-price-table td.val-cost { font-size: .68rem; }
+            /* 4列の圧縮表示をやめ、1品目1カードとして縦に並べる */
+            .table-wrapper.exchange-price-wrapper { max-width: 100% !important; overflow: visible; }
+            table.exchange-price-table { display: block; width: 100%; min-width: 0; font-size: .88rem; }
+            table.exchange-price-table thead,
+            table.exchange-price-table tbody { display: block; }
+            table.exchange-price-table thead tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 0 10px 4px; }
+            table.exchange-price-table thead th { padding: 7px 0; font-size: .72rem; letter-spacing: .08em; color: var(--text-dim); }
+            table.exchange-price-table thead th:nth-child(1) { width: auto; text-align: left; }
+            table.exchange-price-table thead th:nth-child(2) { width: auto; min-width: 92px; text-align: right; }
+            table.exchange-price-table thead th:nth-child(3),
+            table.exchange-price-table thead th:nth-child(4) { display: none; }
+            table.exchange-price-table tbody tr:not(.exchange-category-row) {
+                display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 8px;
+                margin: 7px 0; padding: 2px 10px; border: 1px solid var(--border-color); border-radius: 10px;
+                background: var(--card-bg); box-shadow: 0 2px 8px rgba(0,0,0,.12);
+            }
+            table.exchange-price-table tbody tr:not(.exchange-category-row) td {
+                display: flex; align-items: center; min-width: 0; width: auto; box-sizing: border-box;
+                padding: 8px 0; border: 0; background: transparent;
+            }
+            table.exchange-price-table tbody tr:not(.exchange-category-row) td:nth-child(3) { grid-column: 1; grid-row: 2; }
+            table.exchange-price-table tbody tr:not(.exchange-category-row) td:nth-child(4) { grid-column: 2; grid-row: 2; }
+            table.exchange-price-table td.item-name-cell { gap: 8px; }
+            table.exchange-price-table td.item-name-cell .item-icon,
+            table.exchange-price-table td.item-name-cell .craft-item-icon { width: 30px; height: 30px; flex: 0 0 30px; object-fit: contain; }
+            table.exchange-price-table td.item-name-cell span { font-size: .9rem; line-height: 1.35; overflow-wrap:anywhere; }
+            table.exchange-price-table td.val-cost { justify-content: flex-end; min-width: 92px; font-size: .86rem; color: var(--accent-cyan); }
+            table.exchange-price-table td.exchange-empty-cell { display: none; }
+            table.exchange-price-table tr.exchange-category-row { display: block; margin: 16px 0 7px; }
+            table.exchange-price-table tr.exchange-category-row th { display: block; padding: 10px 12px; border-radius: 8px; font-size: .96rem; }
+            table.exchange-price-table tr.exchange-universal-row { border-color: rgba(217,167,67,.65); background: rgba(217,167,67,.12); }
+            table.exchange-price-table tr.exchange-universal-row td:first-child { border-left: 0; }
         }
 
         /* スマホ：タブを2段にして全メニューを常時表示 */
