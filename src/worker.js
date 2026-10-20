@@ -3,6 +3,7 @@
 const enc = new TextEncoder();
 const SESSION = 'dassai_session';
 const STATE = 'dassai_oauth_state';
+const LOGIN_ASSET = '/x9Qm4Lz7Vp2N8kR';
 const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png']);
 const API = 'https://discord.com/api';
 
@@ -48,7 +49,7 @@ function secure(res) {
 const asset = (env, url, path) => env.ASSETS.fetch(new Request(new URL(path, url)));
 
 async function loginPage(url, env) {
-  const res = await asset(env, url, '/login.html');
+  const res = await asset(env, url, LOGIN_ASSET);
   const html = (await res.text())
     .replaceAll('{{ORIGIN}}', url.origin)
     .replaceAll('{{INVITE_URL}}', env.INVITE_URL || '');
@@ -121,6 +122,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     if (path === '/auth/login') return startLogin(url, env);
+    if (path === LOGIN_ASSET) return loginPage(url, env);
     if (path === '/auth/callback') return callback(request, url, env);
     if (path === '/auth/logout') return redirect('/', [setCookie(SESSION, '', '/', 0)]);
     if (PUBLIC_FILES.has(path)) return env.ASSETS.fetch(request);
