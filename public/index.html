@@ -2400,7 +2400,7 @@ html[data-theme="light"] .search-suggestion-meta { border-color: #c5e0e9; color:
 }
 
 /* ===== スマホ：ハンバーガーメニュー（右からスライドするドロワー） ===== */
-.nav-toggle, .nav-backdrop, .nav-drawer-head { display:none; }
+.nav-toggle, .nav-backdrop, .nav-drawer-head, .nav-drawer-actions { display:none; }
 @media (max-width:700px) {
   .nav-toggle { display:inline-flex; flex:0 0 36px; width:36px; height:36px; padding:0; align-items:center; justify-content:center; border:1px solid var(--border-color); border-radius:50%; background:var(--highlight-bg); color:var(--text-color); cursor:pointer; }
   .nav-toggle:hover, .nav-toggle:focus-visible { color:var(--accent-cyan); border-color:var(--accent-cyan); outline:none; box-shadow:0 0 0 3px rgba(46,201,255,.12); }
@@ -2422,8 +2422,11 @@ html[data-theme="light"] .search-suggestion-meta { border-color: #c5e0e9; color:
   .app-body > nav#mainNav.open { transform:none; visibility:visible; transition:transform .25s ease; }
   html[data-theme="light"] .app-body > nav#mainNav { background:#ffffff; border-left-color:#cbd9e4; box-shadow:-14px 0 40px rgba(32,77,112,.22); }
 
+  .header-tools > .theme-btn { display:none !important; }
   .nav-drawer-head { display:flex; align-items:center; justify-content:space-between; padding:14px 2px 12px; margin-bottom:6px; border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:.78rem; font-weight:700; letter-spacing:.14em; }
   .nav-close { display:inline-flex; width:36px; height:36px; padding:0; align-items:center; justify-content:center; border:1px solid var(--border-color); border-radius:50%; background:transparent; color:var(--text-color); cursor:pointer; }
+  .nav-drawer-actions { display:flex; flex-direction:column; gap:8px; margin:12px 0 8px; padding:12px 0 14px; border-top:1px solid var(--border-color); border-bottom:1px solid var(--border-color); }
+  .nav-drawer-actions .theme-btn { width:100%; justify-content:flex-start; box-sizing:border-box; padding:14px 16px !important; border-radius:10px; }
 
   .app-body > nav#mainNav .tab-btn {
     width:100%; flex:none; box-sizing:border-box; padding:15px 16px;
@@ -2522,6 +2525,10 @@ SOFTWARE.
         <div class="nav-backdrop" id="navBackdrop"></div>
         <nav id="mainNav" aria-label="メインメニュー">
             <div class="nav-drawer-head"><span>MENU</span><button type="button" class="nav-close" id="navClose" aria-label="メニューを閉じる"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+            <div class="nav-drawer-actions" aria-label="アカウント設定">
+                <a class="theme-btn" href="/auth/logout" style="text-decoration:none;display:inline-flex;align-items:center" aria-label="ログアウト">ログアウト</a>
+                <button class="theme-btn" id="mobileThemeBtn" onclick="toggleTheme()" aria-label="ライト/ダーク切り替え"><svg class="lucide-icon theme-symbol" aria-hidden="true" focusable="false"><use href="#lucide-sun"></use></svg><span class="theme-label">ライト</span></button>
+            </div>
             <button class="tab-btn active" onclick="switchTab('info')">ギャング INFO</button>
             <button class="tab-btn" onclick="switchTab('crime')">犯罪マニュアル</button>
             <button class="tab-btn" onclick="switchTab('craft')">クラフトレシピ & リサセン</button>
@@ -3479,8 +3486,11 @@ SOFTWARE.
         }
         function applyTheme(t) {
             document.documentElement.setAttribute('data-theme', t);
+            const markup = (t === 'light') ? iconMarkup('moon', 'theme-symbol') + '<span class="theme-label">ダーク</span>' : iconMarkup('sun', 'theme-symbol') + '<span class="theme-label">ライト</span>';
             const b = document.getElementById('themeBtn');
-            if (b) b.innerHTML = (t === 'light') ? iconMarkup('moon', 'theme-symbol') + '<span class="theme-label">ダーク</span>' : iconMarkup('sun', 'theme-symbol') + '<span class="theme-label">ライト</span>';
+            const mobile = document.getElementById('mobileThemeBtn');
+            if (b) b.innerHTML = markup;
+            if (mobile) mobile.innerHTML = markup;
         }
         function toggleTheme() {
             const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';

@@ -2399,6 +2399,43 @@ html[data-theme="light"] .search-suggestion-meta { border-color: #c5e0e9; color:
   .theme-btn .theme-label { display:none; }
 }
 
+/* ===== スマホ：ハンバーガーメニュー（右からスライドするドロワー） ===== */
+.nav-toggle, .nav-backdrop, .nav-drawer-head, .nav-drawer-actions { display:none; }
+@media (max-width:700px) {
+  .nav-toggle { display:inline-flex; flex:0 0 36px; width:36px; height:36px; padding:0; align-items:center; justify-content:center; border:1px solid var(--border-color); border-radius:50%; background:var(--highlight-bg); color:var(--text-color); cursor:pointer; }
+  .nav-toggle:hover, .nav-toggle:focus-visible { color:var(--accent-cyan); border-color:var(--accent-cyan); outline:none; box-shadow:0 0 0 3px rgba(46,201,255,.12); }
+  .nav-toggle svg, .nav-close svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+
+  .nav-backdrop { display:block; position:fixed; inset:0; z-index:22900; background:rgba(0,0,0,.6); opacity:0; visibility:hidden; transition:opacity .25s ease, visibility 0s linear .25s; }
+  .nav-backdrop.open { opacity:1; visibility:visible; transition:opacity .25s ease; }
+
+  .app-body > nav#mainNav {
+    position:fixed; top:0; right:0; bottom:0; left:auto; z-index:23000;
+    display:flex; flex-direction:column; gap:6px;
+    width:min(290px, 84vw); max-width:none; box-sizing:border-box;
+    padding:0 14px 24px; margin:0; overflow-x:hidden; overflow-y:auto;
+    background:var(--card-bg); border:none; border-left:1px solid var(--border-color);
+    box-shadow:-14px 0 40px rgba(0,0,0,.45);
+    transform:translateX(105%); visibility:hidden;
+    transition:transform .25s ease, visibility 0s linear .25s;
+  }
+  .app-body > nav#mainNav.open { transform:none; visibility:visible; transition:transform .25s ease; }
+  html[data-theme="light"] .app-body > nav#mainNav { background:#ffffff; border-left-color:#cbd9e4; box-shadow:-14px 0 40px rgba(32,77,112,.22); }
+
+  .header-tools > .theme-btn { display:none !important; }
+  .nav-drawer-head { display:flex; align-items:center; justify-content:space-between; padding:14px 2px 12px; margin-bottom:6px; border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:.78rem; font-weight:700; letter-spacing:.14em; }
+  .nav-close { display:inline-flex; width:36px; height:36px; padding:0; align-items:center; justify-content:center; border:1px solid var(--border-color); border-radius:50%; background:transparent; color:var(--text-color); cursor:pointer; }
+  .nav-drawer-actions { display:flex; flex-direction:column; gap:8px; margin:12px 0 8px; padding:12px 0 14px; border-top:1px solid var(--border-color); border-bottom:1px solid var(--border-color); }
+  .nav-drawer-actions .theme-btn { width:100%; justify-content:flex-start; box-sizing:border-box; padding:14px 16px !important; border-radius:10px; }
+
+  .app-body > nav#mainNav .tab-btn {
+    width:100%; flex:none; box-sizing:border-box; padding:15px 16px;
+    font-size:.95rem; line-height:1.4; letter-spacing:0; white-space:normal; text-align:left;
+    border:1px solid transparent; border-radius:10px;
+  }
+  .app-body > nav#mainNav .tab-btn.active { box-shadow:inset 3px 0 0 var(--accent-cyan); border-color:rgba(43,183,237,.3); }
+}
+body.nav-lock { overflow:hidden; }
 </style>
 
 
@@ -2479,12 +2516,19 @@ SOFTWARE.
             <button type="button" class="updates-btn" id="updatesBtn" onclick="openSiteUpdates()" aria-haspopup="dialog" aria-controls="siteUpdatesOverlay" aria-expanded="false"><span class="updates-label-full">更新履歴</span><span class="updates-label-short">更新</span></button><button type="button" class="mobile-search-btn" id="mobileSearchBtn" aria-label="検索を開く" aria-expanded="false" aria-controls="searchInput"><svg class="lucide-icon mobile-search-icon" aria-hidden="true" focusable="false"><use href="#lucide-search"></use></svg></button>
             <a class="theme-btn" href="/auth/logout" style="text-decoration:none;display:inline-flex;align-items:center">ログアウト</a>
             <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="ライト/ダーク切り替え"><svg class="lucide-icon theme-symbol" aria-hidden="true" focusable="false"><use href="#lucide-sun"></use></svg><span class="theme-label">ライト</span></button>
+            <button type="button" class="nav-toggle" id="navToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="mainNav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
         </div>
     </header>
 
     <!-- 本体：左サイドナビ + メインコンテンツ -->
     <div class="app-body">
-        <nav>
+        <div class="nav-backdrop" id="navBackdrop"></div>
+        <nav id="mainNav" aria-label="メインメニュー">
+            <div class="nav-drawer-head"><span>MENU</span><button type="button" class="nav-close" id="navClose" aria-label="メニューを閉じる"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+            <div class="nav-drawer-actions" aria-label="アカウント設定">
+                <a class="theme-btn" href="/auth/logout" style="text-decoration:none;display:inline-flex;align-items:center" aria-label="ログアウト">ログアウト</a>
+                <button class="theme-btn" id="mobileThemeBtn" onclick="toggleTheme()" aria-label="ライト/ダーク切り替え"><svg class="lucide-icon theme-symbol" aria-hidden="true" focusable="false"><use href="#lucide-sun"></use></svg><span class="theme-label">ライト</span></button>
+            </div>
             <button class="tab-btn active" onclick="switchTab('info')">ギャング INFO</button>
             <button class="tab-btn" onclick="switchTab('crime')">犯罪マニュアル</button>
             <button class="tab-btn" onclick="switchTab('craft')">クラフトレシピ & リサセン</button>
@@ -3442,8 +3486,11 @@ SOFTWARE.
         }
         function applyTheme(t) {
             document.documentElement.setAttribute('data-theme', t);
+            const markup = (t === 'light') ? iconMarkup('moon', 'theme-symbol') + '<span class="theme-label">ダーク</span>' : iconMarkup('sun', 'theme-symbol') + '<span class="theme-label">ライト</span>';
             const b = document.getElementById('themeBtn');
-            if (b) b.innerHTML = (t === 'light') ? iconMarkup('moon', 'theme-symbol') + '<span class="theme-label">ダーク</span>' : iconMarkup('sun', 'theme-symbol') + '<span class="theme-label">ライト</span>';
+            const mobile = document.getElementById('mobileThemeBtn');
+            if (b) b.innerHTML = markup;
+            if (mobile) mobile.innerHTML = markup;
         }
         function toggleTheme() {
             const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
@@ -3933,5 +3980,29 @@ SOFTWARE.
     </script>
 
 
+    <script>
+    /* スマホ：ハンバーガーメニュー */
+    (function () {
+        var nav = document.getElementById('mainNav');
+        var toggle = document.getElementById('navToggle');
+        var closeBtn = document.getElementById('navClose');
+        var backdrop = document.getElementById('navBackdrop');
+        if (!nav || !toggle) return;
+        function setOpen(open) {
+            nav.classList.toggle('open', open);
+            backdrop.classList.toggle('open', open);
+            document.body.classList.toggle('nav-lock', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
+            if (open) { if (closeBtn) closeBtn.focus(); } else if (document.activeElement && nav.contains(document.activeElement)) { toggle.focus(); }
+        }
+        toggle.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
+        if (closeBtn) closeBtn.addEventListener('click', function () { setOpen(false); });
+        backdrop.addEventListener('click', function () { setOpen(false); });
+        nav.addEventListener('click', function (e) { if (e.target.closest('.tab-btn')) setOpen(false); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && nav.classList.contains('open')) setOpen(false); });
+        window.addEventListener('resize', function () { if (window.innerWidth > 700 && nav.classList.contains('open')) setOpen(false); });
+    })();
+    </script>
 </body>
 </html>
