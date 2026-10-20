@@ -40,7 +40,7 @@ body::after{inset:16px;border:1px solid rgba(0,215,255,.08);border-radius:24px;b
 .kicker{margin:0 0 8px;color:var(--cyan);font-size:.72rem;font-weight:900;letter-spacing:.24em}.gate h2{margin:0 0 6px;font-family:Orbitron,'Segoe UI',sans-serif;font-size:2.4rem;letter-spacing:.16em}.sub{margin:0 0 26px;color:var(--muted);font-size:.85rem;font-weight:700;letter-spacing:.32em}
 .access-note{display:flex;gap:10px;align-items:flex-start;margin:0 0 22px;padding:12px 14px;border:1px solid rgba(0,215,255,.14);border-radius:10px;background:rgba(0,125,180,.07);color:#a8c4d5;font-size:.78rem;line-height:1.7}.access-note strong{color:#e6faff;font-size:.84rem}
 .err{display:none;margin:0 0 16px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,92,74,.45);background:rgba(255,92,74,.1);font-size:.82rem;line-height:1.7;color:#ffc2ba;text-align:left}
-.btn{display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:11px;font:inherit;font-weight:900;font-size:.94rem;letter-spacing:.04em;text-decoration:none;color:#fff;background:linear-gradient(135deg,#5865f2,#3e7fff);box-shadow:0 12px 30px -12px rgba(88,101,242,.95);transition:filter .2s,transform .2s,box-shadow .2s}.btn:hover{filter:brightness(1.12);transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(0,170,255,.7)}.btn.sec{margin-top:10px;min-height:45px;font-weight:700;font-size:.83rem;background:rgba(255,255,255,.02);border:1px solid var(--line);box-shadow:none;color:#b8cbd8}.btn.sec:hover{background:rgba(0,136,255,.1);border-color:var(--blue)}.btn.download{margin-top:18px;min-height:42px;background:transparent;border:1px dashed rgba(0,215,255,.35);box-shadow:none;color:#8dddf4;font-size:.78rem}.btn.download:hover{background:rgba(0,215,255,.08);border-style:solid}
+.btn{display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:11px;font:inherit;font-weight:900;font-size:.94rem;letter-spacing:.04em;text-decoration:none;color:#fff;background:linear-gradient(135deg,#5865f2,#3e7fff);box-shadow:0 12px 30px -12px rgba(88,101,242,.95);transition:filter .2s,transform .2s,box-shadow .2s}.btn:hover{filter:brightness(1.12);transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(0,170,255,.7)}.btn.sec{margin-top:10px;min-height:45px;font-weight:700;font-size:.83rem;background:rgba(255,255,255,.02);border:1px solid var(--line);box-shadow:none;color:#b8cbd8}.btn.sec:hover{background:rgba(0,136,255,.1);border-color:var(--blue)}
 .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}.note{margin:18px 0 0;color:#71869a;font-size:.7rem;line-height:1.8;text-align:center}
 @media (max-width:760px){body{padding:22px 16px}.shell{grid-template-columns:1fr;gap:18px;max-width:520px}.hero{padding:0 8px;text-align:center}.eyebrow{justify-content:center}.eyebrow::before{display:none}.hero h1{font-size:clamp(3rem,15vw,5rem)}.hero-copy{margin:18px auto 0;font-size:.84rem;line-height:1.8}.hero-stats{justify-content:center;margin-top:18px}.auth-card{padding:28px 22px}.mark{margin:0 auto 18px}.gate{text-align:center}.err{text-align:left}}
 @media (prefers-reduced-motion:reduce){.mark img,.mark circle,body::before{animation:none;will-change:auto}.mark circle{stroke-dashoffset:0}}
@@ -64,7 +64,6 @@ body::after{inset:16px;border:1px solid rgba(0,215,255,.08);border-radius:24px;b
     <div class="err" id="err" role="alert"></div>
     <a class="btn" href="/auth/login">Discordでログイン</a>
     <a class="btn sec" id="invite" href="{{INVITE_URL}}" target="_blank" rel="noopener">サーバーに参加する</a>
-    <button class="btn download" id="downloadHtml" type="button">このログイン画面をHTML保存</button>
     <p class="note">ユーザー名とサーバーへの参加状況だけを確認します。<br>パスワードは取得しません。</p>
   </section>
 </main>
@@ -73,9 +72,5 @@ var m={cancel:'ログインがキャンセルされました。もう一度お�
 var e=new URLSearchParams(location.search).get('error');
 if(e&&m[e]){var b=document.getElementById('err');b.textContent=m[e];b.style.display='block';history.replaceState(null,'','/');}
 var i=document.getElementById('invite');if(!i.getAttribute('href')||i.getAttribute('href')==='{{INVITE_URL}}')i.style.display='none';
-var d=document.getElementById('downloadHtml');
-if(d)d.addEventListener('click',async function(){
-  var old=d.textContent; d.disabled=true; d.textContent='HTMLを準備中…';
-  try{var r=await fetch(location.href,{cache:'no-store'});if(!r.ok)throw new Error('download');var blob=new Blob([await r.text()],{type:'text/html;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dassai-bluegang-login.html';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);d.textContent='HTMLを保存しました';setTimeout(function(){d.textContent=old;d.disabled=false},1800)}catch(e){d.textContent='保存に失敗しました';setTimeout(function(){d.textContent=old;d.disabled=false},1800)}
-});
+
 </script></body></html>
