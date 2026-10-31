@@ -69,8 +69,10 @@ function mercenaryManual(response) {
     .on('button.tab-btn', {
       element(element) {
         const onclick = element.getAttribute('onclick') || '';
-        if (!onclick.includes("switchTab('crime')")) element.remove();
-        else element.setAttribute('class', 'tab-btn active');
+        const isCrime = onclick.includes("switchTab('crime')");
+        const isJoining = onclick.includes("switchTab('joining')");
+        if (!isCrime && !isJoining) element.remove();
+        else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
       },
     })
     .on('#crime', {
@@ -80,6 +82,16 @@ function mercenaryManual(response) {
 }
 function roleIds(value) {
   return String(value || '').split(',').map((id) => id.trim()).filter(Boolean);
+}
+function gangPage(response) {
+  return new HTMLRewriter()
+    .on('#joining', removeElement)
+    .on('button.tab-btn', {
+      element(element) {
+        if ((element.getAttribute('onclick') || '').includes("switchTab('joining')")) element.remove();
+      },
+    })
+    .transform(secure(response));
 }
 
 
@@ -179,7 +191,11 @@ export default {
     if (path === '/' || path === '/index.html') {
       if (!access) return loginPage(url, env);
       const page = await asset(env, url, '/_app/index.html');
-      return access === 'gang' ? secure(page) : mercenaryManual(page);
+      return access === 'gang' ? gangPage(page) : mercenaryManual(page);
+    }
+    if (path === '/mercenary-guide.html') {
+      if (access !== 'mercenary') return new Response('Not found', { status: 404 });
+      return secure(await asset(env, url, '/mercenary-guide.html'));
     }
     if (path === '/ai.html') {
       if (!access) return redirect('/');
