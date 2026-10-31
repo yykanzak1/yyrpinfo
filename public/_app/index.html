@@ -2555,10 +2555,10 @@ SOFTWARE.
             </div>
             <button class="tab-btn active" onclick="switchTab('info')">ギャング INFO</button>
             <button class="tab-btn" onclick="switchTab('crime')">犯罪マニュアル</button>
-            <button class="tab-btn" onclick="switchTab('joining')">加入条件</button>
-            <button class="tab-btn" onclick="switchTab('crewlog')">クルー活動ログ</button>
             <button class="tab-btn" onclick="switchTab('craft')">クラフトレシピ & リサセン</button>
             <button class="tab-btn" onclick="switchTab('exchange')">換金所値段表</button>
+            <button class="tab-btn" onclick="switchTab('joining')">加入条件</button>
+            <button class="tab-btn" onclick="switchTab('crewlog')">ギャング活動ログ</button>
         </nav>
 
         <div class="main-area">
@@ -3043,11 +3043,11 @@ SOFTWARE.
 
         <!-- ③ ギャング INFO -->
         <div id="joining" class="tab-content">
-                <iframe id="mercenaryGuideFrame" src="/mercenary-guide.html" title="ギャング加入条件・加入までの流れ" style="display:block;width:100%;height:1800px;border:0;background:#04172a;"></iframe>
+                <iframe id="mercenaryGuideFrame" src="/mercenary-guide.html" title="ギャング加入条件・加入までの流れ" style="display:block;width:100%;height:1800px;border:0;background:#080e16;"></iframe>
             </div>
 
             <div id="crewlog" class="tab-content">
-                <iframe id="crewLogFrame" src="/crew-log.html" title="クルー活動ログ" style="display:block;width:100%;height:1500px;border:0;background:#0b1220;"></iframe>
+                <iframe id="crewLogFrame" src="/crew-log.html" title="ギャング活動ログ" style="display:block;width:100%;height:1500px;border:0;background:#080e16;"></iframe>
             </div>
 
             <div id="info" class="tab-content active">
@@ -3520,6 +3520,13 @@ SOFTWARE.
         }
         function applyTheme(t) {
             document.documentElement.setAttribute('data-theme', t);
+            const themeBackground = t === 'light' ? '#edf3f8' : '#080e16';
+            ['mercenaryGuideFrame', 'crewLogFrame'].forEach((id) => {
+                const frame = document.getElementById(id);
+                if (!frame) return;
+                frame.style.backgroundColor = themeBackground;
+                try { frame.contentWindow.postMessage({ type: 'dassai-theme', theme: t }, location.origin); } catch (e) {}
+            });
             const markup = (t === 'light') ? iconMarkup('moon', 'theme-symbol') + '<span class="theme-label">ダーク</span>' : iconMarkup('sun', 'theme-symbol') + '<span class="theme-label">ライト</span>';
             const b = document.getElementById('themeBtn');
             const mobile = document.getElementById('mobileThemeBtn');
@@ -3933,6 +3940,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-01', title: '加入条件・ギャング活動ログをテーマ対応', summary: 'メニューで加入条件とギャング活動ログを換金所の後に配置。ログ名とUIを更新し、表示コードの露出を修正。両ページの背景をサイト本体と揃え、ライト／ダーク切替に連動するようにしました。' },
             { date: '2026-10-15', title: '必要素材合計と換金所の画像を追加', summary: '犯罪の必要素材合計に素材アイコンを表示。換金所アイテム10種を画像付き・各200万円に更新し、修理代1082の画像と客船報酬のゴールデンボゴ画像を追加しました。' },
             { date: '2026-10-09', title: '犯罪ごとの必要素材合計を追加', summary: '各犯罪の必要アイテム欄にある作成素材を集計して詳細内に表示。普通・上級など選択式の武器は別々に合算し、素材レシピ未掲載のアイテムは合計対象外と明記しました。' },
             { date: '2026-10-07', title: 'Lucideアイコン・スマホ検索・テーマ切替を改善', summary: 'ページ内の絵文字をLucideアイコンに置き換え、スマホでは更新ボタン横の虫眼鏡から検索できるようにしました。テーマ切替ボタンはダーク時に明るく、ライト時に濃色にして視認性を高めました。' },
@@ -4048,6 +4056,7 @@ window.addEventListener('message', function(event) {
   }
 });
 </script>
+<script>
 window.addEventListener('message', function(event) {
   const frame = document.getElementById('crewLogFrame');
   if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
@@ -4056,5 +4065,6 @@ window.addEventListener('message', function(event) {
     if (Number.isFinite(height)) frame.style.height = Math.min(7000, Math.max(1000, height)) + 'px';
   }
 });
+</script>
 </body>
 </html>

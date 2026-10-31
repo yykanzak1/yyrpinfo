@@ -1,6 +1,26 @@
 <!doctype html>
 <html lang="ja">
 <head>
+<script>
+(() => {
+  const applyTheme = (value) => {
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    const browserColor = document.querySelector('meta[name="theme-color"]');
+    if (browserColor) browserColor.content = theme === 'light' ? '#edf3f8' : '#080e16';
+  };
+  try { applyTheme(localStorage.getItem('dassai_theme') || 'dark'); }
+  catch (e) { applyTheme('dark'); }
+  addEventListener('storage', (event) => {
+    if (event.key === 'dassai_theme') applyTheme(event.newValue || 'dark');
+  });
+  addEventListener('message', (event) => {
+    if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'dassai-theme') return;
+    applyTheme(event.data.theme);
+  });
+})();
+</script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ギャング加入ガイド</title>
@@ -75,6 +95,40 @@
     .motto small { font-size:12px; }
     footer { flex-direction:column; font-size:9px; }
   }
+
+/* Share the main DASSAI page background and respect its saved theme. */
+:root {
+  --bg-color:#080e16; --card-bg:#111b27; --border-color:#293a4a;
+  --text-color:#e9f3fc; --text-dim:#94a8ba; --accent-blue:#168cff; --accent-cyan:#22d4ff;
+}
+html[data-theme="light"] {
+  --bg-color:#edf3f8; --card-bg:#fff; --border-color:#cbd9e4;
+  --text-color:#172b3d; --text-dim:#5b7184; --accent-blue:#0c79d2; --accent-cyan:#087fa7;
+}
+html, body { min-height:100%; background-color:var(--bg-color); }
+body {
+  color:var(--text-color);
+  background-color:var(--bg-color);
+  background-image:radial-gradient(ellipse at 8% 0%,rgba(0,112,205,.13),transparent 36%),radial-gradient(ellipse at 96% 32%,rgba(0,194,235,.055),transparent 31%);
+  background-attachment:fixed;
+}
+.page {
+  background-color:var(--bg-color);
+  background-image:radial-gradient(ellipse at 8% 0%,rgba(0,112,205,.13),transparent 36%),radial-gradient(ellipse at 96% 32%,rgba(0,194,235,.055),transparent 31%);
+}
+.eyebrow { color:var(--accent-cyan); }
+h1, .section-title h2 { color:var(--text-color); }
+.subtitle, .section-title p, footer { color:var(--text-dim); }
+.hero { border-bottom-color:var(--border-color); }
+html[data-theme="light"] body, html[data-theme="light"] .page {
+  background-color:#edf3f8;
+  background-image:radial-gradient(ellipse at 8% 0%,rgba(0,126,207,.075),transparent 34%),radial-gradient(ellipse at 96% 32%,rgba(0,158,190,.04),transparent 30%);
+}
+html[data-theme="light"] .page::before { border-color:rgba(12,121,210,.16); box-shadow:0 0 0 30px rgba(12,121,210,.035),0 0 0 80px rgba(12,121,210,.02); }
+html[data-theme="light"] .logo-wrap { border-color:#d7e4ec; box-shadow:0 0 0 1px rgba(12,121,210,.24); }
+html[data-theme="light"] .node span { color:#172b3d; background:#dceaf4; border-color:#0c79d2; }
+@media print { html,body,.page { background:#fff !important; } }
+
 </style>
 </head>
 <body>
