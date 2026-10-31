@@ -138,7 +138,14 @@ tbody tr:hover td { background:var(--bluegang-panel-raised); }
 .empty, .footer { color:var(--text-dim); }
 html[data-theme="light"] .stat:hover, html[data-theme="light"] .card { box-shadow:0 12px 30px rgba(28,62,91,.09); }
 
-</style></head><body><main class="wrap">
+</style><style id="selection-guard">
+/* Keep labels non-selectable while preserving editable controls and copyable log rows. */
+html, body, body * { -webkit-user-select:none !important; user-select:none !important; }
+body input, body textarea, body select, body table td, body table th {
+  -webkit-user-select:text !important; user-select:text !important;
+}
+</style>
+</head><body><main class="wrap">
 <div class="eyebrow">GANG OPERATIONS / RECORD</div><header><div><h1>ギャング活動ログ</h1><p class="sub">犯罪ごとの警察結果と利確を記録。件数・確率を自動集計。</p></div><div class="badge">ギャングメンバー間で共有</div></header>
 <section class="stats" aria-label="集計"><div class="stat"><div class="muted">記録件数</div><div class="value" id="total">0<small>件</small></div></div><div class="stat"><div class="muted">警察に捕まった</div><div class="value red" id="caught">0<small>件</small></div><div class="rate">逮捕率 <b id="caughtRate">0%</b></div></div><div class="stat"><div class="muted">警察に捕まってない</div><div class="value green" id="free">0<small>件</small></div></div><div class="stat"><div class="muted">利確できた</div><div class="value amber" id="cash">0<small>件</small></div><div class="rate">利確率 <b id="cashRate">0%</b></div></div></section>
 <p class="note">逮捕率・利確率は全記録件数に対する割合です。記録は15秒ごとに共有データと同期します。</p>

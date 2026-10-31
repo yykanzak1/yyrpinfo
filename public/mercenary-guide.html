@@ -130,6 +130,10 @@ html[data-theme="light"] .node span { color:#172b3d; background:#dceaf4; border-
 @media print { html,body,.page { background:#fff !important; } }
 
 </style>
+<style id="selection-guard">
+/* The membership guide is informational; disable casual drag selection. */
+body, body * { -webkit-user-select:none !important; user-select:none !important; }
+</style>
 </head>
 <body>
 <main class="page">

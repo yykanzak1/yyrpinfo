@@ -2466,6 +2466,14 @@ body.nav-lock { overflow:hidden; }
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@700;800;900&display=swap" rel="stylesheet">
+<style id="selection-guard">
+/* Discourage casual text selection; keep values, tables, and controls usable. */
+body, body * { -webkit-user-select:none !important; user-select:none !important; }
+body input, body textarea, body select, body [contenteditable="true"],
+body table td, body table th, body .radio-frequency-number, body .spec-value, body .spot-num {
+  -webkit-user-select:text !important; user-select:text !important;
+}
+</style>
 </head>
 <body>
 <!--
@@ -3940,6 +3948,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-01', title: '本文のドラッグ選択を抑制', summary: '通常の本文テキストは選択しにくくしつつ、周波数・価格表・フォーム・ギャング活動ログの行は選択可能にしました。コピー用ボタンは引き続き使えます。' },
             { date: '2026-11-01', title: '加入条件・ギャング活動ログをテーマ対応', summary: 'メニューで加入条件とギャング活動ログを換金所の後に配置。ログ名とUIを更新し、表示コードの露出を修正。両ページの背景をサイト本体と揃え、ライト／ダーク切替に連動するようにしました。' },
             { date: '2026-10-15', title: '必要素材合計と換金所の画像を追加', summary: '犯罪の必要素材合計に素材アイコンを表示。換金所アイテム10種を画像付き・各200万円に更新し、修理代1082の画像と客船報酬のゴールデンボゴ画像を追加しました。' },
             { date: '2026-10-09', title: '犯罪ごとの必要素材合計を追加', summary: '各犯罪の必要アイテム欄にある作成素材を集計して詳細内に表示。普通・上級など選択式の武器は別々に合算し、素材レシピ未掲載のアイテムは合計対象外と明記しました。' },
