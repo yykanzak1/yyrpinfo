@@ -6,6 +6,12 @@ const STATE = 'dassai_oauth_state';
 const LOGIN_ASSET = '/x9Qm4Lz7Vp2N8kR';
 const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png']);
 const API = 'https://discord.com/api';
+const MERCENARY_ASSETS = new Set([
+  '/assets/fivem/exchange/golden-bogo.webp',
+  '/assets/fivem/rewards/cash.webp',
+  '/assets/fivem/rewards/gold-bar.webp',
+  '/assets/fivem/rewards/zentorno.webp',
+]);
 
 const b64u = {
   enc: (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
@@ -47,6 +53,35 @@ function secure(res) {
   return r;
 }
 const asset = (env, url, path) => env.ASSETS.fetch(new Request(new URL(path, url)));
+const removeElement = { element(element) { element.remove(); } };
+function mercenaryManual(response) {
+  return new HTMLRewriter()
+    .on('#info', removeElement)
+    .on('#craft', removeElement)
+    .on('#exchange', removeElement)
+    .on('.search-bar', removeElement)
+    .on('#searchInput', removeElement)
+    .on('#searchSuggestions', removeElement)
+    .on('#searchEmpty', removeElement)
+    .on('#updatesBtn', removeElement)
+    .on('#siteUpdatesOverlay', removeElement)
+    .on('#ds-login', removeElement)
+    .on('button.tab-btn', {
+      element(element) {
+        const onclick = element.getAttribute('onclick') || '';
+        if (!onclick.includes("switchTab('crime')")) element.remove();
+        else element.setAttribute('class', 'tab-btn active');
+      },
+    })
+    .on('#crime', {
+      element(element) { element.setAttribute('class', 'tab-content active'); },
+    })
+    .transform(secure(response));
+}
+function roleIds(value) {
+  return String(value || '').split(',').map((id) => id.trim()).filter(Boolean);
+}
+
 
 async function loginPage(url, env) {
   const res = await asset(env, url, LOGIN_ASSET);
@@ -92,25 +127,29 @@ async function callback(request, url, env) {
     const { access_token } = await tokenRes.json();
     const auth = { Authorization: `Bearer ${access_token}` };
     const guilds = String(env.GUILD_ID).split(',').map((g) => g.trim()).filter(Boolean);
-    const roles = String(env.REQUIRED_ROLE_ID || '').split(',').map((r) => r.trim()).filter(Boolean);
+    const gangRoles = roleIds(env.GANG_ROLE_ID);
+    const mercenaryRoles = roleIds(env.MERCENARY_ROLE_ID);
+    if (!gangRoles.length || !mercenaryRoles.length) return fail('config');
     const [meRes, ...memRes] = await Promise.all([
       fetch(`${API}/users/@me`, { headers: auth }),
       ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
-    // 複数サーバーのどれか1つに参加していればOK（ロール指定がある場合は、そのロールも必要）
-    let joined = false, allowed = false, error = false;
+    // ギャングロールは全ページ、傭兵ロールのみは犯罪マニュアルに限定する。
+    let joined = false, access = null, error = false;
     for (const r of memRes) {
       if (r.status === 404 || r.status === 403) continue;
       if (!r.ok) { error = true; continue; }
       joined = true;
       const member = await r.json();
-      if (!roles.length || roles.some((id) => (member.roles || []).includes(id))) allowed = true;
+      const memberRoles = member.roles || [];
+      if (gangRoles.some((id) => memberRoles.includes(id))) access = 'gang';
+      else if (access !== 'gang' && mercenaryRoles.some((id) => memberRoles.includes(id))) access = 'mercenary';
     }
-    if (!allowed) return fail(joined ? 'role' : error ? 'server' : 'denied');
+    if (!access) return fail(joined ? 'role' : error ? 'server' : 'denied');
     const me = await meRes.json();
     const days = Number(env.SESSION_DAYS) || 7;
-    const token = await sign(env, { u: me.id, n: me.global_name || me.username, exp: Math.floor(Date.now() / 1000) + days * 86400 });
+    const token = await sign(env, { u: me.id, n: me.global_name || me.username, a: access, exp: Math.floor(Date.now() / 1000) + days * 86400 });
     return redirect('/', [setCookie(SESSION, token, '/', days * 86400), clearState]);
   } catch {
     return fail('server');
@@ -128,16 +167,25 @@ export default {
     if (PUBLIC_FILES.has(path)) return env.ASSETS.fetch(request);
 
     const session = await verify(env, getCookie(request, SESSION));
+    // 旧形式のCookieには権限情報がないため再ログインを必須にする。
+    const access = session && (session.a === 'gang' || session.a === 'mercenary') ? session.a : null;
     if (path.startsWith('/assets/')) {
-      if (!session) return redirect('/');
+      if (!access) return redirect('/');
+      if (access === 'mercenary' && !MERCENARY_ASSETS.has(path)) return new Response('Not found', { status: 404 });
       const response = secure(await env.ASSETS.fetch(request));
       response.headers.set('Cache-Control', 'private, max-age=86400');
       return response;
     }
     if (path === '/' || path === '/index.html') {
-      return session ? secure(await asset(env, url, '/_app/index.html')) : loginPage(url, env);
+      if (!access) return loginPage(url, env);
+      const page = await asset(env, url, '/_app/index.html');
+      return access === 'gang' ? secure(page) : mercenaryManual(page);
     }
-    if (path === '/ai.html') return session ? secure(await asset(env, url, '/ai.html')) : redirect('/');
-    return session ? new Response('Not found', { status: 404 }) : redirect('/');
+    if (path === '/ai.html') {
+      if (!access) return redirect('/');
+      if (access !== 'gang') return new Response('Forbidden', { status: 403 });
+      return secure(await asset(env, url, '/ai.html'));
+    }
+    return access ? new Response('Not found', { status: 404 }) : redirect('/');
   },
 };
