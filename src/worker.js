@@ -59,6 +59,7 @@ function mercenaryManual(response) {
     .on('#info', removeElement)
     .on('#craft', removeElement)
     .on('#exchange', removeElement)
+    .on('#crewlog', removeElement)
     .on('.search-bar', removeElement)
     .on('#searchInput', removeElement)
     .on('#searchSuggestions', removeElement)
@@ -95,6 +96,65 @@ function gangPage(response) {
 }
 
 
+function jsonResponse(data, status = 200, extraHeaders = {}) {
+  const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+  for (const [key, value] of Object.entries(extraHeaders)) headers.set(key, value);
+  return new Response(JSON.stringify(data), { status, headers });
+}
+async function crewLogApi(request, url, env, access) {
+  if (!env.CREW_LOG_DB) return jsonResponse({ error: 'Database unavailable' }, 503);
+  const path = url.pathname;
+  const canDelete = access === 'boss' || access === 'underboss';
+  const sameOrigin = request.headers.get('Origin') === url.origin;
+  const method = request.method;
+  try {
+    if (path === '/api/records' && method === 'GET') {
+      const { results = [] } = await env.CREW_LOG_DB.prepare(
+        'SELECT id, activity, result, cashed, occurred_at FROM crew_log ORDER BY occurred_at DESC LIMIT 10000'
+      ).all();
+      return jsonResponse(results, 200, { 'X-Crew-Can-Delete': canDelete ? '1' : '0' });
+    }
+    if (path === '/api/records' && method === 'POST') {
+      if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
+      const contentLength = Number(request.headers.get('Content-Length') || 0);
+      if (contentLength > 4096) return jsonResponse({ error: 'Request too large' }, 413);
+      let input;
+      try { input = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+      const activity = typeof input?.activity === 'string' ? input.activity.trim() : '';
+      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed)) {
+        return jsonResponse({ error: 'Invalid record' }, 400);
+      }
+      const record = {
+        id: crypto.randomUUID(), activity,
+        result: input.result, cashed: input.cashed,
+        occurred_at: new Date().toISOString(),
+      };
+      await env.CREW_LOG_DB.prepare(
+        'INSERT INTO crew_log (id, activity, result, cashed, occurred_at) VALUES (?, ?, ?, ?, ?)'
+      ).bind(record.id, record.activity, record.result, record.cashed, record.occurred_at).run();
+      return jsonResponse(record, 201);
+    }
+    if (path === '/api/records' && method === 'DELETE') {
+      if (!canDelete) return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
+      await env.CREW_LOG_DB.prepare('DELETE FROM crew_log').run();
+      return jsonResponse({ ok: true });
+    }
+    const match = path.match(/^\/api\/records\/([^/]+)$/);
+    if (match && method === 'DELETE') {
+      if (!canDelete) return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
+      let id;
+      try { id = decodeURIComponent(match[1]); } catch { return jsonResponse({ error: 'Invalid id' }, 400); }
+      await env.CREW_LOG_DB.prepare('DELETE FROM crew_log WHERE id = ?').bind(id).run();
+      return jsonResponse({ ok: true });
+    }
+    return jsonResponse({ error: 'Not found' }, path.startsWith('/api/records') ? 405 : 404);
+  } catch (error) {
+    console.error('crew log API error', error);
+    return jsonResponse({ error: 'Unable to access shared log' }, 500);
+  }
+}
 async function loginPage(url, env) {
   const res = await asset(env, url, LOGIN_ASSET);
   const html = (await res.text())
@@ -141,13 +201,16 @@ async function callback(request, url, env) {
     const guilds = String(env.GUILD_ID).split(',').map((g) => g.trim()).filter(Boolean);
     const gangRoles = roleIds(env.GANG_ROLE_ID);
     const mercenaryRoles = roleIds(env.MERCENARY_ROLE_ID);
-    if (!gangRoles.length || !mercenaryRoles.length) return fail('config');
+    const bossRoles = roleIds(env.BOSS_ROLE_ID);
+    const underbossRoles = roleIds(env.UNDERBOSS_ROLE_ID);
+    if (!gangRoles.length || !mercenaryRoles.length || !bossRoles.length || !underbossRoles.length) return fail('config');
     const [meRes, ...memRes] = await Promise.all([
       fetch(`${API}/users/@me`, { headers: auth }),
       ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
-    // ギャングロールは全ページ、傭兵ロールのみは犯罪マニュアルに限定する。
+    // BOSS・アンボス・ギャングは全ページ、傭兵のみは犯罪マニュアル等に限定。
+    const rank = { mercenary: 1, gang: 2, underboss: 3, boss: 4 };
     let joined = false, access = null, error = false;
     for (const r of memRes) {
       if (r.status === 404 || r.status === 403) continue;
@@ -155,13 +218,16 @@ async function callback(request, url, env) {
       joined = true;
       const member = await r.json();
       const memberRoles = member.roles || [];
-      if (gangRoles.some((id) => memberRoles.includes(id))) access = 'gang';
-      else if (access !== 'gang' && mercenaryRoles.some((id) => memberRoles.includes(id))) access = 'mercenary';
+      const candidate = bossRoles.some((id) => memberRoles.includes(id)) ? 'boss'
+        : underbossRoles.some((id) => memberRoles.includes(id)) ? 'underboss'
+        : gangRoles.some((id) => memberRoles.includes(id)) ? 'gang'
+        : mercenaryRoles.some((id) => memberRoles.includes(id)) ? 'mercenary' : null;
+      if (candidate && (!access || rank[candidate] > rank[access])) access = candidate;
     }
     if (!access) return fail(joined ? 'role' : error ? 'server' : 'denied');
     const me = await meRes.json();
     const days = Number(env.SESSION_DAYS) || 7;
-    const token = await sign(env, { u: me.id, n: me.global_name || me.username, a: access, exp: Math.floor(Date.now() / 1000) + days * 86400 });
+    const token = await sign(env, { v: 2, u: me.id, n: me.global_name || me.username, a: access, exp: Math.floor(Date.now() / 1000) + days * 86400 });
     return redirect('/', [setCookie(SESSION, token, '/', days * 86400), clearState]);
   } catch {
     return fail('server');
@@ -180,7 +246,13 @@ export default {
 
     const session = await verify(env, getCookie(request, SESSION));
     // 旧形式のCookieには権限情報がないため再ログインを必須にする。
-    const access = session && (session.a === 'gang' || session.a === 'mercenary') ? session.a : null;
+    const allowedRoles = new Set(['gang', 'mercenary', 'boss', 'underboss']);
+    const access = session && session.v === 2 && allowedRoles.has(session.a) ? session.a : null;
+    if (path === '/api/records' || path.startsWith('/api/records/')) {
+      if (!access) return redirect('/');
+      if (access === 'mercenary') return new Response('Not found', { status: 404 });
+      return crewLogApi(request, url, env, access);
+    }
     if (path.startsWith('/assets/')) {
       if (!access) return redirect('/');
       if (access === 'mercenary' && !MERCENARY_ASSETS.has(path)) return new Response('Not found', { status: 404 });
@@ -191,15 +263,23 @@ export default {
     if (path === '/' || path === '/index.html') {
       if (!access) return loginPage(url, env);
       const page = await asset(env, url, '/_app/index.html');
-      return access === 'gang' ? gangPage(page) : mercenaryManual(page);
+      if (access === 'gang') return gangPage(page);
+      if (access === 'mercenary') return mercenaryManual(page);
+      return secure(page);
+    }
+    if (path === '/crew-log.html') {
+      if (!access) return redirect('/');
+      if (access === 'mercenary') return new Response('Not found', { status: 404 });
+      return secure(await asset(env, url, '/crew-log.html'));
     }
     if (path === '/mercenary-guide.html') {
-      if (access !== 'mercenary') return new Response('Not found', { status: 404 });
+      if (!access) return redirect('/');
+      if (access === 'gang') return new Response('Not found', { status: 404 });
       return secure(await asset(env, url, '/mercenary-guide.html'));
     }
     if (path === '/ai.html') {
       if (!access) return redirect('/');
-      if (access !== 'gang') return new Response('Forbidden', { status: 403 });
+      if (access === 'mercenary') return new Response('Forbidden', { status: 403 });
       return secure(await asset(env, url, '/ai.html'));
     }
     return access ? new Response('Not found', { status: 404 }) : redirect('/');

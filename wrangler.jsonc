@@ -15,6 +15,15 @@
     "INVITE_URL": "",
     "SESSION_DAYS": "7",
     "GANG_ROLE_ID": "1550164112498229319",
-    "MERCENARY_ROLE_ID": "1566086696918065194"
-  }
+    "MERCENARY_ROLE_ID": "1566086696918065194",
+    "BOSS_ROLE_ID": "1566087420342964376",
+    "UNDERBOSS_ROLE_ID": "1566087502576492676"
+  },
+  "d1_databases": [
+    {
+      "binding": "CREW_LOG_DB",
+      "database_name": "dassai-crew-log",
+      "database_id": "f32102d2-769a-44e5-a478-89f4a1d8c92d"
+    }
+  ]
 }

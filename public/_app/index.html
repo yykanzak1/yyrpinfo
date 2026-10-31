@@ -2556,6 +2556,7 @@ SOFTWARE.
             <button class="tab-btn active" onclick="switchTab('info')">ギャング INFO</button>
             <button class="tab-btn" onclick="switchTab('crime')">犯罪マニュアル</button>
             <button class="tab-btn" onclick="switchTab('joining')">加入条件</button>
+            <button class="tab-btn" onclick="switchTab('crewlog')">クルー活動ログ</button>
             <button class="tab-btn" onclick="switchTab('craft')">クラフトレシピ & リサセン</button>
             <button class="tab-btn" onclick="switchTab('exchange')">換金所値段表</button>
         </nav>
@@ -3043,6 +3044,10 @@ SOFTWARE.
         <!-- ③ ギャング INFO -->
         <div id="joining" class="tab-content">
                 <iframe id="mercenaryGuideFrame" src="/mercenary-guide.html" title="ギャング加入条件・加入までの流れ" style="display:block;width:100%;height:1800px;border:0;background:#04172a;"></iframe>
+            </div>
+
+            <div id="crewlog" class="tab-content">
+                <iframe id="crewLogFrame" src="/crew-log.html" title="クルー活動ログ" style="display:block;width:100%;height:1500px;border:0;background:#0b1220;"></iframe>
             </div>
 
             <div id="info" class="tab-content active">
@@ -4043,5 +4048,13 @@ window.addEventListener('message', function(event) {
   }
 });
 </script>
+window.addEventListener('message', function(event) {
+  const frame = document.getElementById('crewLogFrame');
+  if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
+  if (event.data && event.data.type === 'dassai-crew-log-height') {
+    const height = Number(event.data.height);
+    if (Number.isFinite(height)) frame.style.height = Math.min(7000, Math.max(1000, height)) + 'px';
+  }
+});
 </body>
 </html>
