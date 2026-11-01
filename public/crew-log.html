@@ -68,10 +68,13 @@ label,.field-label{display:block;margin:0 0 6px;color:var(--ink);font-size:11px;
 input,select{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:13.5px;transition:border-color .16s,box-shadow .16s,background .16s}
 input::placeholder{color:var(--muted);opacity:.7}
 input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus)}
-.presets{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.preset{min-height:26px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);font:inherit;font-size:10px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .15s}
-.preset:hover{border-color:color-mix(in srgb,var(--blue) 55%,var(--line));background:var(--blue-soft);color:var(--cyan);transform:translateY(-1px)}
-.preset:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.select-wrap{position:relative}
+.select-wrap select{appearance:none;-webkit-appearance:none;min-height:48px;padding:10px 38px 10px 12px;font-size:14px;font-weight:750;cursor:pointer}
+.select-wrap select:invalid{color:var(--muted);font-weight:650}
+.select-wrap select option,.select-wrap select optgroup{background:var(--panel);color:var(--ink)}
+.select-wrap::after{content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.select-wrap:focus-within::after{border-color:var(--cyan)}
+.field-hint{margin:6px 1px 0;color:var(--muted);font-size:9px;line-height:1.4}
 .segmented{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .seg{position:relative;display:block;min-width:0;margin:0}
 .seg input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;background:transparent;opacity:0;cursor:pointer}
@@ -267,15 +270,30 @@ body input, body textarea, body select, body table td, body table th, body .reco
     <form id="form" autocomplete="off">
       <div class="field">
         <label for="activity">犯罪名</label>
-        <input id="activity" name="activity" maxlength="80" placeholder="例：宝石店強盗" required>
-        <div class="presets" id="presets" role="group" aria-label="よく使う犯罪">
-          <button class="preset" type="button" data-name="ドラッグ販売">ドラッグ販売</button>
-          <button class="preset" type="button" data-name="ATM強盗">ATM強盗</button>
-          <button class="preset" type="button" data-name="コンビニ強盗">コンビニ強盗</button>
-          <button class="preset" type="button" data-name="宝石店強盗">宝石店強盗</button>
-          <button class="preset" type="button" data-name="列車強盗">列車強盗</button>
-          <button class="preset" type="button" data-name="ユニオン強盗">ユニオン強盗</button>
+        <!-- 犯罪マニュアル（index.html #crime）に掲載されている犯罪名と同期 -->
+        <div class="select-wrap">
+          <select id="activity" name="activity" required>
+            <option value="">犯罪を選択してください</option>
+            <optgroup label="小型犯罪">
+              <option value="ATM強盗">ATM強盗</option>
+              <option value="ドラッグ販売">ドラッグ販売</option>
+              <option value="コンビニ強盗">コンビニ強盗</option>
+              <option value="フリーカ強盗">フリーカ強盗</option>
+              <option value="ウィード">ウィード</option>
+            </optgroup>
+            <optgroup label="中型強盗">
+              <option value="宝石店強盗">宝石店強盗</option>
+              <option value="ボブキャット">ボブキャット</option>
+              <option value="列車強盗">列車強盗</option>
+            </optgroup>
+            <optgroup label="大型強盗">
+              <option value="客船強盗">客船強盗</option>
+              <option value="貨物機強盗">貨物機強盗</option>
+              <option value="ユニオン強盗">ユニオン強盗</option>
+            </optgroup>
+          </select>
         </div>
+        <p class="field-hint">犯罪マニュアルに掲載されている犯罪から選択できます。前回の犯罪名は自動で選択されます。</p>
       </div>
       <div class="field">
         <span class="field-label">警察の結果</span>
@@ -440,37 +458,36 @@ body input, body textarea, body select, body table td, body table th, body .reco
   function restoreChoice() {
     try {
       const saved=JSON.parse(localStorage.getItem(CHOICE_KEY)||'null'); if (!saved) return;
+      const hasActivity=[...activityInput.options].some(option=>option.value===saved.activity);
+      if (hasActivity) activityInput.value=saved.activity;
       const result=form.querySelector(`input[name="result"][value="${saved.result}"]`);
       const cashed=form.querySelector(`input[name="cashed"][value="${saved.cashed}"]`);
       if (result) result.checked=true; if (cashed) cashed.checked=true;
     } catch (error) {}
   }
-  function saveChoice(result, cashed) {
-    try { localStorage.setItem(CHOICE_KEY, JSON.stringify({ result, cashed })); } catch (error) {}
+  function saveChoice(activity, result, cashed) {
+    try { localStorage.setItem(CHOICE_KEY, JSON.stringify({ activity, result, cashed })); } catch (error) {}
   }
   function updateClock() { $('clock').textContent=`${clockNow().slice(0,5)} JST`; $('whenLabel').textContent=displayNow(); }
 
-  $('presets').addEventListener('click',event=>{
-    const button=event.target.closest('.preset'); if (!button) return;
-    activityInput.value=button.dataset.name||''; activityInput.focus();
-  });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const data=new FormData(form);
     const payload={activity:String(data.get('activity')||'').trim(),result:String(data.get('result')||'caught'),cashed:String(data.get('cashed')||'yes')};
-    if (!payload.activity) { activityInput.focus(); return; }
+    if (!payload.activity) { setStatus('犯罪名を選択してください。','error'); activityInput.focus(); return; }
     const submitButton=form.querySelector('button[type="submit"]');
     submitButton.disabled=true; setStatus('共有データに記録しています…','info');
+    let succeeded=false;
     try {
       const response=await fetch('/api/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const saved=await response.json(); if (!response.ok) throw new Error('save failed');
-      records=[saved,...records.filter(item=>item.id!==saved.id)]; flashId=saved.id; saveChoice(payload.result,payload.cashed);
-      activityInput.value=''; render(); updateClock();
-      setStatus(`「${payload.activity}」を記録しました。続けて入力できます。`,'ok');
-      activityInput.focus();
+      records=[saved,...records.filter(item=>item.id!==saved.id)]; flashId=saved.id; saveChoice(payload.activity,payload.result,payload.cashed);
+      render(); updateClock();
+      setStatus(`「${payload.activity}」を記録しました。このまま同じ犯罪を続けて登録できます。`,'ok');
+      succeeded=true;
       setTimeout(()=>{flashId=null;},1800);
     } catch (error) { setStatus('追加できませんでした。通信を確認して再度お試しください。','error'); }
-    finally { submitButton.disabled=false; }
+    finally { submitButton.disabled=false; if (succeeded) submitButton.focus(); }
   });
   $('search').addEventListener('input',render); $('filter').addEventListener('change',render); $('cashFilter').addEventListener('change',render);
   $('resetFilters').addEventListener('click',()=>{$('search').value='';$('filter').value='all';$('cashFilter').value='all';render();$('search').focus();});
