@@ -3051,7 +3051,7 @@ SOFTWARE.
 
         <!-- ③ ギャング INFO -->
         <div id="joining" class="tab-content">
-                <iframe id="mercenaryGuideFrame" src="/mercenary-guide.html" title="ギャング加入条件・加入までの流れ" style="display:block;width:100%;height:1800px;border:0;background:#080e16;"></iframe>
+                <iframe id="mercenaryGuideFrame" src="/mercenary-guide.html" title="ギャング加入条件・加入までの流れ" style="display:block;width:100%;height:800px;border:0;background:#080e16;"></iframe>
             </div>
 
             <div id="crewlog" class="tab-content">
@@ -3277,8 +3277,18 @@ SOFTWARE.
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            const activeBtn = document.querySelector('.tab-btn[onclick*="\'' + tabId + '\'"]');
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick') === `switchTab('${tabId}')`);
             if (activeBtn) activeBtn.classList.add('active');
+            if (tabId === 'joining') {
+                const frame = document.getElementById('mercenaryGuideFrame');
+                if (frame) {
+                    const requestHeight = () => setTimeout(() => {
+                        frame.contentWindow.postMessage({ type: 'dassai-request-mercenary-guide-height' }, location.origin);
+                    }, 80);
+                    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') requestHeight();
+                    else frame.addEventListener('load', requestHeight, { once: true });
+                }
+            }
         }
 
         /* 犯罪マニュアル：詳細を別ページ風に表示 */
@@ -3948,6 +3958,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-01', title: '加入条件ページの末尾スクロールを修正', summary: 'iframeを固定の最小高さではなくページ内容の実高に合わせ、注意事項の後に余分な空白をスクロールできる状態を解消しました。' },
             { date: '2026-11-01', title: '加入ガイドのスマホ表示を整理', summary: '見出しの英語ラベルを別行に配置し、手順カードや注意事項、最後のメッセージ枠の文字・余白・色を調整して、スマートフォンでの見た目を整えました。' },
             { date: '2026-11-01', title: '傭兵参加の注意事項カードを調整', summary: 'スマートフォンで大きく見える白いカードを文章量に合う高さへ調整し、カード間隔と最後のメッセージ枠も整えました。' },
             { date: '2026-11-01', title: '加入条件のスマホ表示を調整', summary: '狭い画面では加入条件カードを縦積みにし、カードが内容以上に伸びて大きな空白ができないようにしました。' },
@@ -4064,7 +4075,7 @@ window.addEventListener('message', function(event) {
   if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
   if (event.data && event.data.type === 'dassai-mercenary-guide-height') {
     const height = Number(event.data.height);
-    if (Number.isFinite(height)) frame.style.height = Math.min(5000, Math.max(1000, height)) + 'px';
+    if (Number.isFinite(height)) frame.style.height = Math.min(5000, Math.max(100, height)) + 'px';
   }
 });
 </script>
