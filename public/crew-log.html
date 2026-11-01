@@ -6,7 +6,7 @@
     const theme = value === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', theme);
     const browserColor = document.querySelector('meta[name="theme-color"]');
-    if (browserColor) browserColor.content = theme === 'light' ? '#edf3f8' : '#080e16';
+    if (browserColor) browserColor.content = theme === 'light' ? '#f2f4f8' : '#0f1115';
   };
   try { applyTheme(localStorage.getItem('dassai_theme') || 'dark'); }
   catch (e) { applyTheme('dark'); }
@@ -19,10 +19,10 @@
   });
 })();
 </script>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080e16"><title>ギャング活動ログ | FiveM</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f1115"><title>ギャング活動ログ | FiveM</title>
 <style>
-:root{color-scheme:dark;--page:#080e16;--panel:#0d1722;--surface:#111b27;--surface-raised:#152332;--line:#293a4a;--line-soft:#1f2d3b;--ink:#e9f3fc;--muted:#94a8ba;--blue:#168cff;--cyan:#22d4ff;--red:#ff626f;--amber:#ffc15b;--blue-soft:rgba(22,140,255,.14);--cyan-soft:rgba(34,212,255,.12);--red-soft:rgba(255,98,111,.14);--amber-soft:rgba(255,193,91,.14);--shadow:0 12px 30px rgba(0,0,0,.22);--focus:0 0 0 3px rgba(22,140,255,.22)}
-html[data-theme="light"]{color-scheme:light;--page:#edf3f8;--panel:#f8fbfd;--surface:#fff;--surface-raised:#edf4f8;--line:#cbd9e4;--line-soft:#e2ecf4;--ink:#172b3d;--muted:#5b7184;--blue:#0c79d2;--cyan:#087fa7;--red:#d64550;--amber:#9a6200;--blue-soft:rgba(12,121,210,.11);--cyan-soft:rgba(8,127,167,.10);--red-soft:rgba(214,69,80,.10);--amber-soft:rgba(154,98,0,.12);--shadow:0 10px 26px rgba(28,62,91,.09);--focus:0 0 0 3px rgba(12,121,210,.18)}
+:root{color-scheme:dark;--page:#0f1115;--panel:#14181e;--surface:#181b20;--surface-raised:#20252d;--line:#2a303c;--line-soft:#232a33;--ink:#e1e6ed;--muted:#9aa6b2;--blue:#0088ff;--cyan:#00d2ff;--red:#ff626f;--amber:#ffc15b;--blue-soft:rgba(0,136,255,.14);--cyan-soft:rgba(0,210,255,.12);--red-soft:rgba(255,98,111,.14);--amber-soft:rgba(255,193,91,.14);--shadow:0 12px 30px rgba(0,0,0,.22);--focus:0 0 0 3px rgba(0,136,255,.22)}
+html[data-theme="light"]{color-scheme:light;--page:#f2f4f8;--panel:#f8fafc;--surface:#ffffff;--surface-raised:#f2f4f8;--line:#d4dae2;--line-soft:#e7ebf1;--ink:#1c2330;--muted:#647386;--blue:#0c79d2;--cyan:#006fa8;--red:#d64550;--amber:#9a7000;--blue-soft:rgba(12,121,210,.11);--cyan-soft:rgba(0,111,168,.10);--red-soft:rgba(214,69,80,.10);--amber-soft:rgba(154,112,0,.12);--shadow:0 10px 26px rgba(28,62,91,.09);--focus:0 0 0 3px rgba(12,121,210,.18)}
 *{box-sizing:border-box}
 html,body{min-width:0;margin:0;background:var(--page);color:var(--ink)}
 body{overflow-x:hidden;background-image:radial-gradient(ellipse at 8% 0%,rgba(0,112,205,.13),transparent 36%),radial-gradient(ellipse at 96% 32%,rgba(0,194,235,.055),transparent 31%);font:14px/1.55 Inter,"Noto Sans JP","Yu Gothic UI","Meiryo",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
