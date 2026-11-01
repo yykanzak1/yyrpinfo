@@ -21,8 +21,8 @@
 </script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f1115"><title>ギャング活動ログ | FiveM</title>
 <style>
-:root{color-scheme:dark;--page:#0f1115;--panel:#14181e;--surface:#181b20;--surface-raised:#20252d;--line:#2a303c;--line-soft:#232a33;--ink:#e1e6ed;--muted:#9aa6b2;--blue:#0088ff;--cyan:#00d2ff;--red:#ff626f;--amber:#ffc15b;--green:#2dbb78;--blue-soft:rgba(0,136,255,.14);--cyan-soft:rgba(0,210,255,.12);--red-soft:rgba(255,98,111,.14);--amber-soft:rgba(255,193,91,.14);--green-soft:rgba(45,187,120,.16);--shadow:0 12px 30px rgba(0,0,0,.22);--focus:0 0 0 3px rgba(0,136,255,.22)}
-html[data-theme="light"]{color-scheme:light;--page:#f2f4f8;--panel:#f8fafc;--surface:#ffffff;--surface-raised:#f2f4f8;--line:#d4dae2;--line-soft:#e7ebf1;--ink:#1c2330;--muted:#647386;--blue:#0c79d2;--cyan:#006fa8;--red:#d64550;--amber:#9a7000;--green:#137a49;--blue-soft:rgba(12,121,210,.11);--cyan-soft:rgba(0,111,168,.10);--red-soft:rgba(214,69,80,.10);--amber-soft:rgba(154,112,0,.12);--green-soft:rgba(19,122,73,.12);--shadow:0 10px 26px rgba(28,62,91,.09);--focus:0 0 0 3px rgba(12,121,210,.18)}
+:root{color-scheme:dark;--page:#0f1115;--panel:#14181e;--surface:#181b20;--surface-raised:#20252d;--line:#2a303c;--line-soft:#232a33;--ink:#e1e6ed;--muted:#9aa6b2;--blue:#0088ff;--cyan:#00d2ff;--red:#ff626f;--amber:#ffc15b;--blue-soft:rgba(0,136,255,.14);--cyan-soft:rgba(0,210,255,.12);--red-soft:rgba(255,98,111,.14);--amber-soft:rgba(255,193,91,.14);--shadow:0 12px 30px rgba(0,0,0,.22);--focus:0 0 0 3px rgba(0,136,255,.22)}
+html[data-theme="light"]{color-scheme:light;--page:#f2f4f8;--panel:#f8fafc;--surface:#ffffff;--surface-raised:#f2f4f8;--line:#d4dae2;--line-soft:#e7ebf1;--ink:#1c2330;--muted:#647386;--blue:#0c79d2;--cyan:#006fa8;--red:#d64550;--amber:#9a7000;--blue-soft:rgba(12,121,210,.11);--cyan-soft:rgba(0,111,168,.10);--red-soft:rgba(214,69,80,.10);--amber-soft:rgba(154,112,0,.12);--shadow:0 10px 26px rgba(28,62,91,.09);--focus:0 0 0 3px rgba(12,121,210,.18)}
 *{box-sizing:border-box}
 html,body{min-width:0;margin:0;background:var(--page);color:var(--ink)}
 body{overflow-x:hidden;background-color:var(--page);background-image:none;font:14px/1.55 Inter,"Noto Sans JP","Yu Gothic UI","Meiryo",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
@@ -86,8 +86,7 @@ input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:var(--foc
 .seg input:focus-visible+span{outline:2px solid var(--blue);outline-offset:2px}
 .seg[data-tone="red"]{--seg-bg:var(--red-soft);--seg-border:color-mix(in srgb,var(--red) 55%,var(--line));--seg-ink:var(--red)}
 .seg[data-tone="cyan"]{--seg-bg:var(--cyan-soft);--seg-border:color-mix(in srgb,var(--cyan) 55%,var(--line));--seg-ink:var(--cyan)}
-.seg[data-tone="green"]{--seg-bg:var(--green-soft);--seg-border:color-mix(in srgb,var(--green) 55%,var(--line));--seg-ink:var(--green)}
-.seg[data-tone="amber"]{--seg-bg:var(--amber-soft);--seg-border:color-mix(in srgb,var(--amber) 55%,var(--line));--seg-ink:var(--amber)}
+.seg[data-tone="blue"]{--seg-bg:var(--blue-soft);--seg-border:color-mix(in srgb,var(--blue) 55%,var(--line));--seg-ink:var(--cyan)}
 .seg[data-tone="muted"]{--seg-bg:var(--surface-raised);--seg-border:var(--line);--seg-ink:var(--ink)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 12px;border:1px solid transparent;border-radius:10px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;transition:background .16s,border-color .16s,color .16s,transform .16s,box-shadow .16s,filter .16s}
 .btn svg{width:15px;height:15px;flex:0 0 auto}
@@ -125,7 +124,7 @@ html[data-theme="light"] .accent{color:#fff}
 .legend-heading{color:var(--muted);font-size:9px;font-weight:850;letter-spacing:.04em}
 .legend-item{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:9px;line-height:1.3;white-space:nowrap}
 .legend-swatch{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--muted)}
-.legend-swatch.caught{background:var(--red)}.legend-swatch.free{background:var(--green)}.legend-swatch.done{background:var(--amber)}.legend-swatch.pending{background:var(--muted)}
+.legend-swatch.caught{background:var(--red)}.legend-swatch.free{background:var(--cyan)}.legend-swatch.done{background:var(--blue)}.legend-swatch.pending{background:var(--muted)}
 .filters{display:grid;grid-template-columns:minmax(150px,1fr) 148px 158px auto;gap:7px;margin-bottom:10px}
 .search-wrap{position:relative;min-width:0}
 .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted);pointer-events:none}
@@ -141,8 +140,8 @@ html[data-theme="light"] .accent{color:#fff}
 .record-item{--accent:var(--blue);--cash-accent:var(--muted);position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:11px 12px 11px 16px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(140deg,var(--surface-raised),var(--surface));transition:border-color .16s,transform .16s,box-shadow .16s}
 .record-item::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);opacity:.9}
 .record-item[data-result="caught"]{--accent:var(--red)}
-.record-item[data-result="not_caught"]{--accent:var(--green)}
-.record-item[data-cashed="yes"]{--cash-accent:var(--amber)}
+.record-item[data-result="not_caught"]{--accent:var(--cyan)}
+.record-item[data-cashed="yes"]{--cash-accent:var(--blue)}
 .record-item[data-cashed="no"]{--cash-accent:var(--muted)}
 .record-item::after{content:"";position:absolute;right:0;top:10px;bottom:10px;width:3px;border-radius:3px 0 0 3px;background:var(--cash-accent);opacity:.95}
 .record-item:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));transform:translateY(-1px);box-shadow:0 12px 24px -20px rgba(0,0,0,.9)}
@@ -155,8 +154,8 @@ html[data-theme="light"] .accent{color:#fff}
 .tag{display:inline-flex;align-items:center;gap:5px;min-height:23px;padding:3px 9px;border:1px solid transparent;border-radius:999px;font-size:9.5px;font-weight:800;line-height:1.25;white-space:nowrap}
 .tag::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
 .tag.caught{border-color:color-mix(in srgb,var(--red) 32%,transparent);background:var(--red-soft);color:var(--red)}
-.tag.free{border-color:color-mix(in srgb,var(--green) 38%,transparent);background:var(--green-soft);color:var(--green)}
-.tag.done{border-color:color-mix(in srgb,var(--amber) 32%,transparent);background:var(--amber-soft);color:var(--amber)}
+.tag.free{border-color:color-mix(in srgb,var(--cyan) 30%,transparent);background:var(--cyan-soft);color:var(--cyan)}
+.tag.done{border-color:color-mix(in srgb,var(--blue) 36%,transparent);background:var(--blue-soft);color:var(--cyan)}
 .tag.pending{border-color:var(--line);background:var(--panel);color:var(--muted)}
 .record-actions{display:flex;justify-content:flex-end}
 .delete{display:inline-flex;align-items:center;gap:4px;min-height:29px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:9px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
@@ -256,23 +255,24 @@ body input, body textarea, body select, body table td, body table th, body .reco
     </div>
     <div class="ring" id="caughtRing" style="--ring:var(--red)" aria-hidden="true"><b id="caughtRingText">0%</b></div>
   </article>
-  <article class="stat" style="--accent:var(--green);--accent-soft:var(--green-soft)">
+  <article class="stat" style="--accent:var(--cyan);--accent-soft:var(--cyan-soft)">
     <div class="stat-body">
       <div class="stat-label"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></span>逃げ切った</div>
       <div class="value" id="free">0<small>件</small></div>
-      <div class="rate">検挙を免れた記録</div>
+      <div class="rate">逃走率 <b id="freeRate">0.0%</b></div>
     </div>
+    <div class="ring" id="freeRing" style="--ring:var(--cyan)" aria-hidden="true"><b id="freeRingText">0%</b></div>
   </article>
-  <article class="stat" style="--accent:var(--amber);--accent-soft:var(--amber-soft)">
+  <article class="stat" style="--accent:var(--blue);--accent-soft:var(--blue-soft)">
     <div class="stat-body">
       <div class="stat-label"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></span>利確できた</div>
       <div class="value" id="cash">0<small>件</small></div>
       <div class="rate">利確率 <b id="cashRate">0.0%</b></div>
     </div>
-    <div class="ring" id="cashRing" style="--ring:var(--amber)" aria-hidden="true"><b id="cashRingText">0%</b></div>
+    <div class="ring" id="cashRing" style="--ring:var(--blue)" aria-hidden="true"><b id="cashRingText">0%</b></div>
   </article>
 </section>
-<p class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>逮捕率・利確率は全記録件数に対する割合です。記録は5秒ごとに共有データと同期します。</p>
+<p class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>逮捕率・逃走率・利確率は全記録件数に対する割合です。記録は5秒ごとに共有データと同期します。</p>
 <div class="layout">
   <section class="card form-card" id="recordFormCard">
     <div class="card-head"><h2>クイック登録</h2><span class="time-chip" id="whenLabel">--/-- --:-- JST</span></div>
@@ -308,13 +308,13 @@ body input, body textarea, body select, body table td, body table th, body .reco
         <span class="field-label">警察の結果</span>
         <div class="segmented" role="radiogroup" aria-label="警察の結果">
           <label class="seg" data-tone="red"><input type="radio" name="result" value="caught" checked><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>捕まった</span></label>
-          <label class="seg" data-tone="green"><input type="radio" name="result" value="not_caught"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4M4 13h4"/></svg>逃げ切った</span></label>
+          <label class="seg" data-tone="cyan"><input type="radio" name="result" value="not_caught"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4M4 13h4"/></svg>逃げ切った</span></label>
         </div>
       </div>
       <div class="field">
         <span class="field-label">利確</span>
         <div class="segmented" role="radiogroup" aria-label="利確">
-          <label class="seg" data-tone="amber"><input type="radio" name="cashed" value="yes" checked><span>できた</span></label>
+          <label class="seg" data-tone="blue"><input type="radio" name="cashed" value="yes" checked><span>できた</span></label>
           <label class="seg" data-tone="muted"><input type="radio" name="cashed" value="no"><span>できなかった</span></label>
         </div>
       </div>
@@ -408,10 +408,11 @@ body input, body textarea, body select, body table td, body table th, body .reco
     const free=records.filter(x=>x.result==='not_caught').length, cashed=records.filter(x=>x.cashed==='yes').length;
     $('total').innerHTML=`${count}<small>件</small>`; $('caught').innerHTML=`${caught}<small>件</small>`;
     $('free').innerHTML=`${free}<small>件</small>`; $('cash').innerHTML=`${cashed}<small>件</small>`;
-    const arrestPct=count?100*caught/count:0, cashPct=count?100*cashed/count:0;
+    const arrestPct=count?100*caught/count:0, escapePct=count?100*free/count:0, cashPct=count?100*cashed/count:0;
     $('caughtRate').textContent=`${arrestPct.toFixed(1)}%`;
+    $('freeRate').textContent=`${escapePct.toFixed(1)}%`;
     $('cashRate').textContent=`${cashPct.toFixed(1)}%`;
-    setRing('caughtRing','caughtRingText',arrestPct); setRing('cashRing','cashRingText',cashPct);
+    setRing('caughtRing','caughtRingText',arrestPct); setRing('freeRing','freeRingText',escapePct); setRing('cashRing','cashRingText',cashPct);
   }
   function makeTag(tone, value) {
     const badge=document.createElement('span'); badge.className=`tag ${tone}`; badge.textContent=value; return badge;
