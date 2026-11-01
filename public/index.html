@@ -3055,7 +3055,7 @@ SOFTWARE.
             </div>
 
             <div id="crewlog" class="tab-content">
-                <iframe id="crewLogFrame" src="/crew-log.html" title="ギャング活動ログ" style="display:block;width:100%;height:1500px;border:0;background:#080e16;"></iframe>
+                <iframe id="crewLogFrame" src="/crew-log.html" title="ギャング活動ログ" style="display:block;width:100%;height:800px;border:0;background:#080e16;"></iframe>
             </div>
 
             <div id="info" class="tab-content active">
@@ -3284,6 +3284,16 @@ SOFTWARE.
                 if (frame) {
                     const requestHeight = () => setTimeout(() => {
                         frame.contentWindow.postMessage({ type: 'dassai-request-mercenary-guide-height' }, location.origin);
+                    }, 80);
+                    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') requestHeight();
+                    else frame.addEventListener('load', requestHeight, { once: true });
+                }
+            }
+            if (tabId === 'crewlog') {
+                const frame = document.getElementById('crewLogFrame');
+                if (frame) {
+                    const requestHeight = () => setTimeout(() => {
+                        frame.contentWindow.postMessage({ type: 'dassai-request-crew-log-height' }, location.origin);
                     }, 80);
                     if (frame.contentDocument && frame.contentDocument.readyState === 'complete') requestHeight();
                     else frame.addEventListener('load', requestHeight, { once: true });
@@ -3958,6 +3968,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-01', title: 'ギャング活動ログの末尾スクロールを修正', summary: '活動ログiframeの高さを画面高ではなく実際の内容に合わせ、タブを開いた時や記録件数が変わった時に再計測するようにしました。' },
             { date: '2026-11-01', title: '活動ログの日時をJST表示に統一', summary: '記録日時欄を日本時間の短い表示にし、一覧は日付と時刻を分けて表示。スマートフォンで日時がUIからはみ出ないよう調整しました。' },
             { date: '2026-11-01', title: '加入条件ページの末尾スクロールを修正', summary: 'iframeを固定の最小高さではなくページ内容の実高に合わせ、注意事項の後に余分な空白をスクロールできる状態を解消しました。' },
             { date: '2026-11-01', title: '加入ガイドのスマホ表示を整理', summary: '見出しの英語ラベルを別行に配置し、手順カードや注意事項、最後のメッセージ枠の文字・余白・色を調整して、スマートフォンでの見た目を整えました。' },
@@ -4086,7 +4097,7 @@ window.addEventListener('message', function(event) {
   if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
   if (event.data && event.data.type === 'dassai-crew-log-height') {
     const height = Number(event.data.height);
-    if (Number.isFinite(height)) frame.style.height = Math.min(7000, Math.max(1000, height)) + 'px';
+    if (Number.isFinite(height)) frame.style.height = Math.min(7000, Math.max(100, height)) + 'px';
   }
 });
 </script>
