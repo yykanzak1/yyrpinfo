@@ -979,46 +979,57 @@
             .reward-item-icon.reward-vehicle-icon { width: 64px; height: 30px; flex-basis: 64px; }
         }
 
-/* 罪状一覧：サイト共通のブルー配色とカード設計 */
-.fines-page{max-width:1180px;margin:0 auto;padding:clamp(14px,2.5vw,28px);color:var(--text-color)}
-.fines-hero{padding:clamp(18px,3vw,30px);border:1px solid var(--border-color);border-radius:22px;background:linear-gradient(135deg,rgba(0,136,255,.16),rgba(0,210,255,.06)),var(--card-bg);box-shadow:0 14px 36px rgba(0,0,0,.12)}
-.fines-kicker{margin:0 0 8px;color:var(--accent-cyan);font-size:.72rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-.fines-title{margin:0;font-size:clamp(1.65rem,4vw,2.35rem);line-height:1.2}
-.fines-lead{margin:10px 0 0;opacity:.78;line-height:1.7}
-.fines-note{margin-top:16px;padding:12px 14px;border:1px solid rgba(0,136,255,.28);border-radius:12px;background:rgba(0,136,255,.09);font-weight:700}
-.fines-index{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.fines-index a{display:inline-flex;align-items:center;min-height:38px;padding:8px 13px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);color:var(--text-color);font-size:.86rem;font-weight:700;text-decoration:none;transition:border-color .18s,color .18s,transform .18s}
+/* 罪状一覧：LucideアイコンとコンパクトなBlue Gang UI */
+.fines-page{box-sizing:border-box;width:100%;max-width:1060px;margin:0 auto;padding:16px clamp(12px,2vw,24px) 28px;color:var(--text-color)}
+.fines-hero{display:block;box-sizing:border-box;width:100%;min-width:0;padding:clamp(16px,2.2vw,22px);border:1px solid var(--border-color);border-radius:18px;background:linear-gradient(135deg,rgba(0,136,255,.15),rgba(0,210,255,.055)),var(--card-bg);box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.fines-heading-row{display:flex;align-items:center;gap:13px;min-width:0}
+.fines-emblem{display:flex;flex:0 0 46px;align-items:center;justify-content:center;width:46px;height:46px;border:1px solid rgba(0,210,255,.32);border-radius:14px;background:rgba(0,136,255,.13);color:var(--accent-cyan)}
+.fines-emblem .lucide-icon{width:23px;height:23px}
+.fines-heading-copy{min-width:0}
+.fines-kicker{margin:0 0 4px;color:var(--accent-cyan);font-size:.66rem;font-weight:800;letter-spacing:.14em}
+.fines-title{margin:0;font-size:clamp(1.45rem,3vw,1.9rem);line-height:1.2}
+.fines-lead{margin:5px 0 0;font-size:.88rem;line-height:1.5;opacity:.78}
+.fines-scope{display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;margin-left:auto;padding:7px 10px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);font-size:.73rem;font-weight:750;white-space:nowrap}
+.fines-scope .lucide-icon{width:15px;height:15px;color:var(--accent-cyan)}
+.fines-note{display:flex;align-items:center;gap:9px;margin-top:15px;padding:10px 12px;border:1px solid rgba(0,136,255,.24);border-radius:11px;background:rgba(0,136,255,.075);font-size:.86rem;font-weight:700;line-height:1.5}
+.fines-note .lucide-icon{flex:0 0 17px;width:17px;height:17px;color:var(--accent-cyan)}
+.fines-index{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:7px;width:100%;box-sizing:border-box;margin-top:13px;padding:0;border:0;border-radius:0;background:transparent;overflow:visible}
+.fines-index a{display:inline-flex;flex:0 1 auto;align-items:center;justify-content:center;gap:6px;min-height:34px;box-sizing:border-box;padding:7px 10px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);color:var(--text-color);font-size:.78rem;font-weight:700;line-height:1.2;text-decoration:none;white-space:nowrap;transition:border-color .18s,color .18s,transform .18s}
+.fines-index a .lucide-icon{width:14px;height:14px;color:var(--accent-cyan)}
 .fines-index a:hover,.fines-index a:focus-visible{border-color:var(--accent-cyan);color:var(--accent-cyan);transform:translateY(-1px);outline:none}
-.fines-section{margin-top:28px;scroll-margin-top:18px}
-.fines-section-title{display:flex;align-items:center;gap:10px;margin:0 0 13px;font-size:clamp(1.18rem,2.5vw,1.45rem)}
-.fines-section-title::before{content:"";width:4px;height:1.15em;border-radius:8px;background:linear-gradient(var(--accent-blue),var(--accent-cyan))}
-.fines-table-shell{overflow:hidden;border:1px solid var(--border-color);border-radius:15px;background:var(--card-bg)}
+.fines-section{margin-top:21px;scroll-margin-top:18px}
+.fines-section-title{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:1.18rem;line-height:1.3}
+.fines-section-title::before{display:none}
+.fines-section-icon{display:flex;flex:0 0 30px;align-items:center;justify-content:center;width:30px;height:30px;padding:6px;box-sizing:border-box;border:1px solid rgba(0,210,255,.24);border-radius:9px;background:rgba(0,136,255,.1);color:var(--accent-cyan)}
+.fines-table-shell{overflow:hidden;border:1px solid var(--border-color);border-radius:13px;background:var(--card-bg)}
 .fines-table{width:100%;border-collapse:collapse;table-layout:fixed}
-.fines-table th,.fines-table td{padding:13px 15px;border-bottom:1px solid var(--border-color);text-align:left;line-height:1.5;overflow-wrap:anywhere}
-.fines-table th{background:rgba(0,136,255,.12);color:var(--text-color);font-size:.84rem;font-weight:800}
-.fines-table td{font-size:.94rem}
+.fines-table th,.fines-table td{padding:10px 13px;border-bottom:1px solid var(--border-color);text-align:left;line-height:1.45;overflow-wrap:anywhere}
+.fines-table th{background:rgba(0,136,255,.12);color:var(--text-color);font-size:.79rem;font-weight:800}
+.fines-table td{font-size:.88rem}
 .fines-table tbody tr:last-child td{border-bottom:0}
 .fines-table tbody tr:nth-child(even) td{background:rgba(127,153,180,.035)}
 .fines-table th:nth-child(1){width:54%}.fines-table th:nth-child(2){width:26%}.fines-table th:nth-child(3){width:20%}
-.fines-callout{margin-top:12px;padding:15px 16px;border-left:3px solid var(--accent-cyan);border-radius:0 12px 12px 0;background:rgba(0,210,255,.07);line-height:1.75}
-.fines-offenses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.fines-offense{min-width:0;padding:16px;border:1px solid var(--border-color);border-radius:15px;background:var(--card-bg)}
-.fines-offense h4{margin:0;font-size:1rem}
-.fines-offense p{margin:9px 0 0;line-height:1.7;opacity:.82}
-.fines-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
-.fines-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border:1px solid var(--border-color);border-radius:999px;background:rgba(0,136,255,.08);font-size:.78rem;font-weight:750}
-.fines-goods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.fines-goods-card{min-width:0;padding:16px;border:1px solid var(--border-color);border-radius:15px;background:var(--card-bg)}
-.fines-goods-card h4{margin:0 0 10px;color:var(--accent-cyan);font-size:1rem}
-.fines-goods-card ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 16px;margin:0;padding-left:1.2em;line-height:1.65}
+.fines-callout{margin-top:10px;padding:12px 14px;border-left:3px solid var(--accent-cyan);border-radius:0 10px 10px 0;background:rgba(0,210,255,.07);font-size:.88rem;line-height:1.65}
+.fines-offenses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fines-offense{min-width:0;padding:13px;border:1px solid var(--border-color);border-radius:13px;background:var(--card-bg)}
+.fines-offense h4{margin:0;font-size:.93rem;line-height:1.45}
+.fines-offense p{margin:7px 0 0;font-size:.85rem;line-height:1.6;opacity:.82}
+.fines-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.fines-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border-color);border-radius:999px;background:rgba(0,136,255,.08);font-size:.72rem;font-weight:750;line-height:1.35}
+.fines-goods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fines-goods-card{min-width:0;padding:14px;border:1px solid var(--border-color);border-radius:13px;background:var(--card-bg)}
+.fines-goods-card h4{display:flex;align-items:center;gap:7px;margin:0 0 9px;color:var(--accent-cyan);font-size:.92rem}
+.fines-goods-card h4::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent-cyan);box-shadow:0 0 10px rgba(0,210,255,.55)}
+.fines-goods-card ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 14px;margin:0;padding-left:1.1em;font-size:.84rem;line-height:1.55}
 .fines-goods-card li{overflow-wrap:anywhere}
-.fines-footnote{margin:12px 0 0;font-size:.84rem;line-height:1.7;opacity:.74}
+.fines-goods-card li::marker{color:var(--accent-cyan)}
+.fines-footnote{margin:9px 0 0;font-size:.77rem;line-height:1.55;opacity:.74}
 @media(max-width:640px){
-  .fines-page{padding:12px 10px 22px}.fines-hero{border-radius:17px}.fines-index{gap:7px}.fines-index a{min-height:36px;padding:7px 10px;font-size:.78rem}
-  .fines-section{margin-top:22px}.fines-table th,.fines-table td{padding:10px 8px;font-size:.82rem}.fines-table th:nth-child(1){width:52%}.fines-table th:nth-child(2){width:27%}.fines-table th:nth-child(3){width:21%}
-  .fines-offenses,.fines-goods{grid-template-columns:1fr}.fines-goods-card ul{grid-template-columns:1fr 1fr}.fines-offense{padding:14px}
+  .fines-page{padding:12px 10px 22px}.fines-hero{padding:15px 13px;border-radius:15px}.fines-heading-row{gap:9px}.fines-emblem{flex-basis:39px;width:39px;height:39px;border-radius:12px}.fines-emblem .lucide-icon{width:20px;height:20px}.fines-title{font-size:1.42rem}.fines-kicker{font-size:.6rem}.fines-lead{font-size:.78rem}.fines-scope{gap:4px;padding:6px 7px;font-size:.65rem}.fines-scope .lucide-icon{width:13px;height:13px}
+  .fines-note{margin-top:12px;padding:9px 10px;font-size:.79rem}.fines-index{gap:6px;margin-top:11px}.fines-index a{min-height:32px;padding:6px 8px;font-size:.72rem}.fines-index a .lucide-icon{width:13px;height:13px}
+  .fines-section{margin-top:18px}.fines-section-title{gap:8px;margin-bottom:8px;font-size:1.05rem}.fines-section-icon{flex-basis:27px;width:27px;height:27px;padding:5px}.fines-table th,.fines-table td{padding:9px 8px;font-size:.79rem}.fines-table th:nth-child(1){width:52%}.fines-table th:nth-child(2){width:27%}.fines-table th:nth-child(3){width:21%}
+  .fines-offenses,.fines-goods{grid-template-columns:1fr;gap:8px}.fines-offense,.fines-goods-card{padding:12px}.fines-offense h4,.fines-goods-card h4{font-size:.87rem}.fines-offense p,.fines-goods-card ul{font-size:.8rem}.fines-goods-card ul{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px}.fines-chip{font-size:.68rem}.fines-callout{padding:10px 11px;font-size:.81rem}
 }
-
 </style>
 
     <meta property="og:url" content="https://yydassai.f5.si/">
@@ -3094,40 +3105,52 @@ SOFTWARE.
         <!-- ③ 罪状一覧：全ロール共通 -->
         <div id="fines" class="tab-content">
             <main class="fines-page">
-                <header class="fines-hero">
-                    <p class="fines-kicker">Blue Gang / Legal reference</p>
-                    <h2 class="fines-title">罪状一覧</h2>
-                    <p class="fines-lead">強盗・抗争・その他の罪状と、押収物の基準を確認できます。</p>
-                    <div class="fines-note">記載の金額は一人あたりの金額です。</div>
-                    <nav class="fines-index" aria-label="罪状一覧の目次">
-                        <a href="#fine-small">小型強盗</a><a href="#fine-medium">中型強盗</a><a href="#fine-large">大型強盗</a><a href="#fine-conflict">抗争罪</a><a href="#fine-other">その他罪状</a><a href="#fine-seizure">押収物一覧</a><a href="#fine-blackmoney">ブラックマネー</a>
-                    </nav>
-                </header>
+                <div class="fines-hero">
+                    <div class="fines-heading-row">
+                        <span class="fines-emblem"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-landmark"></use></svg></span>
+                        <div class="fines-heading-copy">
+                            <p class="fines-kicker">BLUE GANG / CRIME CODE</p>
+                            <h2 class="fines-title">罪状一覧</h2>
+                            <p class="fines-lead">罰金・プリズン・押収基準をすばやく確認</p>
+                        </div>
+                        <span class="fines-scope"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-user-round"></use></svg>全ロール共通</span>
+                    </div>
+                    <div class="fines-note"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-coins"></use></svg><span>記載の金額は一人あたりの金額です。</span></div>
+                    <div class="fines-index" role="navigation" aria-label="罪状一覧の目次">
+                        <a href="#fine-small"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-store"></use></svg>小型強盗</a>
+                        <a href="#fine-medium"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-gem"></use></svg>中型強盗</a>
+                        <a href="#fine-large"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-plane"></use></svg>大型強盗</a>
+                        <a href="#fine-conflict"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-triangle-alert"></use></svg>抗争罪</a>
+                        <a href="#fine-other"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-list-ordered"></use></svg>その他罪状</a>
+                        <a href="#fine-seizure"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-package"></use></svg>押収物一覧</a>
+                        <a href="#fine-blackmoney"><svg class="lucide-icon" aria-hidden="true" focusable="false"><use href="#lucide-banknote"></use></svg>ブラックマネー</a>
+                    </div>
+                </div>
 
                 <section class="fines-section" id="fine-small" aria-labelledby="fine-small-title">
-                    <h3 class="fines-section-title" id="fine-small-title">小型強盗</h3>
+                    <h3 class="fines-section-title" id="fine-small-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-store"></use></svg><span>小型強盗</span></h3>
                     <div class="fines-table-shell"><table class="fines-table"><thead><tr><th>罪状名</th><th>罰金</th><th>プリズン</th></tr></thead><tbody>
                         <tr><td>ATM強盗罪</td><td>80万</td><td>0</td></tr><tr><td>フリーカ強盗罪</td><td>130万</td><td>0</td></tr><tr><td>店舗強盗</td><td>80万</td><td>0</td></tr><tr><td>ウィードショップ強盗</td><td>190万</td><td>0</td></tr>
                     </tbody></table></div>
                 </section>
                 <section class="fines-section" id="fine-medium" aria-labelledby="fine-medium-title">
-                    <h3 class="fines-section-title" id="fine-medium-title">中型強盗</h3>
+                    <h3 class="fines-section-title" id="fine-medium-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-gem"></use></svg><span>中型強盗</span></h3>
                     <div class="fines-table-shell"><table class="fines-table"><thead><tr><th>罪状名</th><th>罰金</th><th>プリズン</th></tr></thead><tbody>
                         <tr><td>宝石店強盗</td><td>200万</td><td>30分</td></tr><tr><td>ボブキャット</td><td>250万</td><td>60分</td></tr><tr><td>列車強盗</td><td>250万</td><td>60分</td></tr>
                     </tbody></table></div>
                 </section>
                 <section class="fines-section" id="fine-large" aria-labelledby="fine-large-title">
-                    <h3 class="fines-section-title" id="fine-large-title">大型強盗</h3>
+                    <h3 class="fines-section-title" id="fine-large-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-plane"></use></svg><span>大型強盗</span></h3>
                     <div class="fines-table-shell"><table class="fines-table"><thead><tr><th>罪状名</th><th>罰金</th><th>プリズン</th></tr></thead><tbody>
                         <tr><td>客船強盗</td><td>300万</td><td>60分</td></tr><tr><td>貨物機強盗</td><td>400万</td><td>60分</td></tr><tr><td>ユニオン強盗</td><td>500万</td><td>60分</td></tr>
                     </tbody></table></div>
                 </section>
                 <section class="fines-section" id="fine-conflict" aria-labelledby="fine-conflict-title">
-                    <h3 class="fines-section-title" id="fine-conflict-title">抗争罪</h3>
+                    <h3 class="fines-section-title" id="fine-conflict-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-triangle-alert"></use></svg><span>抗争罪</span></h3>
                     <div class="fines-offense"><h4>ギャング抗争で発砲通知等によりPDに捕まった場合</h4><div class="fines-meta"><span class="fines-chip">罰金：100万</span></div><p>その他違法物等は別途罪状が付きます。</p></div>
                 </section>
                 <section class="fines-section" id="fine-other" aria-labelledby="fine-other-title">
-                    <h3 class="fines-section-title" id="fine-other-title">その他罪状</h3>
+                    <h3 class="fines-section-title" id="fine-other-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-list-ordered"></use></svg><span>その他罪状</span></h3>
                     <div class="fines-offenses">
                         <article class="fines-offense"><h4>公務執行妨害</h4><div class="fines-meta"><span class="fines-chip">罰金：30万</span><span class="fines-chip">プリズン：0</span></div><p>職質拒否・妨害。</p></article>
                         <article class="fines-offense"><h4>銃刀法違反</h4><div class="fines-meta"><span class="fines-chip">罰金：50万</span><span class="fines-chip">プリズン：0</span></div><p>ライセンスなしでの銃の所持。</p></article>
@@ -3141,7 +3164,7 @@ SOFTWARE.
                     </div>
                 </section>
                 <section class="fines-section" id="fine-seizure" aria-labelledby="fine-seizure-title">
-                    <h3 class="fines-section-title" id="fine-seizure-title">押収物一覧</h3>
+                    <h3 class="fines-section-title" id="fine-seizure-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-package"></use></svg><span>押収物一覧</span></h3>
                     <div class="fines-goods">
                         <article class="fines-goods-card"><h4>10,000／個</h4><ul><li>各強盗道具</li><li>ロックピック</li><li>手錠</li><li>Gold bar</li><li>Gold</li><li>金腕時計</li><li>ダイヤのリング</li><li>ゴールドチェーン</li><li>10Kのゴールドチェーン</li><li>ダイヤモンド（フリーカ用）</li></ul></article>
                         <article class="fines-goods-card"><h4>5,000／個</h4><ul><li>各種薬物</li></ul><p class="fines-footnote">薬物関係の物は「違法物」と説明書きされています。</p></article>
@@ -3150,7 +3173,7 @@ SOFTWARE.
                     </div>
                 </section>
                 <section class="fines-section" id="fine-blackmoney" aria-labelledby="fine-blackmoney-title">
-                    <h3 class="fines-section-title" id="fine-blackmoney-title">ブラックマネー</h3>
+                    <h3 class="fines-section-title" id="fine-blackmoney-title"><svg class="lucide-icon fines-section-icon" aria-hidden="true" focusable="false"><use href="#lucide-banknote"></use></svg><span>ブラックマネー</span></h3>
                     <div class="fines-callout">押収した金額をそのまま罰金とします。</div>
                 </section>
             </main>
@@ -4074,6 +4097,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-02', title: '罪状一覧をLucideアイコン付きの見やすいレイアウトに調整', summary: 'サイト共通header・navの影響を除いてスマホの縦崩れを修正。各カテゴリにLucideアイコンを付け、文字・余白・カードを読みやすいサイズに整えました。' },
             { date: '2026-11-02', title: '罪状一覧を追加し、全ロールで閲覧可能に', summary: '罰金・プリズン・押収物の一覧をメニューに追加しました。ギャング、傭兵、BOSS、アンボスのすべての認証ロールから閲覧できます。' },
             { date: '2026-11-01', title: '活動ログの犯罪名をマニュアル連動プルダウンに変更', summary: '犯罪マニュアルに掲載されている11種の犯罪を小型・中型・大型のグループ別に選択できるようにし、前回選んだ犯罪名を自動で引き継ぐようにしました。同じ犯罪はそのまま連続登録できます。' },
             { date: '2026-11-01', title: '活動ログをサイトのブルー基調に統一', summary: 'ギャング活動ログの配色をサイト本体のBlue Gangカラー（ネイビー・エレクトリックブルー・シアン）に統一。クイック登録を刷新し、ワンタップの結果選択と前回選択の保持で連続登録をすぐ行えるようにしました。' },
