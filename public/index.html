@@ -3292,11 +3292,10 @@ SOFTWARE.
             if (tabId === 'crewlog') {
                 const frame = document.getElementById('crewLogFrame');
                 if (frame) {
-                    const requestHeight = () => setTimeout(() => {
+                    frame.addEventListener('load', () => setTimeout(() => {
                         frame.contentWindow.postMessage({ type: 'dassai-request-crew-log-height' }, location.origin);
-                    }, 80);
-                    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') requestHeight();
-                    else frame.addEventListener('load', requestHeight, { once: true });
+                    }, 80), { once: true });
+                    frame.src = '/crew-log.html?rev=' + Date.now();
                 }
             }
         }
@@ -3968,6 +3967,7 @@ SOFTWARE.
     <script>
         // 今後サイトを更新する際は、新しい履歴をこの配列の先頭へ追加してください。
         const SITE_UPDATE_HISTORY = [
+            { date: '2026-11-01', title: '活動ログを開くたび最新画面を読み込み', summary: 'タブ切り替え時に活動ログiframeをキャッシュ回避付きで再読み込みし、デプロイ後に古い画面が残り続けないようにしました。' },
             { date: '2026-11-01', title: '活動ログをカード一覧に再設計', summary: '犯罪名・日時を主役にし、警察結果と利確を色分けしたカードでPC／スマホ共通表示にしました。スマホでは活動記録を先に表示し、「記録する」ボタンから入力欄へすぐ移動できます。' },
             { date: '2026-11-01', title: '活動ログの検索・共有更新を改善', summary: '利確結果でも絞り込めるようにし、検索条件の一括クリア、表示件数、最終同期時刻、手動更新ボタンを追加しました。共有記録は5秒ごとに自動更新します。' },
             { date: '2026-11-01', title: '活動ログをスマホでカード表示に変更', summary: 'スマートフォンでは各記録を横スクロール不要のカードにし、日時・犯罪名・警察結果・利確を見分けやすく整理しました。PCの一覧表も読みやすく調整しました。' },
