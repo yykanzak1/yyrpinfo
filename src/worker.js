@@ -57,9 +57,10 @@ const removeElement = { element(element) { element.remove(); } };
 function mercenaryManual(response) {
   return new HTMLRewriter()
     .on('#info', removeElement)
-    .on('#craft', removeElement)
+    .on('#craft .mercenary-hide', removeElement)
     .on('#exchange', removeElement)
     .on('#crewlog', removeElement)
+    .on('.search-bar', removeElement)
     .on('.search-bar', removeElement)
     .on('#searchInput', removeElement)
     .on('#searchSuggestions', removeElement)
@@ -73,8 +74,10 @@ function mercenaryManual(response) {
         const isCrime = onclick.includes("switchTab('crime')");
         const isFines = onclick.includes("switchTab('fines')");
         const isJoining = onclick.includes("switchTab('joining')");
-        if (!isCrime && !isFines && !isJoining) element.remove();
+        const isCraft = onclick.includes("switchTab('craft')");
+        if (!isCrime && !isFines && !isJoining && !isCraft) element.remove();
         else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
+        if (isCraft) element.setInnerContent('クラフトレシピ', { html: false });
       },
     })
     .on('#crime', {
@@ -210,7 +213,7 @@ async function callback(request, url, env) {
       ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
-    // BOSS・アンボス・ギャングは全ページ、傭兵は犯罪マニュアル・罪状一覧・加入条件を閲覧。
+    // BOSS・アンボス・ギャングは全ページ、傭兵は許可したページとクラフトレシピのみ閲覧。
     const rank = { mercenary: 1, gang: 2, underboss: 3, boss: 4 };
     let joined = false, access = null, error = false;
     for (const r of memRes) {
