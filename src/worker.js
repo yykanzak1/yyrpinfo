@@ -71,8 +71,9 @@ function mercenaryManual(response) {
       element(element) {
         const onclick = element.getAttribute('onclick') || '';
         const isCrime = onclick.includes("switchTab('crime')");
+        const isFines = onclick.includes("switchTab('fines')");
         const isJoining = onclick.includes("switchTab('joining')");
-        if (!isCrime && !isJoining) element.remove();
+        if (!isCrime && !isFines && !isJoining) element.remove();
         else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
       },
     })
@@ -209,7 +210,7 @@ async function callback(request, url, env) {
       ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
-    // BOSS・アンボス・ギャングは全ページ、傭兵のみは犯罪マニュアル等に限定。
+    // BOSS・アンボス・ギャングは全ページ、傭兵は犯罪マニュアル・罪状一覧・加入条件を閲覧。
     const rank = { mercenary: 1, gang: 2, underboss: 3, boss: 4 };
     let joined = false, access = null, error = false;
     for (const r of memRes) {
