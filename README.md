@@ -36,7 +36,7 @@ npx wrangler login
 ```
 `wrangler.jsonc` の `vars` を編集:
 - `DISCORD_CLIENT_ID` … Application ID
-- `GUILD_ID` … サーバーID
+- `GUILD_ID` … サーバーID（複数サーバーを許可する場合はカンマ区切りで指定）
 - `REQUIRED_ROLE_ID` … 特定ロールだけに絞るならロールID（不要なら空のまま）
 - `INVITE_URL` … 未参加の人に出す招待リンク（不要なら空）
 - `SESSION_DAYS` … ログインの有効日数（サーバーを抜けた人が閲覧できなくなるまでの最大日数）
