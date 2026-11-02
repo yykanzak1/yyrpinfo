@@ -60,6 +60,7 @@ function mercenaryManual(response) {
     .on('#craft .craft-layout', {
       element(element) {
         element.setAttribute('class', 'craft-layout mercenary-craft-layout');
+        element.setAttribute('style', 'grid-template-columns: minmax(0, 1fr);');
       },
     })
     .on('#craft .mercenary-hide', removeElement)
