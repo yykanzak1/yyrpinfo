@@ -1781,10 +1781,21 @@ table.craft-recipe-matrix td.val-cost { color: var(--cost-color); font-weight: 8
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
+.crime-material-total-head .lucide-icon { flex: 0 0 auto; }
+.crime-material-total-title,
+.crime-material-total-note,
+.crime-material-total-option-title,
+.crime-material-total-name,
+.crime-material-total-empty,
+.crime-material-total-footnote {
+  font-family: "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+}
+.crime-material-total-title { white-space: nowrap; letter-spacing: .02em; }
 .crime-material-total-title { color: #65d8ff; font-size: .92rem; font-weight: 850; }
-.crime-material-total-note { margin-left: auto; color: #a7bdcc; font-size: .7rem; text-align: right; }
+.crime-material-total-note { flex: 1 1 100%; margin-left: 0; color: #a7bdcc; font-size: .7rem; line-height: 1.5; text-align: left; }
 .crime-material-total-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 9px; }
 .crime-material-total-option {
   min-width: 0;
@@ -1808,7 +1819,7 @@ table.craft-recipe-matrix td.val-cost { color: var(--cost-color); font-weight: 8
 }
 .crime-material-total-chip .mat-icon { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; }
 .crime-material-total-name { flex: 1 1 auto; min-width: 0; color: #d5e3ec; font-size: .72rem; line-height: 1.25; overflow-wrap: anywhere; }
-.crime-material-total-amount { flex: 0 0 auto; color: #55d4ff; font-family: 'Orbitron', sans-serif; font-size: .76rem; font-weight: 800; white-space: nowrap; }
+.crime-material-total-amount { flex: 0 0 auto; color: #55d4ff; font-family: "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif; font-size: .78rem; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .crime-material-total-empty { margin: 0; color: #a7bdcc; font-size: .76rem; }
 .crime-material-total-footnote { margin: 9px 0 0; color: #91a8b9; font-size: .68rem; line-height: 1.55; }
 @media (max-width: 620px) {
@@ -5013,7 +5024,7 @@ SOFTWARE.
 
                 const panel = document.createElement('section');
                 panel.className = 'crime-material-total';
-                panel.setAttribute('aria-label', '必要素材の合計');
+                panel.setAttribute('aria-label', '必要素材合計');
                 const head = document.createElement('div');
                 head.className = 'crime-material-total-head';
                 const previousLabel = guide.previousElementSibling;
@@ -5021,10 +5032,10 @@ SOFTWARE.
                 if (sourceIcon) head.appendChild(sourceIcon.cloneNode(true));
                 const title = document.createElement('span');
                 title.className = 'crime-material-total-title';
-                title.textContent = '必要素材の合計';
+                title.textContent = '必要素材合計';
                 const note = document.createElement('span');
                 note.className = 'crime-material-total-note';
-                note.textContent = scenarios.length ? '選択式のアイテムは別々に表示' : '必要アイテムの作成素材を合算';
+                note.textContent = scenarios.length ? '選択式のアイテムは別々に集計しています' : '必要アイテムの作成素材を合算しています';
                 head.append(title, note);
                 panel.appendChild(head);
 
