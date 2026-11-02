@@ -1498,15 +1498,15 @@
     "note": ""
   },
   {
-    "id": "6f7fb8db-4531-457c-a107-e68241bd57da",
+    "id": "59fc5e22-3860-436d-be86-906500f205c3",
     "model": "volatus",
     "name": "Volatus",
-    "manufacturer": "Buckingham",
+    "manufacturer": "None",
     "class": "Helicopter",
     "price": 200000000,
     "seats": 4,
-    "trunk": "",
-    "glovebox": "",
+    "trunk": "なし",
+    "glovebox": "31枠/248kg",
     "stash": "",
     "topspeed": null,
     "note": ""
