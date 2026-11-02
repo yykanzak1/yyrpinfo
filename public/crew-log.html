@@ -157,10 +157,20 @@ html[data-theme="light"] .accent{color:#fff}
 .tag.free{border-color:color-mix(in srgb,var(--cyan) 30%,transparent);background:var(--cyan-soft);color:var(--cyan)}
 .tag.done{border-color:color-mix(in srgb,var(--blue) 36%,transparent);background:var(--blue-soft);color:var(--cyan)}
 .tag.pending{border-color:var(--line);background:var(--panel);color:var(--muted)}
-.record-actions{display:flex;justify-content:flex-end}
-.delete{display:inline-flex;align-items:center;gap:4px;min-height:29px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:9px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
-.delete svg{width:12px;height:12px}
-.delete:hover{border-color:color-mix(in srgb,var(--red) 60%,var(--line));background:var(--red-soft);color:var(--red)}
+.record-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px}
+.record-action{display:inline-flex;align-items:center;gap:4px;min-height:29px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:9px;font-weight:750;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.record-action svg{width:12px;height:12px}
+.record-action:hover{border-color:color-mix(in srgb,var(--blue) 60%,var(--line));background:var(--blue-soft);color:var(--cyan)}
+.record-action.delete:hover{border-color:color-mix(in srgb,var(--red) 60%,var(--line));background:var(--red-soft);color:var(--red)}
+.form-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+.form-actions .primary{grid-column:1/-1;margin-top:2px}
+.edit-mode .form-actions .primary{grid-column:1}
+#cancelEdit{min-height:46px;margin-top:2px}
+.edit-mode .card-head h2{color:var(--amber)}
+.edit-mode .primary{background:linear-gradient(120deg,var(--amber),#ff8f5b);color:#261402;box-shadow:0 12px 26px -16px var(--amber)}
+.edit-mode .primary:hover{filter:brightness(1.06)}
+html[data-theme="light"] .edit-mode .primary{color:#fff}
+
 .empty{display:grid;place-items:center;gap:7px;padding:30px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel);color:var(--muted);font-size:11.5px;text-align:center}
 .empty svg{width:26px;height:26px;color:color-mix(in srgb,var(--muted) 65%,transparent)}
 .empty p{margin:0}
@@ -207,8 +217,10 @@ html[data-theme="light"] .accent{color:#fff}
   .record-item{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 10px 10px 14px;border-radius:11px}
   .record-title{font-size:13px}
   .record-outcomes{grid-column:1/-1;justify-content:flex-start}
-  .delete{padding:6px}
-  .delete span{display:none}
+  .record-actions{gap:4px}
+  .record-action{padding:6px}
+  .record-action span{display:none}
+  #cancelEdit{min-height:44px;padding:8px}
   .footer{font-size:8.5px}
   .primary{min-height:44px}
 }
@@ -286,8 +298,9 @@ h2{font-size:17.5px}
   .record-title{font-size:15px}
   .record-outcomes{grid-column:1/-1;justify-content:flex-start}
   .tag{min-height:26px;padding:5px 9px;font-size:10.5px}
-  .delete{padding:8px}
-  .delete span{display:none}
+  .record-actions{gap:5px}
+  .record-action{padding:8px}
+  .record-action span{display:none}
   .footer{font-size:9.5px}
   .primary{min-height:46px}
 }
@@ -354,13 +367,6 @@ body input, body textarea, body select, body table td, body table th, body .reco
         <div class="select-wrap">
           <select id="activity" name="activity" required>
             <option value="">犯罪を選択してください</option>
-            <optgroup label="小型犯罪">
-              <option value="ATM強盗">ATM強盗</option>
-              <option value="ドラッグ販売">ドラッグ販売</option>
-              <option value="コンビニ強盗">コンビニ強盗</option>
-              <option value="フリーカ強盗">フリーカ強盗</option>
-              <option value="ウィード">ウィード</option>
-            </optgroup>
             <optgroup label="中型強盗">
               <option value="宝石店強盗">宝石店強盗</option>
               <option value="ボブキャット">ボブキャット</option>
@@ -389,7 +395,10 @@ body input, body textarea, body select, body table td, body table th, body .reco
           <label class="seg" data-tone="muted"><input type="radio" name="cashed" value="no"><span>できなかった</span></label>
         </div>
       </div>
-      <button class="btn primary" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>記録する<span class="kbd">Enter</span></button>
+      <div class="form-actions">
+        <button class="btn primary" id="submitButton" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="submitLabel">記録する</span><span class="kbd">Enter</span></button>
+        <button class="btn ghost" id="cancelEdit" type="button" hidden aria-label="編集をキャンセル">キャンセル</button>
+      </div>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </form>
   </section>
@@ -433,7 +442,7 @@ body input, body textarea, body select, body table td, body table th, body .reco
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11h6M9 15h6"/><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v3h3"/></svg>
       <p id="emptyText">記録はまだありません。左のフォームから追加できます。</p>
     </div>
-    <p class="footer">記録はギャング・BOSS・アンボスの共有データベースに保存されます。ギャング／BOSS／アンボスは閲覧・追加ができ、削除・全削除はBOSS／アンボスのみ可能です。大切な記録はCSVでバックアップしてください。</p>
+    <p class="footer">記録はギャング・BOSS・アンボスで共有されます。ギャングはクイック登録と自分が作成した記録のみ編集でき、削除・全削除はBOSS／アンボスのみ可能です。過去の記録は作成者情報がないためギャングから編集できません。</p>
   </section>
 </div>
 </main>
@@ -444,7 +453,8 @@ body input, body textarea, body select, body table td, body table th, body .reco
   const form = $('form'), activityInput = $('activity'), rows = $('rows'), empty = $('empty'), emptyText = $('emptyText'), status = $('status');
   const CHOICE_KEY = 'dassai_crew_last_choice';
   const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-  let records = [], canDelete = false, loading = false, flashId = null, statusTimer = 0;
+  const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+  let records = [], canDelete = false, loading = false, flashId = null, statusTimer = 0, editingId = null;
 
   function now() {
     const parts = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(new Date());
@@ -506,11 +516,19 @@ body input, body textarea, body select, body table td, body table th, body .reco
       outcomes.append(makeTag(item.result==='caught'?'caught':'free',resultLabel(item.result)));
       outcomes.append(makeTag(item.cashed==='yes'?'done':'pending',item.cashed==='yes'?'利確できた':'利確できず'));
       card.append(main,outcomes);
-      if (canDelete) {
+      if (item.can_edit === true || canDelete) {
         const actions=document.createElement('div'); actions.className='record-actions';
-        const button=document.createElement('button'); button.className='delete'; button.type='button'; button.innerHTML=TRASH_ICON+'<span>削除</span>';
-        button.setAttribute('aria-label',`${item.activity||'記録'}を削除`); button.addEventListener('click',()=>remove(item));
-        actions.append(button); card.append(actions);
+        if (item.can_edit === true) {
+          const editButton=document.createElement('button'); editButton.className='record-action edit'; editButton.type='button'; editButton.innerHTML=EDIT_ICON+'<span>編集</span>';
+          editButton.setAttribute('aria-label',`${item.activity||'記録'}を編集`); editButton.addEventListener('click',()=>startEdit(item));
+          actions.append(editButton);
+        }
+        if (canDelete) {
+          const button=document.createElement('button'); button.className='record-action delete'; button.type='button'; button.innerHTML=TRASH_ICON+'<span>削除</span>';
+          button.setAttribute('aria-label',`${item.activity||'記録'}を削除`); button.addEventListener('click',()=>remove(item));
+          actions.append(button);
+        }
+        card.append(actions);
       }
       frag.append(card);
     });
@@ -557,24 +575,50 @@ body input, body textarea, body select, body table td, body table th, body .reco
     try { localStorage.setItem(CHOICE_KEY, JSON.stringify({ activity, result, cashed })); } catch (error) {}
   }
   function updateClock() { $('clock').textContent=`${clockNow().slice(0,5)} JST`; $('whenLabel').textContent=displayNow(); }
+  function startEdit(item) {
+    if (item.can_edit !== true) return;
+    editingId=item.id;
+    let option=[...activityInput.options].find(candidate=>candidate.value===item.activity);
+    if (!option) {
+      option=document.createElement('option'); option.value=item.activity; option.textContent=`${item.activity}（過去の記録）`; option.dataset.legacy='true';
+      activityInput.add(option);
+    }
+    activityInput.value=item.activity;
+    const result=form.querySelector(`input[name="result"][value="${item.result}"]`);
+    const cashed=form.querySelector(`input[name="cashed"][value="${item.cashed}"]`);
+    if (result) result.checked=true; if (cashed) cashed.checked=true;
+    $('recordFormCard').classList.add('edit-mode'); $('submitLabel').textContent='変更を保存'; $('cancelEdit').hidden=false;
+    setStatus('自分が作成した記録を編集中です。','info');
+    $('recordFormCard').scrollIntoView({behavior:'smooth',block:'start'}); activityInput.focus({preventScroll:true});
+  }
+  function resetEditor() {
+    editingId=null; form.reset();
+    activityInput.querySelectorAll('option[data-legacy="true"]').forEach(option=>option.remove());
+    restoreChoice(); $('recordFormCard').classList.remove('edit-mode'); $('submitLabel').textContent='記録する'; $('cancelEdit').hidden=true;
+  }
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const data=new FormData(form);
     const payload={activity:String(data.get('activity')||'').trim(),result:String(data.get('result')||'caught'),cashed:String(data.get('cashed')||'yes')};
     if (!payload.activity) { setStatus('犯罪名を選択してください。','error'); activityInput.focus(); return; }
-    const submitButton=form.querySelector('button[type="submit"]');
-    submitButton.disabled=true; setStatus('共有データに記録しています…','info');
+    const submitButton=$('submitButton');
+    const targetId=editingId;
+    submitButton.disabled=true; setStatus(targetId?'記録を更新しています…':'共有データに記録しています…','info');
     let succeeded=false;
     try {
-      const response=await fetch('/api/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const response=await fetch(targetId?`/api/records/${encodeURIComponent(targetId)}`:'/api/records',{
+        method:targetId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+      });
       const saved=await response.json(); if (!response.ok) throw new Error('save failed');
-      records=[saved,...records.filter(item=>item.id!==saved.id)]; flashId=saved.id; saveChoice(payload.activity,payload.result,payload.cashed);
+      records=targetId?records.map(item=>item.id===targetId?saved:item):[saved,...records.filter(item=>item.id!==saved.id)];
+      flashId=saved.id; saveChoice(payload.activity,payload.result,payload.cashed);
+      if (targetId) resetEditor();
       render(); updateClock();
-      setStatus(`「${payload.activity}」を記録しました。このまま同じ犯罪を続けて登録できます。`,'ok');
+      setStatus(targetId?`「${payload.activity}」の記録を更新しました。`:`「${payload.activity}」を記録しました。このまま同じ犯罪を続けて登録できます。`,'ok');
       succeeded=true;
       setTimeout(()=>{flashId=null;},1800);
-    } catch (error) { setStatus('追加できませんでした。通信を確認して再度お試しください。','error'); }
+    } catch (error) { setStatus(targetId?'更新できませんでした。権限または通信を確認してください。':'追加できませんでした。通信を確認して再度お試しください。','error'); }
     finally { submitButton.disabled=false; if (succeeded) submitButton.focus(); }
   });
   $('search').addEventListener('input',render); $('filter').addEventListener('change',render); $('cashFilter').addEventListener('change',render);
@@ -584,6 +628,7 @@ body input, body textarea, body select, body table td, body table th, body .reco
     activityInput.focus({preventScroll:true});
   });
   $('refresh').addEventListener('click',()=>load(false));
+  $('cancelEdit').addEventListener('click',()=>{resetEditor();setStatus('編集をキャンセルしました。','info');});
   $('clear').addEventListener('click',async()=>{
     if (!records.length || !confirm('共有されている全記録を削除します。この操作は元に戻せません。続けますか？')) return;
     try { const response=await fetch('/api/records',{method:'DELETE'}); if (!response.ok) throw new Error('clear failed'); records=[]; render(); setStatus('すべての共有記録を削除しました。','ok'); }

@@ -111,7 +111,7 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   for (const [key, value] of Object.entries(extraHeaders)) headers.set(key, value);
   return new Response(JSON.stringify(data), { status, headers });
 }
-async function crewLogApi(request, url, env, access) {
+async function crewLogApi(request, url, env, access, userId) {
   if (!env.CREW_LOG_DB) return jsonResponse({ error: 'Database unavailable' }, 503);
   const path = url.pathname;
   const canDelete = access === 'boss' || access === 'underboss';
@@ -120,11 +120,16 @@ async function crewLogApi(request, url, env, access) {
   try {
     if (path === '/api/records' && method === 'GET') {
       const { results = [] } = await env.CREW_LOG_DB.prepare(
-        'SELECT id, activity, result, cashed, occurred_at FROM crew_log ORDER BY occurred_at DESC LIMIT 10000'
+        'SELECT id, activity, result, cashed, occurred_at, created_by FROM crew_log ORDER BY occurred_at DESC LIMIT 10000'
       ).all();
-      return jsonResponse(results, 200, { 'X-Crew-Can-Delete': canDelete ? '1' : '0' });
+      const records = results.map(({ created_by, ...record }) => ({
+        ...record,
+        can_edit: access === 'gang' && Boolean(userId) && created_by === userId,
+      }));
+      return jsonResponse(records, 200, { 'X-Crew-Can-Delete': canDelete ? '1' : '0' });
     }
     if (path === '/api/records' && method === 'POST') {
+      if (!userId) return jsonResponse({ error: 'Forbidden' }, 403);
       if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
       const contentLength = Number(request.headers.get('Content-Length') || 0);
       if (contentLength > 4096) return jsonResponse({ error: 'Request too large' }, 413);
@@ -140,9 +145,9 @@ async function crewLogApi(request, url, env, access) {
         occurred_at: new Date().toISOString(),
       };
       await env.CREW_LOG_DB.prepare(
-        'INSERT INTO crew_log (id, activity, result, cashed, occurred_at) VALUES (?, ?, ?, ?, ?)'
-      ).bind(record.id, record.activity, record.result, record.cashed, record.occurred_at).run();
-      return jsonResponse(record, 201);
+        'INSERT INTO crew_log (id, activity, result, cashed, occurred_at, created_by) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(record.id, record.activity, record.result, record.cashed, record.occurred_at, userId).run();
+      return jsonResponse({ ...record, can_edit: access === 'gang' }, 201);
     }
     if (path === '/api/records' && method === 'DELETE') {
       if (!canDelete) return jsonResponse({ error: 'Forbidden' }, 403);
@@ -151,6 +156,34 @@ async function crewLogApi(request, url, env, access) {
       return jsonResponse({ ok: true });
     }
     const match = path.match(/^\/api\/records\/([^/]+)$/);
+    if (match && method === 'PUT') {
+      if (access !== 'gang') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
+      if (!userId) return jsonResponse({ error: 'Forbidden' }, 403);
+      const contentLength = Number(request.headers.get('Content-Length') || 0);
+      if (contentLength > 4096) return jsonResponse({ error: 'Request too large' }, 413);
+      let id;
+      try { id = decodeURIComponent(match[1]); } catch { return jsonResponse({ error: 'Invalid id' }, 400); }
+      let input;
+      try { input = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+      const activity = typeof input?.activity === 'string' ? input.activity.trim() : '';
+      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed)) {
+        return jsonResponse({ error: 'Invalid record' }, 400);
+      }
+      const { results: existing = [] } = await env.CREW_LOG_DB.prepare(
+        'SELECT created_by FROM crew_log WHERE id = ?'
+      ).bind(id).all();
+      if (!existing.length) return jsonResponse({ error: 'Record not found' }, 404);
+      if (existing[0].created_by !== userId) return jsonResponse({ error: 'Forbidden' }, 403);
+      await env.CREW_LOG_DB.prepare(
+        'UPDATE crew_log SET activity = ?, result = ?, cashed = ? WHERE id = ? AND created_by = ?'
+      ).bind(activity, input.result, input.cashed, id, userId).run();
+      const { results: updated = [] } = await env.CREW_LOG_DB.prepare(
+        'SELECT id, activity, result, cashed, occurred_at FROM crew_log WHERE id = ?'
+      ).bind(id).all();
+      if (!updated.length) return jsonResponse({ error: 'Record not found' }, 404);
+      return jsonResponse({ ...updated[0], can_edit: true });
+    }
     if (match && method === 'DELETE') {
       if (!canDelete) return jsonResponse({ error: 'Forbidden' }, 403);
       if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
@@ -261,7 +294,7 @@ export default {
     if (path === '/api/records' || path.startsWith('/api/records/')) {
       if (!access) return redirect('/');
       if (access === 'mercenary') return new Response('Not found', { status: 404 });
-      return crewLogApi(request, url, env, access);
+      return crewLogApi(request, url, env, access, session.u);
     }
     if (path.startsWith('/assets/')) {
       if (!access) return redirect('/');
