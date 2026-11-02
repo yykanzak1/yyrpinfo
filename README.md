@@ -40,6 +40,7 @@ npx wrangler login
 - `REQUIRED_ROLE_ID` … 特定ロールだけに絞るならロールID（不要なら空のまま）
 - `INVITE_URL` … 未参加の人に出す招待リンク（不要なら空）
 - `SESSION_DAYS` … ログインの有効日数（サーバーを抜けた人が閲覧できなくなるまでの最大日数）
+- `SPECIAL_FULL_ACCESS_USER_ID` / `SPECIAL_FULL_ACCESS_GUILD_ID` … 指定サーバー参加時だけ、指定ユーザーをBOSS相当（全ページ閲覧）にする設定
 
 秘密情報は `vars` ではなくシークレットとして登録します:
 ```bash

@@ -365,10 +365,18 @@ async function callback(request, url, env) {
       ...guilds.map((g) => fetch(`${API}/users/@me/guilds/${g}/member`, { headers: auth })),
     ]);
     if (!meRes.ok) return fail('oauth');
+    const me = await meRes.json();
+    const specialUserId = String(env.SPECIAL_FULL_ACCESS_USER_ID || '').trim();
+    const specialGuildId = String(env.SPECIAL_FULL_ACCESS_GUILD_ID || '').trim();
+    const specialGuildIndex = guilds.indexOf(specialGuildId);
+    const specialFullAccess = specialUserId && specialGuildIndex >= 0
+      && me.id === specialUserId
+      && memRes[specialGuildIndex]?.ok;
     // BOSS・アンボス・ギャングは全ページ、傭兵は許可したページとクラフトレシピのみ閲覧。
+    // 指定ユーザーは指定サーバー参加時のみBOSS相当として全ページを閲覧可能。
     const rank = { mercenary: 1, gang: 2, underboss: 3, boss: 4 };
-    let joined = false, access = null, error = false;
-    for (const r of memRes) {
+    let joined = false, access = specialFullAccess ? 'boss' : null, error = false;
+    for (const [index, r] of memRes.entries()) {
       if (r.status === 404 || r.status === 403) continue;
       if (!r.ok) { error = true; continue; }
       joined = true;
@@ -381,7 +389,6 @@ async function callback(request, url, env) {
       if (candidate && (!access || rank[candidate] > rank[access])) access = candidate;
     }
     if (!access) return fail(joined ? 'role' : error ? 'server' : 'denied');
-    const me = await meRes.json();
     const days = Number(env.SESSION_DAYS) || 7;
     const token = await sign(env, { v: 2, u: me.id, n: me.global_name || me.username, a: access, exp: Math.floor(Date.now() / 1000) + days * 86400 });
     return redirect('/', [setCookie(SESSION, token, '/', days * 86400), clearState]);
