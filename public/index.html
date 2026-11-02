@@ -3011,6 +3011,14 @@ html, .crew-log-embedded body, .crew-log-embedded body * { -webkit-user-select:n
   -webkit-user-select:text !important; user-select:text !important;
 }
 
+
+/* 活動ログは内部スクロールを使わず、内容をすべて展開する */
+.crew-log-embedded .player-list,
+.crew-log-embedded .record-list {
+  max-height: none !important;
+  overflow: visible !important;
+}
+.crew-log-embedded { overflow: visible !important; }
 </style>
 </head>
 <body>
