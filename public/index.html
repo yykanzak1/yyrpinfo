@@ -4519,13 +4519,32 @@ SOFTWARE.
 
 
     <script>
-        function switchTab(tabId) {
+        const pageRoutes = {
+            info: '/', fines: '/fines', crime: '/crime', craft: '/craft', exchange: '/exchange',
+            vehicles: '/vehicles', crewlog: '/crewlog', joining: '/joining'
+        };
+        const routeTabs = Object.fromEntries(Object.entries(pageRoutes).map(([tab, path]) => [path, tab]));
+        function switchTab(tabId, options = {}) {
+            const target = document.getElementById(tabId);
+            if (!target) return;
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            target.classList.add('active');
             const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick') === `switchTab('${tabId}')`);
             if (activeBtn) activeBtn.classList.add('active');
+            const nextPath = pageRoutes[tabId];
+            if (nextPath && window.location.pathname !== nextPath) {
+                const method = options.replace ? 'replaceState' : 'pushState';
+                window.history[method]({ tab: tabId }, '', nextPath + window.location.search + window.location.hash);
+            }
+            document.title = `${target.querySelector('h2,h1')?.textContent?.trim() || '獺祭 DASSAI'} | 獺祭 DASSAI`;
         }
+        function activateRoute(path = window.location.pathname, replace = true) {
+            const tabId = routeTabs[path] || 'info';
+            switchTab(tabId, { replace });
+        }
+        window.addEventListener('popstate', () => activateRoute(window.location.pathname, true));
+        activateRoute(window.location.pathname, true);
 
         /* 犯罪マニュアル：詳細を別ページ風に表示 */
         const videoBlobCache = {};

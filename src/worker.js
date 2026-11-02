@@ -5,6 +5,9 @@ const SESSION = 'dassai_session';
 const STATE = 'dassai_oauth_state';
 const LOGIN_ASSET = '/x9Qm4Lz7Vp2N8kR';
 const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png']);
+const PAGE_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog','/joining']);
+const MERCENARY_ROUTES = new Set(['/crime','/fines','/craft','/joining']);
+const GANG_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog']);
 const API = 'https://discord.com/api';
 const MERCENARY_ASSETS = new Set([
   '/assets/fivem/exchange/golden-bogo.webp',
@@ -409,8 +412,10 @@ export default {
       response.headers.set('Cache-Control', 'private, max-age=86400');
       return response;
     }
-    if (path === '/' || path === '/index.html') {
+    if (PAGE_ROUTES.has(path)) {
       if (!access) return loginPage(url, env);
+      if (access === 'mercenary' && !MERCENARY_ROUTES.has(path)) return new Response('Not found', { status: 404 });
+      if (access === 'gang' && !GANG_ROUTES.has(path)) return new Response('Not found', { status: 404 });
       const page = await asset(env, url, '/_app/index.html');
       if (access === 'gang') return gangPage(page);
       if (access === 'mercenary') return mercenaryManual(page);
