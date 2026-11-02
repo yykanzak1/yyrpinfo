@@ -105,6 +105,43 @@
     footer { flex-direction:column; font-size:9px; }
   }
 
+  /* PC版：大きすぎる見出し・カードを抑えて一覧性を優先 */
+  @media (min-width:701px) {
+    .page { width:min(1000px,100%); padding:32px 38px 28px; }
+    .hero { grid-template-columns:minmax(0,1fr) 108px; gap:18px; padding-bottom:19px; }
+    .eyebrow { gap:8px; margin-bottom:8px; font-size:11px; }
+    h1 { font-size:32px; line-height:1.25; }
+    .subtitle { margin-top:7px; font-size:14px; line-height:1.5; }
+    .logo-wrap { width:100px; height:100px; }
+    .logo-wrap img { width:92px; height:92px; }
+    .section-title { gap:10px; margin:22px 0 11px; }
+    .section-title .index { font-size:15px; }
+    .section-title h2 { font-size:20px; }
+    .section-title p { font-size:10px; }
+    .requirements { gap:9px; }
+    .requirement { grid-template-columns:38px 1fr; gap:10px; min-height:78px; padding:13px 14px; }
+    .requirement .n { width:32px; height:32px; font-size:13px; }
+    .requirement p { font-size:15px; line-height:1.45; }
+    .steps { gap:12px; }
+    .step { grid-template-columns:52px 1fr; gap:10px; }
+    .step:not(:last-child)::after { left:18px; bottom:-18px; font-size:18px; }
+    .node { padding-top:14px; }
+    .node span { width:38px; height:38px; font-size:13px; }
+    .step-card { padding:14px 17px 15px; border-left-width:5px; }
+    .step-meta { margin-bottom:3px; font-size:10px; }
+    .step-card h3 { margin-bottom:5px; font-size:18px; line-height:1.3; }
+    .step-card p { font-size:14px; line-height:1.5; }
+    .step-card .sub { margin-top:6px; padding-top:6px; }
+    .notes { gap:9px; }
+    .note { grid-template-columns:22px 1fr; gap:8px; min-height:76px; padding:11px 12px; font-size:14px; line-height:1.45; }
+    .note .bullet { width:20px; height:20px; font-size:12px; }
+    .motto { grid-template-columns:34px 1fr; gap:10px; margin-top:14px; padding:14px 16px; }
+    .motto .mark { width:30px; height:30px; font-size:16px; }
+    .motto strong { font-size:18px; line-height:1.35; }
+    .motto small { font-size:13px; }
+    footer { margin-top:9px; font-size:9px; }
+  }
+
 /* Share the main DASSAI page background and respect its saved theme. */
 :root {
   --bg-color:#080e16; --card-bg:#111b27; --border-color:#293a4a;
