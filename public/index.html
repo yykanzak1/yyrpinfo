@@ -3338,6 +3338,20 @@ table.exchange-price-table tr.exchange-category-row th { padding:14px 18px; font
  #crewlog .crew-log-embedded .search-wrap { grid-column:auto; }
 }
 </style>
+
+<style id="crewlog-record-actions-fix">
+/* 活動記録：操作ボタンをカード右側へ固定 */
+#crewlog .crew-log-embedded .record-item { grid-template-columns:minmax(0,1fr) auto auto; }
+#crewlog .crew-log-embedded .record-outcomes { grid-column:2; grid-row:1; }
+#crewlog .crew-log-embedded .record-actions { grid-column:3; grid-row:1; min-width:max-content; }
+#crewlog .crew-log-embedded .record-action.delete { border-color:color-mix(in srgb,var(--red) 35%,var(--line)); color:var(--red); }
+#crewlog .crew-log-embedded .record-action.delete:hover { background:var(--red-soft); color:var(--red); }
+@media (max-width:700px) {
+ #crewlog .crew-log-embedded .record-item { grid-template-columns:minmax(0,1fr) auto; }
+ #crewlog .crew-log-embedded .record-outcomes { grid-column:1/-1; grid-row:2; justify-content:flex-start; }
+ #crewlog .crew-log-embedded .record-actions { grid-column:2; grid-row:1; align-self:start; }
+}
+</style>
 </head>
 <body>
 <!--
