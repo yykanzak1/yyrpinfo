@@ -2966,6 +2966,12 @@ html[data-theme="light"] .accent .crew-log-embedded{color:#fff}
 .crew-log-embedded .record-players{display:block;margin-top:8px;color:var(--muted);font-size:10px;line-height:1.4}
 .crew-log-embedded .record-players-heading{display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.04em}
 .crew-log-embedded .record-players-heading svg{width:13px;height:13px;flex:0 0 13px;color:var(--cyan)}
+.crew-log-embedded .record-players-toggle{width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.crew-log-embedded .record-players-toggle:hover{color:var(--ink)}
+.crew-log-embedded .record-players-chevron{margin-left:auto;color:var(--cyan);font-size:15px;line-height:1;transition:transform .18s ease}
+.crew-log-embedded .record-players-toggle[aria-expanded="false"] .record-players-chevron{transform:rotate(-90deg)}
+.crew-log-embedded .record-player-grid[hidden]{display:none}
+
 .crew-log-embedded .record-player-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
 .crew-log-embedded .record-player-card{grid-column:span 1}
 .crew-log-embedded .record-player-card--wide,.crew-log-embedded .record-player-card--full{grid-column:span 1}
@@ -4755,13 +4761,20 @@ SOFTWARE.
       main.append(timestamp,title);
       if (Array.isArray(item.players)&&item.players.length) {
         const playerLine=document.createElement('div'); playerLine.className='record-players';
-        const playerHeading=document.createElement('div'); playerHeading.className='record-players-heading';
+        const playerHeading=document.createElement('button'); playerHeading.type='button'; playerHeading.className='record-players-heading record-players-toggle';
+        playerHeading.setAttribute('aria-expanded','true'); playerHeading.setAttribute('aria-label','参加メンバーを表示・非表示');
         const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
         playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
         playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
         const playerHeadingText=document.createElement('span'); playerHeadingText.textContent=`参加メンバー（${item.players.length}人）`;
-        playerHeading.append(playerIcon,playerHeadingText);
+        const playerChevron=document.createElement('span'); playerChevron.className='record-players-chevron'; playerChevron.textContent='⌄'; playerChevron.setAttribute('aria-hidden','true');
+        playerHeading.append(playerIcon,playerHeadingText,playerChevron);
         const playerGrid=document.createElement('div'); playerGrid.className='record-player-grid';
+        playerHeading.addEventListener('click',()=>{
+          const expanded=playerHeading.getAttribute('aria-expanded')==='true';
+          playerHeading.setAttribute('aria-expanded',String(!expanded));
+          playerGrid.hidden=expanded;
+        });
         const playerCards=[];
         item.players.forEach(player=>{
           const playerCard=document.createElement('div'); playerCard.className='record-player-card';
