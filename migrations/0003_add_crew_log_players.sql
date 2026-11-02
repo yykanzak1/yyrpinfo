@@ -1,0 +1,1 @@
+ALTER TABLE crew_log ADD COLUMN players_json TEXT NOT NULL DEFAULT '[]';

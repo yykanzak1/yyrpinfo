@@ -111,19 +111,90 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   for (const [key, value] of Object.entries(extraHeaders)) headers.set(key, value);
   return new Response(JSON.stringify(data), { status, headers });
 }
+function parsePlayersJson(value) {
+  try {
+    const players = JSON.parse(value || '[]');
+    return Array.isArray(players) ? players.filter((player) => player && /^\d{17,20}$/.test(player.id) && typeof player.name === 'string') : [];
+  } catch { return []; }
+}
+function normalizePlayers(value) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 50) return null;
+  const seen = new Set(), players = [];
+  for (const player of value) {
+    const id = typeof player?.id === 'string' ? player.id : '';
+    const name = typeof player?.name === 'string' ? player.name.trim() : '';
+    if (!/^\d{17,20}$/.test(id) || !name || name.length > 80) return null;
+    if (!seen.has(id)) { seen.add(id); players.push({ id, name }); }
+  }
+  return players;
+}
+async function discordGuildMembers(url, env) {
+  if (!env.DISCORD_BOT_TOKEN) throw new Error('Discord bot token is not configured');
+  const guildId = String(env.GUILD_ID || '').split(',')[0].trim();
+  if (!guildId) throw new Error('Discord guild is not configured');
+  const cache = globalThis.caches?.default;
+  const cacheKey = new Request(new URL(`/__internal/discord-members/${guildId}`, url.origin));
+  if (cache) {
+    try {
+      const cached = await cache.match(cacheKey);
+      if (cached) return await cached.json();
+    } catch {}
+  }
+  const members = [];
+  let after = '';
+  for (let pageNumber = 0; pageNumber < 500; pageNumber++) {
+    const endpoint = new URL(`${API}/v10/guilds/${guildId}/members`);
+    endpoint.searchParams.set('limit', '1000');
+    if (after) endpoint.searchParams.set('after', after);
+    const response = await fetch(endpoint, { headers: { Authorization: `Bot ${env.DISCORD_BOT_TOKEN}` } });
+    if (!response.ok) throw new Error(`Discord member request failed (${response.status})`);
+    const page = await response.json();
+    if (!Array.isArray(page)) throw new Error('Invalid Discord member response');
+    for (const member of page) {
+      const user = member?.user;
+      if (!user?.id || user.bot) continue;
+      members.push({ id: user.id, name: member.nick || user.global_name || user.username || user.id });
+    }
+    if (page.length < 1000) break;
+    const nextAfter = page.at(-1)?.user?.id;
+    if (!nextAfter || nextAfter === after) throw new Error('Discord member pagination did not advance');
+    after = nextAfter;
+    if (pageNumber === 499) throw new Error('Discord member list exceeded the pagination limit');
+  }
+  members.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  if (cache) {
+    try {
+      await cache.put(cacheKey, new Response(JSON.stringify(members), { headers: { 'Cache-Control': 'public, max-age=20' } }));
+    } catch {}
+  }
+  return members;
+}
 async function crewLogApi(request, url, env, access, userId) {
-  if (!env.CREW_LOG_DB) return jsonResponse({ error: 'Database unavailable' }, 503);
   const path = url.pathname;
   const canDelete = access === 'boss' || access === 'underboss';
   const sameOrigin = request.headers.get('Origin') === url.origin;
   const method = request.method;
   try {
+    if (path === '/api/members' && method === 'GET') {
+      if (!['gang', 'boss', 'underboss'].includes(access)) return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!env.DISCORD_BOT_TOKEN) return jsonResponse({ error: 'discord_bot_not_configured' }, 503);
+      try {
+        const members = await discordGuildMembers(url, env);
+        return jsonResponse(members, 200, { 'Cache-Control': 'private, max-age=15' });
+      } catch (error) {
+        console.error('Discord member list error', error);
+        return jsonResponse({ error: 'discord_member_fetch_failed' }, 502);
+      }
+    }
+    if (!env.CREW_LOG_DB) return jsonResponse({ error: 'Database unavailable' }, 503);
     if (path === '/api/records' && method === 'GET') {
       const { results = [] } = await env.CREW_LOG_DB.prepare(
-        'SELECT id, activity, result, cashed, occurred_at, created_by FROM crew_log ORDER BY occurred_at DESC LIMIT 10000'
+        'SELECT id, activity, result, cashed, occurred_at, created_by, players_json FROM crew_log ORDER BY occurred_at DESC LIMIT 10000'
       ).all();
-      const records = results.map(({ created_by, ...record }) => ({
+      const records = results.map(({ created_by, players_json, ...record }) => ({
         ...record,
+        players: parsePlayersJson(players_json),
         can_edit: access === 'gang' && Boolean(userId) && created_by === userId,
       }));
       return jsonResponse(records, 200, { 'X-Crew-Can-Delete': canDelete ? '1' : '0' });
@@ -132,21 +203,22 @@ async function crewLogApi(request, url, env, access, userId) {
       if (!userId) return jsonResponse({ error: 'Forbidden' }, 403);
       if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
       const contentLength = Number(request.headers.get('Content-Length') || 0);
-      if (contentLength > 4096) return jsonResponse({ error: 'Request too large' }, 413);
+      if (contentLength > 8192) return jsonResponse({ error: 'Request too large' }, 413);
       let input;
       try { input = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
       const activity = typeof input?.activity === 'string' ? input.activity.trim() : '';
-      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed)) {
+      const players = normalizePlayers(input?.players);
+      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed) || !players) {
         return jsonResponse({ error: 'Invalid record' }, 400);
       }
       const record = {
         id: crypto.randomUUID(), activity,
         result: input.result, cashed: input.cashed,
-        occurred_at: new Date().toISOString(),
+        occurred_at: new Date().toISOString(), players,
       };
       await env.CREW_LOG_DB.prepare(
-        'INSERT INTO crew_log (id, activity, result, cashed, occurred_at, created_by) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(record.id, record.activity, record.result, record.cashed, record.occurred_at, userId).run();
+        'INSERT INTO crew_log (id, activity, result, cashed, occurred_at, created_by, players_json) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(record.id, record.activity, record.result, record.cashed, record.occurred_at, userId, JSON.stringify(players)).run();
       return jsonResponse({ ...record, can_edit: access === 'gang' }, 201);
     }
     if (path === '/api/records' && method === 'DELETE') {
@@ -161,13 +233,14 @@ async function crewLogApi(request, url, env, access, userId) {
       if (!sameOrigin) return jsonResponse({ error: 'Forbidden origin' }, 403);
       if (!userId) return jsonResponse({ error: 'Forbidden' }, 403);
       const contentLength = Number(request.headers.get('Content-Length') || 0);
-      if (contentLength > 4096) return jsonResponse({ error: 'Request too large' }, 413);
+      if (contentLength > 8192) return jsonResponse({ error: 'Request too large' }, 413);
       let id;
       try { id = decodeURIComponent(match[1]); } catch { return jsonResponse({ error: 'Invalid id' }, 400); }
       let input;
       try { input = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
       const activity = typeof input?.activity === 'string' ? input.activity.trim() : '';
-      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed)) {
+      const players = normalizePlayers(input?.players);
+      if (!activity || activity.length > 80 || !['caught', 'not_caught'].includes(input?.result) || !['yes', 'no'].includes(input?.cashed) || !players) {
         return jsonResponse({ error: 'Invalid record' }, 400);
       }
       const { results: existing = [] } = await env.CREW_LOG_DB.prepare(
@@ -176,13 +249,14 @@ async function crewLogApi(request, url, env, access, userId) {
       if (!existing.length) return jsonResponse({ error: 'Record not found' }, 404);
       if (existing[0].created_by !== userId) return jsonResponse({ error: 'Forbidden' }, 403);
       await env.CREW_LOG_DB.prepare(
-        'UPDATE crew_log SET activity = ?, result = ?, cashed = ? WHERE id = ? AND created_by = ?'
-      ).bind(activity, input.result, input.cashed, id, userId).run();
+        'UPDATE crew_log SET activity = ?, result = ?, cashed = ?, players_json = ? WHERE id = ? AND created_by = ?'
+      ).bind(activity, input.result, input.cashed, JSON.stringify(players), id, userId).run();
       const { results: updated = [] } = await env.CREW_LOG_DB.prepare(
-        'SELECT id, activity, result, cashed, occurred_at FROM crew_log WHERE id = ?'
+        'SELECT id, activity, result, cashed, occurred_at, players_json FROM crew_log WHERE id = ?'
       ).bind(id).all();
       if (!updated.length) return jsonResponse({ error: 'Record not found' }, 404);
-      return jsonResponse({ ...updated[0], can_edit: true });
+      const { players_json, ...record } = updated[0];
+      return jsonResponse({ ...record, players: parsePlayersJson(players_json), can_edit: true });
     }
     if (match && method === 'DELETE') {
       if (!canDelete) return jsonResponse({ error: 'Forbidden' }, 403);
@@ -291,7 +365,7 @@ export default {
     // 旧形式のCookieには権限情報がないため再ログインを必須にする。
     const allowedRoles = new Set(['gang', 'mercenary', 'boss', 'underboss']);
     const access = session && session.v === 2 && allowedRoles.has(session.a) ? session.a : null;
-    if (path === '/api/records' || path.startsWith('/api/records/')) {
+    if (path === '/api/members' || path === '/api/records' || path.startsWith('/api/records/')) {
       if (!access) return redirect('/');
       if (access === 'mercenary') return new Response('Not found', { status: 404 });
       return crewLogApi(request, url, env, access, session.u);

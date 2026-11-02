@@ -75,6 +75,23 @@ input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:var(--foc
 .select-wrap::after{content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .select-wrap:focus-within::after{border-color:var(--cyan)}
 .field-hint{margin:6px 1px 0;color:var(--muted);font-size:9px;line-height:1.4}
+.player-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.player-heading label{margin:0}
+.player-count{padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:var(--blue-soft);color:var(--cyan);font-size:9px;font-weight:800;white-space:nowrap}
+.player-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.player-controls input{min-height:40px;font-size:11px}
+.player-controls .btn{min-height:40px;padding:7px 9px}
+.player-list{display:grid;gap:4px;max-height:180px;overflow:auto;margin-top:7px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.player-choice{display:flex;align-items:center;gap:8px;min-width:0;min-height:34px;margin:0!important;padding:5px 7px;border:1px solid transparent;border-radius:8px;background:var(--surface);color:var(--ink);font-size:10.5px;font-weight:650;cursor:pointer}
+.player-choice:hover{border-color:var(--line);background:var(--surface-raised)}
+.player-choice input[type="checkbox"]{width:17px;height:17px;min-height:17px;flex:0 0 17px;margin:0;padding:0;accent-color:var(--cyan)}
+.player-choice span{min-width:0;overflow-wrap:anywhere}
+.player-empty{padding:10px 7px;color:var(--muted);font-size:10px;text-align:center}
+.player-state[data-tone="error"]{color:var(--red)}
+.player-departed-list{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px}
+.player-departed-label{width:100%;color:var(--amber);font-size:9px;font-weight:750}
+.player-departed-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border:1px solid color-mix(in srgb,var(--amber) 35%,var(--line));border-radius:999px;background:var(--amber-soft);color:var(--amber);font-size:9px}
+.player-remove{min-height:22px!important;padding:2px 6px!important;font-size:8px!important}
 .segmented{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .seg{position:relative;display:block;min-width:0;margin:0}
 .seg input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;background:transparent;opacity:0;cursor:pointer}
@@ -150,6 +167,9 @@ html[data-theme="light"] .accent{color:#fff}
 .record-main{min-width:0}
 .record-time{display:block;margin-bottom:2px;color:var(--muted);font-size:9px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .record-title{margin:0;color:var(--ink);font-size:14px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+.record-players{display:flex;align-items:flex-start;gap:6px;margin-top:6px;color:var(--muted);font-size:10px;line-height:1.4}
+.record-players svg{width:13px;height:13px;flex:0 0 13px;color:var(--cyan);margin-top:1px}
+.record-players span{overflow-wrap:anywhere}
 .record-outcomes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px}
 .tag{display:inline-flex;align-items:center;gap:5px;min-height:23px;padding:3px 9px;border:1px solid transparent;border-radius:999px;font-size:9.5px;font-weight:800;line-height:1.25;white-space:nowrap}
 .tag::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -381,6 +401,16 @@ body input, body textarea, body select, body table td, body table th, body .reco
         </div>
         <p class="field-hint">犯罪マニュアルに掲載されている犯罪から選択できます。前回の犯罪名は自動で選択されます。</p>
       </div>
+      <div class="field player-field">
+        <div class="player-heading"><label for="playerSearch">参加プレイヤー</label><span class="player-count" id="playerCount">0人選択</span></div>
+        <div class="player-controls">
+          <input id="playerSearch" type="search" placeholder="プレイヤー名を検索" aria-label="参加プレイヤーを検索">
+          <button class="btn ghost" id="refreshMembers" type="button" aria-label="Discordメンバーを更新" title="Discordメンバーを更新"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>更新</button>
+        </div>
+        <p class="field-hint player-state" id="membersState" role="status" aria-live="polite">Discordメンバーを読み込み中…</p>
+        <div class="player-list" id="playerList" role="group" aria-label="参加プレイヤー"></div>
+        <div class="player-departed-list" id="departedPlayers" hidden></div>
+      </div>
       <div class="field">
         <span class="field-label">警察の結果</span>
         <div class="segmented" role="radiogroup" aria-label="警察の結果">
@@ -422,7 +452,7 @@ body input, body textarea, body select, body table td, body table th, body .reco
     <div class="filters">
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="search" type="search" placeholder="犯罪名を検索" aria-label="犯罪名を検索">
+        <input id="search" type="search" placeholder="犯罪名・プレイヤー名を検索" aria-label="犯罪名・プレイヤー名を検索">
       </div>
       <select id="filter" aria-label="警察結果で絞り込み">
         <option value="all">警察結果：すべて</option>
@@ -455,6 +485,8 @@ body input, body textarea, body select, body table td, body table th, body .reco
   const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
   const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
   let records = [], canDelete = false, loading = false, flashId = null, statusTimer = 0, editingId = null;
+  let members = [], memberById = new Map(), memberError = '', membersLoading = false;
+  let selectedPlayers = new Map(), preEditPlayers = null;
 
   function now() {
     const parts = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(new Date());
@@ -498,10 +530,78 @@ body input, body textarea, body select, body table td, body table th, body .reco
   function makeTag(tone, value) {
     const badge=document.createElement('span'); badge.className=`tag ${tone}`; badge.textContent=value; return badge;
   }
+  function updatePlayerCount() { $('playerCount').textContent=`${selectedPlayers.size}人選択`; }
+  function renderDepartedPlayers() {
+    const container=$('departedPlayers'); container.replaceChildren();
+    const departed=[...selectedPlayers.values()].filter(player=>!memberById.has(player.id));
+    container.hidden=departed.length===0;
+    if (!departed.length) return;
+    const heading=document.createElement('span'); heading.className='player-departed-label';
+    heading.textContent=memberError?'在籍状態を確認できない選択中プレイヤー':'サーバー退会済み（過去ログから引き継ぎ）';
+    container.append(heading);
+    departed.forEach(player=>{
+      const chip=document.createElement('span'); chip.className='player-departed-chip';
+      const name=document.createElement('span'); name.textContent=player.name;
+      const remove=document.createElement('button'); remove.type='button'; remove.className='btn ghost player-remove'; remove.textContent='外す';
+      remove.setAttribute('aria-label',`${player.name}を参加者から外す`);
+      remove.addEventListener('click',()=>{selectedPlayers.delete(player.id);renderMemberChoices();});
+      chip.append(name,remove); container.append(chip);
+    });
+  }
+  function renderMemberChoices() {
+    const list=$('playerList'), query=$('playerSearch').value.trim().toLocaleLowerCase('ja');
+    const state=$('membersState');
+    state.textContent=membersLoading&&!members.length?'Discordメンバーを読み込み中…':memberError || `Discordメンバー ${members.length} 人（30秒ごとに更新）`;
+    state.dataset.tone=memberError?'error':'ok';
+    const shown=members.filter(member=>!query || member.name.toLocaleLowerCase('ja').includes(query));
+    list.replaceChildren();
+    if (!shown.length) {
+      const emptyMessage=document.createElement('div'); emptyMessage.className='player-empty';
+      emptyMessage.textContent=membersLoading?'Discordメンバーを取得しています…':memberError?'参加者一覧を利用できません。設定後に更新してください。':query?'検索に一致するメンバーはいません。':'Discordメンバーがいません。';
+      list.append(emptyMessage);
+    } else {
+      const frag=document.createDocumentFragment();
+      shown.forEach(member=>{
+        const label=document.createElement('label'); label.className='player-choice';
+        const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.checked=selectedPlayers.has(member.id);
+        checkbox.addEventListener('change',()=>{
+          if (checkbox.checked) selectedPlayers.set(member.id,member); else selectedPlayers.delete(member.id);
+          updatePlayerCount(); renderDepartedPlayers();
+        });
+        const name=document.createElement('span'); name.textContent=member.name;
+        label.append(checkbox,name); frag.append(label);
+      });
+      list.append(frag);
+    }
+    updatePlayerCount(); renderDepartedPlayers();
+  }
+  async function loadMembers(silent=true) {
+    if (membersLoading) return;
+    membersLoading=true;
+    const button=$('refreshMembers'); button.disabled=true;
+    if (!silent) { memberError=''; renderMemberChoices(); }
+    try {
+      const response=await fetch('/api/members',{cache:'no-store'});
+      const payload=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(payload.error||'discord_member_fetch_failed');
+      members=Array.isArray(payload)?payload.filter(member=>member&&/^\d{17,20}$/.test(member.id)&&typeof member.name==='string'):[];
+      memberById=new Map(members.map(member=>[member.id,member]));
+      memberError='';
+      members.forEach(member=>{if(selectedPlayers.has(member.id))selectedPlayers.set(member.id,member);});
+      if (!editingId) for (const id of selectedPlayers.keys()) if (!memberById.has(id)) selectedPlayers.delete(id);
+    } catch (error) {
+      members=[]; memberById=new Map();
+      memberError=error.message==='discord_bot_not_configured'
+        ? 'Bot未設定です。管理者がBotをサーバーへ招待し、GUILD_MEMBERSとDISCORD_BOT_TOKENを設定してください。'
+        : 'Discordメンバー一覧を取得できません。Botの参加状態・Intent・トークン設定を確認してください。';
+    } finally {
+      membersLoading=false; button.disabled=false; renderMemberChoices();
+    }
+  }
   function render() {
     const query=$('search').value.trim().toLocaleLowerCase('ja'), resultFilter=$('filter').value, cashFilter=$('cashFilter').value;
     const shown=records.slice().sort((a,b)=>String(b.occurred_at||'').localeCompare(String(a.occurred_at||''))).filter(item =>
-      (!query || String(item.activity||'').toLocaleLowerCase('ja').includes(query)) &&
+      (!query || String(item.activity||'').toLocaleLowerCase('ja').includes(query) || (item.players||[]).some(player=>String(player.name||'').toLocaleLowerCase('ja').includes(query))) &&
       (resultFilter==='all' || item.result===resultFilter) && (cashFilter==='all' || item.cashed===cashFilter));
     $('shownCount').textContent=shown.length===records.length ? `${records.length} 件` : `${shown.length} / ${records.length} 件を表示`;
     const frag=document.createDocumentFragment();
@@ -512,6 +612,14 @@ body input, body textarea, body select, body table td, body table th, body .reco
       const timestamp=document.createElement('time'); timestamp.className='record-time'; timestamp.textContent=dateLabel(item.occurred_at);
       const title=document.createElement('h3'); title.className='record-title'; title.textContent=item.activity||'名称未設定';
       main.append(timestamp,title);
+      if (Array.isArray(item.players)&&item.players.length) {
+        const playerLine=document.createElement('div'); playerLine.className='record-players';
+        const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
+        playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
+        const names=document.createElement('span'); names.textContent=item.players.map(player=>player.name).join(' · ');
+        playerLine.append(playerIcon,names); main.append(playerLine);
+      }
       const outcomes=document.createElement('div'); outcomes.className='record-outcomes';
       outcomes.append(makeTag(item.result==='caught'?'caught':'free',resultLabel(item.result)));
       outcomes.append(makeTag(item.cashed==='yes'?'done':'pending',item.cashed==='yes'?'利確できた':'利確できず'));
@@ -587,6 +695,8 @@ body input, body textarea, body select, body table td, body table th, body .reco
     const result=form.querySelector(`input[name="result"][value="${item.result}"]`);
     const cashed=form.querySelector(`input[name="cashed"][value="${item.cashed}"]`);
     if (result) result.checked=true; if (cashed) cashed.checked=true;
+    preEditPlayers=new Map(selectedPlayers); selectedPlayers=new Map((Array.isArray(item.players)?item.players:[]).map(player=>[player.id,player]));
+    renderMemberChoices();
     $('recordFormCard').classList.add('edit-mode'); $('submitLabel').textContent='変更を保存'; $('cancelEdit').hidden=false;
     setStatus('自分が作成した記録を編集中です。','info');
     $('recordFormCard').scrollIntoView({behavior:'smooth',block:'start'}); activityInput.focus({preventScroll:true});
@@ -594,13 +704,14 @@ body input, body textarea, body select, body table td, body table th, body .reco
   function resetEditor() {
     editingId=null; form.reset();
     activityInput.querySelectorAll('option[data-legacy="true"]').forEach(option=>option.remove());
-    restoreChoice(); $('recordFormCard').classList.remove('edit-mode'); $('submitLabel').textContent='記録する'; $('cancelEdit').hidden=true;
+    if (preEditPlayers) { selectedPlayers=preEditPlayers; preEditPlayers=null; }
+    restoreChoice(); renderMemberChoices(); $('recordFormCard').classList.remove('edit-mode'); $('submitLabel').textContent='記録する'; $('cancelEdit').hidden=true;
   }
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const data=new FormData(form);
-    const payload={activity:String(data.get('activity')||'').trim(),result:String(data.get('result')||'caught'),cashed:String(data.get('cashed')||'yes')};
+    const payload={activity:String(data.get('activity')||'').trim(),result:String(data.get('result')||'caught'),cashed:String(data.get('cashed')||'yes'),players:[...selectedPlayers.values()]};
     if (!payload.activity) { setStatus('犯罪名を選択してください。','error'); activityInput.focus(); return; }
     const submitButton=$('submitButton');
     const targetId=editingId;
@@ -628,6 +739,9 @@ body input, body textarea, body select, body table td, body table th, body .reco
     activityInput.focus({preventScroll:true});
   });
   $('refresh').addEventListener('click',()=>load(false));
+  $('playerSearch').addEventListener('input',renderMemberChoices);
+  $('playerSearch').addEventListener('keydown',event=>{if(event.key==='Enter')event.preventDefault();});
+  $('refreshMembers').addEventListener('click',()=>loadMembers(false));
   $('cancelEdit').addEventListener('click',()=>{resetEditor();setStatus('編集をキャンセルしました。','info');});
   $('clear').addEventListener('click',async()=>{
     if (!records.length || !confirm('共有されている全記録を削除します。この操作は元に戻せません。続けますか？')) return;
@@ -636,13 +750,13 @@ body input, body textarea, body select, body table td, body table th, body .reco
   });
   $('export').addEventListener('click',()=>{
     if (!records.length) { alert('CSVに保存する記録がありません。'); return; }
-    const data=[['日時（JST）','犯罪名','警察結果','利確'],...records.map(item=>[dateLabel(item.occurred_at),item.activity,resultLabel(item.result),item.cashed==='yes'?'できた':'できなかった'])];
+    const data=[['日時（JST）','犯罪名','参加プレイヤー','警察結果','利確'],...records.map(item=>[dateLabel(item.occurred_at),item.activity,(item.players||[]).map(player=>player.name).join('、'),resultLabel(item.result),item.cashed==='yes'?'できた':'できなかった'])];
     const csv=data.map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
     const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url; link.download=`gang-activity-log-${now().slice(0,10)}.csv`; document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
   });
-  restoreChoice(); updateClock(); render(); load(false);
-  setInterval(updateClock,30000); setInterval(()=>load(true),5000);
+  restoreChoice(); updateClock(); render(); load(false); loadMembers(false);
+  setInterval(updateClock,30000); setInterval(()=>load(true),5000); setInterval(()=>loadMembers(true),30000);
 })();
 (() => {
   const content = document.querySelector('.wrap');
