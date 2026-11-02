@@ -389,6 +389,12 @@ export default {
       if (access === 'mercenary') return new Response('Not found', { status: 404 });
       return crewLogApi(request, url, env, access, session.u);
     }
+    if (path === '/vehicles.json') {
+      if (!access) return redirect('/');
+      const response = secure(await env.ASSETS.fetch(request));
+      response.headers.set('Cache-Control', 'private, max-age=300');
+      return response;
+    }
     if (path.startsWith('/assets/')) {
       if (!access) return redirect('/');
       if (access === 'mercenary' && !MERCENARY_ASSETS.has(path)) return new Response('Not found', { status: 404 });
