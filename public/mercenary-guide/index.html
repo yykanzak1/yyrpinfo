@@ -183,6 +183,8 @@ body, body * { -webkit-user-select:none !important; user-select:none !important;
 </head>
 <body>
 <main class="page">
+<a href="/" style="display:inline-block;margin:0 0 18px;color:#9edfff;font-weight:700;text-decoration:none">← トップページへ戻る</a>
+
   <header class="hero">
     <div>
       <div class="eyebrow">GANG MEMBERSHIP GUIDE</div>
@@ -225,17 +227,6 @@ body, body * { -webkit-user-select:none !important; user-select:none !important;
   <div class="motto"><span class="mark">!</span><div><strong>自分がやられて嫌なことは、人にしない！！！！</strong><small>（打ち合いのテクニック等は別です）</small></div></div>
   <footer><span>RESPECT · TEAMWORK · ENJOY</span><span>GANG MEMBERSHIP GUIDE</span></footer>
 </main>
-<script>
-(() => {
-  const page = document.querySelector('.page');
-  const sendHeight = () => parent.postMessage({ type: 'dassai-mercenary-guide-height', height: Math.ceil(page.getBoundingClientRect().height) }, location.origin);
-  new ResizeObserver(sendHeight).observe(page);
-  addEventListener('message', event => {
-    if (event.source === parent && event.origin === location.origin && event.data && event.data.type === 'dassai-request-mercenary-guide-height') sendHeight();
-  });
-  addEventListener('load', () => requestAnimationFrame(sendHeight));
-  addEventListener('resize', () => requestAnimationFrame(sendHeight));
-})();
-</script>
+
 </body>
 </html>

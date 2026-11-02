@@ -69,6 +69,6 @@ npx wrangler deploy
 
 ## AI コンソールについて
 
-- `public/ai.html`（獺祭 AI コンソール）は、opencode でコード作業・ファイル操作を行うためのチャットUIです。詳細は `local-helper/RUN_GUIDE_ja.md` を参照してください。
+- 旧AIコンソールはサイト構成変更に伴い削除しました。
 - ヘルパー `local-helper/server.py` は **opencode**（`opencode serve`）の起動・終了とチャット中継を担当します。Ollama ではありません。
 - モデルは opencode が接続するクラウドプロバイダ（例: OpenCode Zen）を使うため、**アカウントの残高／APIキー**が必要です。

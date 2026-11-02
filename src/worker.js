@@ -384,20 +384,15 @@ export default {
       if (access === 'mercenary') return mercenaryManual(page);
       return secure(page);
     }
-    if (path === '/crew-log.html') {
+    if (path === '/crew-log' || path === '/crew-log/') {
       if (!access) return redirect('/');
       if (access === 'mercenary') return new Response('Not found', { status: 404 });
-      return secure(await asset(env, url, '/crew-log.html'));
+      return secure(await asset(env, url, '/crew-log/index.html'));
     }
-    if (path === '/mercenary-guide.html') {
+    if (path === '/mercenary-guide' || path === '/mercenary-guide/') {
       if (!access) return redirect('/');
       if (access === 'gang') return new Response('Not found', { status: 404 });
-      return secure(await asset(env, url, '/mercenary-guide.html'));
-    }
-    if (path === '/ai.html') {
-      if (!access) return redirect('/');
-      if (access === 'mercenary') return new Response('Forbidden', { status: 403 });
-      return secure(await asset(env, url, '/ai.html'));
+      return secure(await asset(env, url, '/mercenary-guide/index.html'));
     }
     return access ? new Response('Not found', { status: 404 }) : redirect('/');
   },
