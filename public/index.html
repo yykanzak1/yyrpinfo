@@ -3688,6 +3688,22 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
   #crewlog .crew-log-embedded .ring{display:none}
 }
 </style>
+<style id="crewlog-record-full-width">
+/* 活動記録：参加者カードを削除ボタン側まで使う */
+#crewlog .crew-log-embedded .record-main{display:contents}
+#crewlog .crew-log-embedded .record-time{grid-column:1;grid-row:1}
+#crewlog .crew-log-embedded .record-title{grid-column:1;grid-row:2}
+#crewlog .crew-log-embedded .record-players{grid-column:1/-1;grid-row:3;min-width:0}
+#crewlog .crew-log-embedded .record-outcomes{grid-column:2;grid-row:1}
+#crewlog .crew-log-embedded .record-actions{grid-column:3;grid-row:1}
+@media (max-width:700px){
+  #crewlog .crew-log-embedded .record-time{grid-column:1;grid-row:1}
+  #crewlog .crew-log-embedded .record-title{grid-column:1;grid-row:2}
+  #crewlog .crew-log-embedded .record-players{grid-column:1/-1;grid-row:3}
+  #crewlog .crew-log-embedded .record-outcomes{grid-column:1/-1;grid-row:4;justify-content:flex-start}
+  #crewlog .crew-log-embedded .record-actions{grid-column:2;grid-row:1;align-self:start}
+}
+</style>
 </head>
 <body>
 <!--
