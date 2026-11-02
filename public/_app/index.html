@@ -1127,6 +1127,23 @@
 .app-body > nav .nav-group-label{padding:8px 10px 5px;color:var(--text-dim);font-size:.64rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
 .app-body > nav .nav-group:not(:has(.tab-btn)){display:none}
 @media(max-width:600px){.app-body > nav .nav-group{margin-bottom:6px;padding-bottom:6px}.app-body > nav .nav-group-label{padding:8px 10px 4px;font-size:.62rem}}
+
+/* 車両一覧：クラス別セクションとおすすめ強調 */
+#vehicles .vehicles-grid{display:block}
+#vehicles .vehicle-category{margin-top:22px}
+#vehicles .vehicle-category:first-child{margin-top:4px}
+#vehicles .vehicle-category-head{display:flex;align-items:center;gap:9px;margin:0 0 9px;padding:8px 11px;border-left:3px solid var(--accent-cyan);border-bottom:1px solid var(--border-color);color:var(--text-color)}
+#vehicles .vehicle-category-head h3{margin:0;font-size:1rem}
+#vehicles .vehicle-category-count{margin-left:auto;color:var(--text-dim);font-size:.7rem;font-weight:700}
+#vehicles .vehicle-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px}
+#vehicles .vehicle-card.vehicle-recommended{border:2px solid #ef626c;background:linear-gradient(145deg,rgba(239,98,108,.14),var(--card-bg) 62%);box-shadow:0 8px 24px rgba(170,35,45,.16)}
+#vehicles .vehicle-card.vehicle-recommended:hover{border-color:#ff7d86;box-shadow:0 13px 30px rgba(170,35,45,.24)}
+#vehicles .vehicle-card.vehicle-recommended .vehicle-media{background:linear-gradient(145deg,rgba(239,98,108,.18),rgba(0,0,0,.12));border-bottom-color:rgba(239,98,108,.35)}
+#vehicles .vehicle-recommended-badge{position:absolute;left:8px;top:8px;padding:4px 8px;border-radius:999px;background:#e95761;color:#fff;font-size:.62rem;font-weight:800;z-index:2}
+#vehicles .vehicle-card.vehicle-recommended .vehicle-price{background:rgba(239,98,108,.14);color:#ff9aa1}
+#vehicles .vehicle-card.vehicle-recommended .vehicle-price-label{color:#ff8d96}
+@media(max-width:760px){#vehicles .vehicle-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+@media(max-width:430px){#vehicles .vehicle-category-grid{grid-template-columns:1fr}}
 </style>
 
     <meta property="og:url" content="https://yydassai.f5.si/">
@@ -3239,11 +3256,11 @@ SOFTWARE.
             <button class="tab-btn" onclick="switchTab('fines')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-landmark"></use></svg><span>罪状一覧</span></button>
             </div>
             <div class="nav-group">
-              <div class="nav-group-label">犯罪・車両</div>
-            <button class="tab-btn" onclick="switchTab('vehicles')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><span>車両一覧</span></button>
-            <button class="tab-btn" onclick="switchTab('crime')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-clapperboard"></use></svg><span>犯罪マニュアル</span></button>
+              <div class="nav-group-label">犯罪・車両</div>            <button class="tab-btn" onclick="switchTab('crime')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-clapperboard"></use></svg><span>犯罪マニュアル</span></button>
             <button class="tab-btn" onclick="switchTab('craft')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-hammer"></use></svg><span>クラフトレシピ</span></button>
             <button class="tab-btn" onclick="switchTab('exchange')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-banknote"></use></svg><span>換金場</span></button>
+
+            <button class="tab-btn" onclick="switchTab('vehicles')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><span>車両一覧</span></button>
             </div>
             <div class="nav-group">
               <div class="nav-group-label">ギャング管理</div>
@@ -5325,25 +5342,39 @@ SOFTWARE.
     classFilter.innerHTML='<option value="">すべてのクラス</option>'+classes.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
     if(classes.includes(current)) classFilter.value=current;
   }
+  const recommendedModels=new Set(['bati','shotaro','hakuchou2','draugur','elegy']);
+  const categoryOrder=['Compact','Sedan','Sports','Sports Classic','Super','Muscle','SUV','Off-Road','Van','Motorcycle','Helicopter','Plane','その他','未分類'];
+  const categoryLabels={Compact:'コンパクト',Sedan:'セダン',Sports:'スポーツ', 'Sports Classic':'スポーツクラシック',Super:'スーパーカー',Muscle:'マッスル',SUV:'SUV','Off-Road':'オフロード',Van:'バン',Motorcycle:'バイク',Helicopter:'ヘリコプター',Plane:'飛行機','その他':'その他','未分類':'未分類'};
   function render(){
     const q=search.value.trim().toLocaleLowerCase('ja'), cls=classFilter.value;
     let list=vehicles.filter(v=>(!cls||v.class===cls)&&(!q||[v.name,v.model,v.manufacturer,v.class,v.note].some(x=>String(x||'').toLocaleLowerCase('ja').includes(q))));
     const sorters={'name-asc':(a,b)=>String(a.name||a.model).localeCompare(String(b.name||b.model),'ja'),'price-asc':(a,b)=>(a.price??Infinity)-(b.price??Infinity),'price-desc':(a,b)=>(b.price??-Infinity)-(a.price??-Infinity),'class-asc':(a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ja')||String(a.name||a.model).localeCompare(String(b.name||b.model),'ja')};
     list.sort(sorters[sort.value]||sorters['name-asc']); count.textContent=vehicles.length; result.textContent=`表示中 ${list.length} / 全 ${vehicles.length} 台`; empty.hidden=list.length>0; vehicleGrid.replaceChildren();
+    const groups=new Map(); list.forEach(v=>{const key=v.class||'未分類';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(v);});
+    const ordered=[...categoryOrder.filter(key=>groups.has(key)),...Array.from(groups.keys()).filter(key=>!categoryOrder.includes(key))];
     const frag=document.createDocumentFragment();
-    list.forEach(v=>{
-      const card=document.createElement('article'); card.className='vehicle-card';
-      const media=document.createElement('div'); media.className='vehicle-media';
-      const img=document.createElement('img'); img.loading='lazy'; img.alt=v.name||v.model;
-      const candidates=imageCandidates(v.model); let imageIndex=0;
-      img.onerror=()=>{ if(imageIndex<candidates.length-1){img.src=candidates[++imageIndex];}else{img.onerror=null;img.src=fallbackImage(v.model,v.name||v.model);} };
-      img.src=candidates[0]; media.append(img);
-      if(v.class){const badge=document.createElement('span');badge.className='vehicle-class';badge.textContent=v.class;media.append(badge);}
-      const body=document.createElement('div'); body.className='vehicle-body';
-      const specs=[]; if(v.seats)specs.push(['定員',`${v.seats}人`]); if(v.trunk)specs.push(['トランク',v.trunk]); if(v.glovebox)specs.push(['グローブ',v.glovebox]); if(v.topspeed)specs.push(['最高速度',`${v.topspeed}km/h`]);
-      body.innerHTML=`<h3 class="vehicle-name">${esc(v.name||v.model)}</h3><p class="vehicle-meta">${esc(v.manufacturer||'')} / ${esc(v.model||'')}</p><div class="vehicle-price"><span class="vehicle-price-label">販売価格</span><strong class="vehicle-price-value">${yen(v.price)}</strong></div>${specs.length?`<ul class="vehicle-specs">${specs.map(([k,val])=>`<li class="vehicle-spec"><b>${esc(k)}</b><span>${esc(val)}</span></li>`).join('')}</ul>`:''}${v.note?`<p class="vehicle-note">${esc(v.note)}</p>`:''}`;
-      card.append(media,body); frag.append(card);
-    }); vehicleGrid.append(frag);
+    ordered.forEach(category=>{
+      const section=document.createElement('section'); section.className='vehicle-category';
+      section.innerHTML=`<div class="vehicle-category-head"><h3>${esc(categoryLabels[category]||category)}</h3><span class="vehicle-category-count">${groups.get(category).length}台</span></div><div class="vehicle-category-grid"></div>`;
+      const grid=section.querySelector('.vehicle-category-grid');
+      groups.get(category).forEach(v=>{
+        const recommended=recommendedModels.has(v.model);
+        const card=document.createElement('article'); card.className=`vehicle-card${recommended?' vehicle-recommended':''}`;
+        const media=document.createElement('div'); media.className='vehicle-media';
+        const img=document.createElement('img'); img.loading='lazy'; img.alt=v.name||v.model;
+        const candidates=imageCandidates(v.model); let imageIndex=0;
+        img.onerror=()=>{ if(imageIndex<candidates.length-1){img.src=candidates[++imageIndex];}else{img.onerror=null;img.src=fallbackImage(v.model,v.name||v.model);} };
+        img.src=candidates[0]; media.append(img);
+        if(recommended){const badge=document.createElement('span');badge.className='vehicle-recommended-badge';badge.textContent='おすすめ';media.append(badge);}
+        if(v.class){const badge=document.createElement('span');badge.className='vehicle-class';badge.textContent=categoryLabels[v.class]||v.class;media.append(badge);}
+        const body=document.createElement('div'); body.className='vehicle-body';
+        const specs=[]; if(v.seats)specs.push(['定員',`${v.seats}人`]); if(v.trunk)specs.push(['トランク',v.trunk]); if(v.glovebox)specs.push(['グローブ',v.glovebox]); if(v.topspeed)specs.push(['最高速度',`${v.topspeed}km/h`]);
+        body.innerHTML=`<h3 class="vehicle-name">${esc(v.name||v.model)}</h3><p class="vehicle-meta">${esc(v.manufacturer||'')} / ${esc(v.model||'')}</p><div class="vehicle-price"><span class="vehicle-price-label">販売価格</span><strong class="vehicle-price-value">${yen(v.price)}</strong></div>${specs.length?`<ul class="vehicle-specs">${specs.map(([k,val])=>`<li class="vehicle-spec"><b>${esc(k)}</b><span>${esc(val)}</span></li>`).join('')}</ul>`:''}${v.note?`<p class="vehicle-note">${esc(v.note)}</p>`:''}`;
+        card.append(media,body); grid.append(card);
+      });
+      frag.append(section);
+    });
+    vehicleGrid.append(frag);
   }
   fetch('/vehicles.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('vehicle data');return r.json();}).then(data=>{vehicles=Array.isArray(data)?data:[];populateClasses();render();}).catch(()=>{vehicles=[];render();});
   search.addEventListener('input',render); classFilter.addEventListener('change',render); sort.addEventListener('change',render);
