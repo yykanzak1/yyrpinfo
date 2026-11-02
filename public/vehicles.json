@@ -74,7 +74,7 @@
     "model": "faggio2",
     "name": "Faggio",
     "manufacturer": "Pegassi",
-    "class": "",
+    "class": "Motorcycle",
     "price": 100000,
     "seats": 1,
     "trunk": "5枠/40kg",
