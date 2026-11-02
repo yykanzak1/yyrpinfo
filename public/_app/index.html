@@ -5310,7 +5310,7 @@ SOFTWARE.
   let vehicles=[];
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'—';
-  const localVehicleImages={clube:'/vehicle-images/clube.jpg',peanut:'/vehicle-images/peanut.jpg'};
+  const localVehicleImages={clube:'/vehicle-images/clube.png',peanut:'/vehicle-images/peanut.png'};
   const imageCandidates=model=>{
     const m=String(model||'').trim().toLowerCase();
     return [...(localVehicleImages[m]?[localVehicleImages[m]]:[]),`https://docs.fivem.net/vehicles/${encodeURIComponent(m)}.webp`,`https://docs.fivem.net/vehicles/${encodeURIComponent(m)}.png`,`/assets/${encodeURIComponent(m)}.webp`,`/assets/${encodeURIComponent(m)}.png`];
