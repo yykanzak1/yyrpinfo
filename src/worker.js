@@ -118,21 +118,32 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   for (const [key, value] of Object.entries(extraHeaders)) headers.set(key, value);
   return new Response(JSON.stringify(data), { status, headers });
 }
+const PLAYER_CATEGORIES = new Set(['BOSS', 'アンボス', '傭兵メンバー', 'ギャングメンバー', 'その他']);
+function cleanPlayer(player) {
+  if (!player || typeof player.name !== 'string') return null;
+  const id = typeof player.id === 'string' ? player.id : '';
+  const name = player.name.trim();
+  const isOther = id === 'other';
+  if ((!isOther && !/^\d{17,20}$/.test(id)) || !name || name.length > 80) return null;
+  const category = typeof player.category === 'string' && PLAYER_CATEGORIES.has(player.category)
+    ? player.category
+    : (isOther ? 'その他' : undefined);
+  return category ? { id, name, category } : { id, name };
+}
 function parsePlayersJson(value) {
   try {
     const players = JSON.parse(value || '[]');
-    return Array.isArray(players) ? players.filter((player) => player && /^\d{17,20}$/.test(player.id) && typeof player.name === 'string') : [];
+    return Array.isArray(players) ? players.map(cleanPlayer).filter(Boolean) : [];
   } catch { return []; }
 }
 function normalizePlayers(value) {
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value) || value.length > 50) return null;
   const seen = new Set(), players = [];
-  for (const player of value) {
-    const id = typeof player?.id === 'string' ? player.id : '';
-    const name = typeof player?.name === 'string' ? player.name.trim() : '';
-    if (!/^\d{17,20}$/.test(id) || !name || name.length > 80) return null;
-    if (!seen.has(id)) { seen.add(id); players.push({ id, name }); }
+  for (const rawPlayer of value) {
+    const player = cleanPlayer(rawPlayer);
+    if (!player) return null;
+    if (!seen.has(player.id)) { seen.add(player.id); players.push(player); }
   }
   return players;
 }
