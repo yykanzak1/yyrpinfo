@@ -3221,6 +3221,50 @@ html[data-theme="light"] table.exchange-price-table tr.exchange-category-row th 
   table.exchange-price-table tr.exchange-category-row { margin-top:20px; }
 }
 </style>
+
+<style id="exchange-polish">
+/* 換金場プレミアム仕上げ */
+#exchange { max-width: 1040px; }
+#exchange .category-header { min-height: 86px; padding: 20px 24px 25px; border-color: rgba(97,221,255,.34); background: radial-gradient(circle at 84% 20%,rgba(70,211,255,.16),transparent 25%), linear-gradient(125deg,#102e47 0%,#0b1c2e 55%,#07131f 100%); }
+#exchange .category-header .category-title::before { content:"✦"; display:inline-block; margin-right:10px; color:#71e6ff; font-size:1.05em; text-shadow:0 0 14px #4ad8ff; }
+#exchange .category-header::before { top:17px; bottom:auto; right:24px; color:rgba(174,235,252,.72); }
+#exchange .category-header::after { right:-26px; top:-93px; width:240px; height:240px; border-color:rgba(106,225,255,.3); }
+#exchange .exchange-lead { margin:0 4px 14px; padding:0 2px; }
+#exchange .exchange-overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0 0 21px; }
+#exchange .exchange-kpi { position:relative; min-height:72px; padding:13px 15px; overflow:hidden; border:1px solid rgba(126,172,201,.22); border-radius:14px; background:linear-gradient(145deg,rgba(22,47,69,.8),rgba(9,22,36,.84)); }
+#exchange .exchange-kpi::after { content:""; position:absolute; right:-22px; bottom:-28px; width:86px; height:86px; border-radius:50%; background:radial-gradient(circle,rgba(66,211,255,.18),transparent 68%); }
+#exchange .exchange-kpi-label { display:block; color:#8ca8ba; font-size:.66rem; letter-spacing:.12em; font-weight:800; }
+#exchange .exchange-kpi-value { display:block; margin-top:5px; color:#eefaff; font-size:1.2rem; line-height:1; font-weight:900; }
+#exchange .exchange-kpi-value em { color:#70e5ff; font-size:.72rem; font-style:normal; font-weight:700; }
+#exchange .exchange-kpi:nth-child(2) .exchange-kpi-value { color:#a9efc8; }
+#exchange .exchange-kpi:nth-child(3) .exchange-kpi-value { color:#ffd875; }
+.table-wrapper.exchange-price-wrapper { padding:0 2px 20px; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) { gap:8px; margin:8px 0; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td { transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+table.exchange-price-table tbody tr:not(.exchange-category-row):hover td { border-color:rgba(104,222,255,.54); box-shadow:0 12px 26px rgba(0,0,0,.25),0 0 18px rgba(56,186,232,.08); }
+table.exchange-price-table tbody tr:not(.exchange-category-row):hover td.item-name-cell { transform:translateX(-2px); }
+table.exchange-price-table tbody tr:not(.exchange-category-row):hover td.val-cost { transform:translateX(2px); }
+table.exchange-price-table tr.exchange-category-row { margin:29px 0 10px; }
+table.exchange-price-table tr.exchange-category-row th { padding:12px 15px; border-left-width:4px; box-shadow:0 5px 15px rgba(0,0,0,.1); }
+table.exchange-price-table tr.exchange-category-row:nth-of-type(3n+1) th { border-left-color:#67d9ff; }
+table.exchange-price-table tr.exchange-category-row:nth-of-type(3n+2) th { border-left-color:#b794ff; background:linear-gradient(90deg,rgba(125,91,207,.2),rgba(28,24,59,.3) 58%,transparent); }
+table.exchange-price-table tr.exchange-category-row:nth-of-type(3n) th { border-left-color:#f2bc58; background:linear-gradient(90deg,rgba(181,125,38,.18),rgba(47,35,20,.3) 58%,transparent); }
+table.exchange-price-table tbody tr.exchange-universal-row { position:relative; margin:0 0 17px; }
+table.exchange-price-table tbody tr.exchange-universal-row td { border-color:rgba(235,190,82,.46); background:radial-gradient(circle at 30% 50%,rgba(239,180,56,.18),transparent 35%),linear-gradient(145deg,rgba(93,62,18,.62),rgba(28,25,18,.95)); }
+table.exchange-price-table tbody tr.exchange-universal-row td.item-name-cell::after { content:"TOP REWARD"; margin-left:auto; padding:4px 7px; border:1px solid rgba(255,216,114,.35); border-radius:5px; color:#ffd875; font-size:.55rem; letter-spacing:.1em; font-weight:900; }
+table.exchange-price-table tbody tr.exchange-universal-row td.item-name-cell .item-icon { border-color:rgba(255,214,97,.5); }
+html[data-theme="light"] #exchange .exchange-kpi { background:linear-gradient(145deg,#fff,#edf5fa); border-color:#d1e1ea; }
+html[data-theme="light"] #exchange .exchange-kpi-label { color:#688092; }
+html[data-theme="light"] #exchange .exchange-kpi-value { color:#254456; }
+@media (max-width:700px) {
+ #exchange .exchange-overview { gap:7px; margin-bottom:17px; }
+ #exchange .exchange-kpi { min-height:62px; padding:10px 9px; border-radius:11px; }
+ #exchange .exchange-kpi-label { font-size:.54rem; letter-spacing:.05em; white-space:nowrap; }
+ #exchange .exchange-kpi-value { font-size:.96rem; }
+ #exchange .exchange-kpi-value em { font-size:.58rem; }
+ table.exchange-price-table tbody tr.exchange-universal-row td.item-name-cell::after { display:none; }
+}
+</style>
 </head>
 <body>
 <!--
@@ -4546,6 +4590,11 @@ SOFTWARE.
                 <span class="category-title">換金所 値段表</span>
             </div>
             <div class="exchange-lead"><span class="exchange-status">PRICE BOARD ONLINE</span><span><strong>戦利品を換金</strong>　カテゴリごとの最新換金価格を確認できます</span></div>
+            <div class="exchange-overview" aria-label="換金所概要">
+                <div class="exchange-kpi"><span class="exchange-kpi-label">登録カテゴリ</span><span class="exchange-kpi-value">05 <em>CATEGORIES</em></span></div>
+                <div class="exchange-kpi"><span class="exchange-kpi-label">換金アイテム</span><span class="exchange-kpi-value">18 <em>ITEMS</em></span></div>
+                <div class="exchange-kpi"><span class="exchange-kpi-label">最高換金額</span><span class="exchange-kpi-value">$2.0M</span></div>
+            </div>
             <div class="table-wrapper exchange-price-wrapper" style="max-width:980px;">
                 <table class="craft-table exchange-price-table">
                     <thead>
