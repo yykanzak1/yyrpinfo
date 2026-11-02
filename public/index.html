@@ -2963,9 +2963,22 @@ html[data-theme="light"] .accent .crew-log-embedded{color:#fff}
 .crew-log-embedded .record-main{min-width:0}
 .crew-log-embedded .record-time{display:block;margin-bottom:2px;color:var(--muted);font-size:9px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .crew-log-embedded .record-title{margin:0;color:var(--ink);font-size:14px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
-.crew-log-embedded .record-players{display:flex;align-items:flex-start;gap:6px;margin-top:6px;color:var(--muted);font-size:10px;line-height:1.4}
-.crew-log-embedded .record-players svg{width:13px;height:13px;flex:0 0 13px;color:var(--cyan);margin-top:1px}
-.crew-log-embedded .record-players span{overflow-wrap:anywhere}
+.crew-log-embedded .record-players{display:block;margin-top:8px;color:var(--muted);font-size:10px;line-height:1.4}
+.crew-log-embedded .record-players-heading{display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.04em}
+.crew-log-embedded .record-players-heading svg{width:13px;height:13px;flex:0 0 13px;color:var(--cyan)}
+.crew-log-embedded .record-player-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:5px}
+.crew-log-embedded .record-player-card{display:flex;align-items:center;gap:7px;min-width:0;padding:6px 8px;border:1px solid rgba(102,216,255,.18);border-radius:8px;background:linear-gradient(135deg,rgba(25,57,78,.72),rgba(8,24,39,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.crew-log-embedded .record-player-card::before{content:"";width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px rgba(85,223,255,.7)}
+.crew-log-embedded .record-player-card[data-category="BOSS"]::before{background:#ffd166;box-shadow:0 0 7px rgba(255,209,102,.7)}
+.crew-log-embedded .record-player-card[data-category="アンボス"]::before{background:#c79cff;box-shadow:0 0 7px rgba(199,156,255,.7)}
+.crew-log-embedded .record-player-card[data-category="傭兵メンバー"]::before{background:#ff9d7a;box-shadow:0 0 7px rgba(255,157,122,.7)}
+.crew-log-embedded .record-player-card[data-category="その他"]::before{background:#a7bdcc;box-shadow:none}
+.crew-log-embedded .record-player-card-body{display:flex;flex-direction:column;min-width:0;gap:1px}
+.crew-log-embedded .record-player-name{color:#dff5fc;font-size:10px;font-weight:850;overflow-wrap:anywhere}
+.crew-log-embedded .record-player-role{color:#7fa5b7;font-size:8px;line-height:1.2}
+html[data-theme="light"] #crewlog .crew-log-embedded .record-player-card{border-color:#c6dce6;background:linear-gradient(135deg,#f7fcfe,#eaf4f8)}
+html[data-theme="light"] #crewlog .crew-log-embedded .record-player-name{color:#183244}
+html[data-theme="light"] #crewlog .crew-log-embedded .record-player-role{color:#628090}
 .crew-log-embedded .record-outcomes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px}
 .crew-log-embedded .tag{display:inline-flex;align-items:center;gap:5px;min-height:23px;padding:3px 9px;border:1px solid transparent;border-radius:999px;font-size:9.5px;font-weight:800;line-height:1.25;white-space:nowrap}
 .crew-log-embedded .tag::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -4619,11 +4632,22 @@ SOFTWARE.
       main.append(timestamp,title);
       if (Array.isArray(item.players)&&item.players.length) {
         const playerLine=document.createElement('div'); playerLine.className='record-players';
+        const playerHeading=document.createElement('div'); playerHeading.className='record-players-heading';
         const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
         playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
         playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
-        const names=document.createElement('span'); names.textContent=item.players.map(player=>`${player.category ? player.category+'：' : ''}${player.name||'その他'}`).join(' · ');
-        playerLine.append(playerIcon,names); main.append(playerLine);
+        const playerHeadingText=document.createElement('span'); playerHeadingText.textContent=`参加メンバー（${item.players.length}人）`;
+        playerHeading.append(playerIcon,playerHeadingText);
+        const playerGrid=document.createElement('div'); playerGrid.className='record-player-grid';
+        item.players.forEach(player=>{
+          const playerCard=document.createElement('div'); playerCard.className='record-player-card';
+          const category=player.category||'ギャングメンバー'; playerCard.dataset.category=category;
+          const body=document.createElement('div'); body.className='record-player-card-body';
+          const name=document.createElement('span'); name.className='record-player-name'; name.textContent=player.name||'その他';
+          const role=document.createElement('span'); role.className='record-player-role'; role.textContent=category;
+          body.append(name,role); playerCard.append(body); playerGrid.append(playerCard);
+        });
+        playerLine.append(playerHeading,playerGrid); main.append(playerLine);
       }
       const outcomes=document.createElement('div'); outcomes.className='record-outcomes';
       outcomes.append(makeTag(item.result==='caught'?'caught':'free',resultLabel(item.result)));
