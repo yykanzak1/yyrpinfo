@@ -4,7 +4,7 @@ const enc = new TextEncoder();
 const SESSION = 'dassai_session';
 const STATE = 'dassai_oauth_state';
 const LOGIN_ASSET = '/x9Qm4Lz7Vp2N8kR';
-const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png']);
+const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png', ...['info','fines','crime','craft','exchange','vehicles','crewlog','joining'].map((name) => `/ogp/${name}.png`)]);
 const PAGE_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog','/joining']);
 const MERCENARY_ROUTES = new Set(['/crime','/fines','/craft','/joining']);
 const GANG_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog']);
@@ -294,11 +294,28 @@ async function crewLogApi(request, url, env, access, userId) {
     return jsonResponse({ error: 'Unable to access shared log' }, 500);
   }
 }
+const SHARE_META = {
+  '/': { key: 'info', title: 'ギャングINFO | 獺祭 DASSAI', description: 'ギャングの基本情報・衣装・車両・無線・主要スポットを確認できます。' },
+  '/fines': { key: 'fines', title: '罪状一覧 | 獺祭 DASSAI', description: '罰金・プリズン・押収物の一覧を確認できます。' },
+  '/crime': { key: 'crime', title: '犯罪マニュアル | 獺祭 DASSAI', description: '犯罪の手順・必要素材・攻略情報を確認できます。' },
+  '/craft': { key: 'craft', title: 'クラフトレシピ | 獺祭 DASSAI', description: 'クラフトレシピと必要素材を確認できます。' },
+  '/exchange': { key: 'exchange', title: '換金場 | 獺祭 DASSAI', description: '素材・戦利品の換金価格を確認できます。' },
+  '/vehicles': { key: 'vehicles', title: '車両一覧 | 獺祭 DASSAI', description: 'カテゴリー別の車両・価格・おすすめ車両を確認できます。' },
+  '/crewlog': { key: 'crewlog', title: 'ギャング活動ログ | 獺祭 DASSAI', description: 'ギャング活動の記録と参加メンバーを確認できます。' },
+  '/joining': { key: 'joining', title: '加入条件 | 獺祭 DASSAI', description: 'ギャング加入に必要な条件を確認できます。' },
+};
 async function loginPage(url, env) {
   const res = await asset(env, url, LOGIN_ASSET);
+  const route = url.pathname === '/index.html' ? '/' : (SHARE_META[url.pathname] ? url.pathname : '/');
+  const meta = SHARE_META[route];
+  const image = `${url.origin}/ogp/${meta.key}.png`;
   const html = (await res.text())
     .replaceAll('{{ORIGIN}}', url.origin)
-    .replaceAll('{{INVITE_URL}}', env.INVITE_URL || '');
+    .replaceAll('{{INVITE_URL}}', env.INVITE_URL || '')
+    .replaceAll('{{PAGE_TITLE}}', meta.title)
+    .replaceAll('{{PAGE_DESCRIPTION}}', meta.description)
+    .replaceAll('{{PAGE_URL}}', `${url.origin}${route}`)
+    .replaceAll('{{OG_IMAGE}}', image);
   return secure(new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
 }
 
