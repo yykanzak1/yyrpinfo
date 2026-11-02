@@ -5275,7 +5275,16 @@ SOFTWARE.
   let vehicles=[];
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'—';
-  const imageUrl=model=>`https://docs.fivem.net/vehicles/${encodeURIComponent(String(model||'').toLowerCase())}.webp`;
+  const localVehicleImages={clube:'/vehicle-images/clube.jpg',peanut:'/vehicle-images/peanut.jpg'};
+  const imageCandidates=model=>{
+    const m=String(model||'').trim().toLowerCase();
+    return [...(localVehicleImages[m]?[localVehicleImages[m]]:[]),`https://docs.fivem.net/vehicles/${encodeURIComponent(m)}.webp`,`https://docs.fivem.net/vehicles/${encodeURIComponent(m)}.png`,`/assets/${encodeURIComponent(m)}.webp`,`/assets/${encodeURIComponent(m)}.png`];
+  };
+  const fallbackImage=(model,name)=>{
+    const label=esc(name||model);
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#12243d"/><stop offset="1" stop-color="#07111f"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><g fill="none" stroke="#36d9ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M137 232h366l-24-58c-7-17-22-28-40-31l-44-8-35-43h-91l-39 43-44 8c-18 3-33 14-40 31z"/><path d="M154 232v30m332-30v30"/><circle cx="205" cy="235" r="25"/><circle cx="435" cy="235" r="25"/></g><text x="320" y="320" fill="#d9f7ff" text-anchor="middle" font-family="sans-serif" font-size="25" font-weight="700">'+label+'</text></svg>';
+    return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  };
   function populateClasses(){
     const current=classFilter.value, classes=[...new Set(vehicles.map(v=>v.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
     classFilter.innerHTML='<option value="">すべてのクラス</option>'+classes.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
@@ -5290,7 +5299,10 @@ SOFTWARE.
     list.forEach(v=>{
       const card=document.createElement('article'); card.className='vehicle-card';
       const media=document.createElement('div'); media.className='vehicle-media';
-      const img=document.createElement('img'); img.loading='lazy'; img.alt=v.name||v.model; img.src=imageUrl(v.model); img.onerror=()=>{img.style.display='none';}; media.append(img);
+      const img=document.createElement('img'); img.loading='lazy'; img.alt=v.name||v.model;
+      const candidates=imageCandidates(v.model); let imageIndex=0;
+      img.onerror=()=>{ if(imageIndex<candidates.length-1){img.src=candidates[++imageIndex];}else{img.onerror=null;img.src=fallbackImage(v.model,v.name||v.model);} };
+      img.src=candidates[0]; media.append(img);
       if(v.class){const badge=document.createElement('span');badge.className='vehicle-class';badge.textContent=v.class;media.append(badge);}
       const body=document.createElement('div'); body.className='vehicle-body';
       const specs=[]; if(v.seats)specs.push(['定員',`${v.seats}人`]); if(v.trunk)specs.push(['トランク',v.trunk]); if(v.glovebox)specs.push(['グローブ',v.glovebox]); if(v.topspeed)specs.push(['最高速度',`${v.topspeed}km/h`]);

@@ -66,6 +66,7 @@ function mercenaryManual(response) {
     .on('#craft .mercenary-hide', removeElement)
     .on('#exchange', removeElement)
     .on('#crewlog', removeElement)
+    .on('#vehicles', removeElement)
     .on('.search-bar', removeElement)
     .on('.search-bar', removeElement)
     .on('#searchInput', removeElement)
@@ -81,8 +82,7 @@ function mercenaryManual(response) {
         const isFines = onclick.includes("switchTab('fines')");
         const isJoining = onclick.includes("switchTab('joining')");
         const isCraft = onclick.includes("switchTab('craft')");
-        const isVehicles = onclick.includes("switchTab('vehicles')");
-        if (!isCrime && !isFines && !isJoining && !isCraft && !isVehicles) element.remove();
+        if (!isCrime && !isFines && !isJoining && !isCraft) element.remove();
         else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
         if (isCraft) element.setInnerContent('クラフトレシピ', { html: false });
       },
@@ -391,8 +391,15 @@ export default {
     }
     if (path === '/vehicles.json') {
       if (!access) return redirect('/');
+      if (access === 'mercenary') return new Response('Not found', { status: 404 });
       const response = secure(await env.ASSETS.fetch(request));
       response.headers.set('Cache-Control', 'private, max-age=300');
+      return response;
+    }
+    if (path.startsWith('/vehicle-images/')) {
+      if (!access || access === 'mercenary') return new Response('Not found', { status: 404 });
+      const response = secure(await env.ASSETS.fetch(request));
+      response.headers.set('Cache-Control', 'private, max-age=86400');
       return response;
     }
     if (path.startsWith('/assets/')) {
