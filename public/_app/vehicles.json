@@ -1582,20 +1582,6 @@
     "note": ""
   },
   {
-    "id": "59fc5e22-3860-436d-be86-906500f205c3",
-    "model": "volatus",
-    "name": "Volatus",
-    "manufacturer": "None",
-    "class": "Helicopter",
-    "price": 200000000,
-    "seats": 4,
-    "trunk": "なし",
-    "glovebox": "31枠/248kg",
-    "stash": "",
-    "topspeed": null,
-    "note": ""
-  },
-  {
     "id": "85765977-7487-4ec4-be23-95df627755d7",
     "model": "shamal",
     "name": "Shamal",
