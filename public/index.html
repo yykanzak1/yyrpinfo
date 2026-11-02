@@ -4762,14 +4762,14 @@ SOFTWARE.
       if (Array.isArray(item.players)&&item.players.length) {
         const playerLine=document.createElement('div'); playerLine.className='record-players';
         const playerHeading=document.createElement('button'); playerHeading.type='button'; playerHeading.className='record-players-heading record-players-toggle';
-        playerHeading.setAttribute('aria-expanded','true'); playerHeading.setAttribute('aria-label','参加メンバーを表示・非表示');
+        playerHeading.setAttribute('aria-expanded','false'); playerHeading.setAttribute('aria-label','参加メンバーを表示・非表示');
         const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
         playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
         playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
         const playerHeadingText=document.createElement('span'); playerHeadingText.textContent=`参加メンバー（${item.players.length}人）`;
         const playerChevron=document.createElement('span'); playerChevron.className='record-players-chevron'; playerChevron.textContent='⌄'; playerChevron.setAttribute('aria-hidden','true');
         playerHeading.append(playerIcon,playerHeadingText,playerChevron);
-        const playerGrid=document.createElement('div'); playerGrid.className='record-player-grid';
+        const playerGrid=document.createElement('div'); playerGrid.className='record-player-grid'; playerGrid.hidden=true;
         playerHeading.addEventListener('click',()=>{
           const expanded=playerHeading.getAttribute('aria-expanded')==='true';
           playerHeading.setAttribute('aria-expanded',String(!expanded));
