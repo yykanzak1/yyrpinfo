@@ -3971,7 +3971,7 @@ SOFTWARE.
   function renderMemberChoices() {
     const list=$('playerList'), query=$('playerSearch').value.trim().toLocaleLowerCase('ja');
     const state=$('membersState');
-    const categories=['BOSS','アンボス','傭兵メンバー','ギャングメンバー'];
+    const categories=['BOSS','アンボス','ギャングメンバー','傭兵メンバー'];
     state.textContent=membersLoading&&!members.length?'Discordメンバーを読み込み中…':memberError || `Discordメンバー ${members.length} 人（ロール別表示）`;
     state.dataset.tone=memberError?'error':'ok';
     const shown=members.filter(member=>!query || member.name.toLocaleLowerCase('ja').includes(query));
