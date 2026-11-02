@@ -81,7 +81,8 @@ function mercenaryManual(response) {
         const isFines = onclick.includes("switchTab('fines')");
         const isJoining = onclick.includes("switchTab('joining')");
         const isCraft = onclick.includes("switchTab('craft')");
-        if (!isCrime && !isFines && !isJoining && !isCraft) element.remove();
+        const isVehicles = onclick.includes("switchTab('vehicles')");
+        if (!isCrime && !isFines && !isJoining && !isCraft && !isVehicles) element.remove();
         else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
         if (isCraft) element.setInnerContent('クラフトレシピ', { html: false });
       },

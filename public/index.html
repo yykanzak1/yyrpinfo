@@ -1069,6 +1069,38 @@
 #fines #fine-seizure .fines-goods-card:nth-child(2){--fine-accent:#45d4ff}
 #fines #fine-seizure .fines-goods-card:nth-child(3){--fine-accent:#d19cff}
 #fines #fine-blackmoney .fines-callout{border-color:var(--fine-accent);background:color-mix(in srgb,var(--fine-accent) 10%,transparent);color:var(--fine-accent)}
+
+/* 車両一覧 */
+#vehicles .vehicles-page{max-width:1320px;margin:0 auto;padding:24px 0 48px;color:var(--text-color)}
+#vehicles .vehicles-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px;padding:18px 20px;border:1px solid var(--border-color);border-radius:16px;background:linear-gradient(135deg,rgba(0,210,255,.11),rgba(0,136,255,.04));box-shadow:0 10px 28px rgba(0,0,0,.12)}
+#vehicles .vehicles-kicker{margin:0 0 5px;color:var(--accent-cyan);font-size:.7rem;font-weight:800;letter-spacing:.16em}
+#vehicles .vehicles-title{margin:0;color:var(--text-color);font-size:clamp(1.45rem,3vw,2.1rem);line-height:1.2}
+#vehicles .vehicles-lead{margin:6px 0 0;color:var(--text-dim);font-size:.82rem}
+#vehicles .vehicles-count{padding:9px 13px;border:1px solid var(--border-color);border-radius:11px;background:var(--card-bg);color:var(--accent-cyan);font-size:.8rem;font-weight:800;white-space:nowrap}
+#vehicles .vehicles-controls{display:grid;grid-template-columns:minmax(0,1fr) 190px 170px;gap:8px;margin-bottom:12px}
+#vehicles .vehicles-control{width:100%;min-height:42px;box-sizing:border-box;padding:9px 12px;border:1px solid var(--border-color);border-radius:10px;background:var(--card-bg);color:var(--text-color);font:inherit;font-size:.82rem}
+#vehicles .vehicles-control:focus{outline:none;border-color:var(--accent-cyan);box-shadow:0 0 0 3px rgba(0,210,255,.12)}
+#vehicles .vehicles-result{margin:0 2px 10px;color:var(--text-dim);font-size:.74rem}
+#vehicles .vehicles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px}
+#vehicles .vehicle-card{min-width:0;overflow:hidden;border:1px solid var(--border-color);border-radius:13px;background:var(--card-bg);box-shadow:0 7px 20px rgba(0,0,0,.1);transition:transform .16s,border-color .16s,box-shadow .16s}
+#vehicles .vehicle-card:hover{transform:translateY(-2px);border-color:var(--accent-cyan);box-shadow:0 12px 26px rgba(0,0,0,.18)}
+#vehicles .vehicle-media{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;background:linear-gradient(145deg,rgba(0,136,255,.13),rgba(0,0,0,.12));border-bottom:1px solid var(--border-color)}
+#vehicles .vehicle-media img{width:100%;height:100%;object-fit:contain;padding:10px;box-sizing:border-box}
+#vehicles .vehicle-class{position:absolute;top:8px;right:8px;padding:4px 8px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.45);color:#fff;font-size:.62rem;font-weight:800}
+#vehicles .vehicle-body{padding:12px}
+#vehicles .vehicle-name{margin:0;color:var(--text-color);font-size:1rem;font-weight:800}
+#vehicles .vehicle-meta{margin:3px 0 9px;color:var(--text-dim);font-size:.7rem}
+#vehicles .vehicle-price{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding:7px 9px;border-radius:8px;background:rgba(255,170,0,.1);color:#ffce69}
+#vehicles .vehicle-price-label{font-size:.66rem;font-weight:700}
+#vehicles .vehicle-price-value{font-size:1rem;font-weight:850}
+#vehicles .vehicle-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0;padding:0;list-style:none}
+#vehicles .vehicle-spec{padding:6px 7px;border:1px solid var(--border-color);border-radius:7px;background:rgba(0,0,0,.06);font-size:.66rem}
+#vehicles .vehicle-spec b{display:block;color:var(--text-dim);font-size:.58rem;font-weight:600}
+#vehicles .vehicle-spec span{display:block;margin-top:2px;color:var(--text-color);font-weight:750;overflow-wrap:anywhere}
+#vehicles .vehicle-note{margin:8px 0 0;padding-top:7px;border-top:1px dashed var(--border-color);color:var(--text-dim);font-size:.66rem;line-height:1.5}
+#vehicles .vehicles-empty{padding:40px;text-align:center;border:1px dashed var(--border-color);border-radius:13px;color:var(--text-dim)}
+@media (max-width:760px){#vehicles .vehicles-page{padding:14px 0 32px}#vehicles .vehicles-hero{align-items:flex-start;flex-direction:column;padding:14px}.vehicles-count{align-self:flex-end}#vehicles .vehicles-controls{grid-template-columns:1fr;gap:6px}#vehicles .vehicles-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#vehicles .vehicle-body{padding:9px}#vehicles .vehicle-name{font-size:.86rem}#vehicles .vehicle-price-value{font-size:.86rem}}
+@media (max-width:430px){#vehicles .vehicles-grid{grid-template-columns:1fr}}
 </style>
 
     <meta property="og:url" content="https://yydassai.f5.si/">
@@ -3177,6 +3209,7 @@ SOFTWARE.
             </div>
             <button class="tab-btn active" onclick="switchTab('info')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-map-pin"></use></svg><span>ギャングINFO</span></button>
             <button class="tab-btn" onclick="switchTab('fines')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-landmark"></use></svg><span>罪状一覧</span></button>
+            <button class="tab-btn" onclick="switchTab('vehicles')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><span>車両一覧</span></button>
             <button class="tab-btn" onclick="switchTab('crime')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-clapperboard"></use></svg><span>犯罪マニュアル</span></button>
             <button class="tab-btn" onclick="switchTab('craft')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-hammer"></use></svg><span>クラフトレシピ</span></button>
             <button class="tab-btn" onclick="switchTab('exchange')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-banknote"></use></svg><span>換金場</span></button>
@@ -3742,6 +3775,25 @@ SOFTWARE.
         </div>
 
         <!-- ④ 加入条件 -->
+
+        <!-- 車両一覧 -->
+        <div id="vehicles" class="tab-content">
+          <main class="vehicles-page">
+            <section class="vehicles-hero">
+              <div><p class="vehicles-kicker">YYRP / VEHICLE CATALOG</p><h2 class="vehicles-title">車両一覧</h2><p class="vehicles-lead">車名・メーカー・クラス・価格・収納情報を検索できます。</p></div>
+              <div class="vehicles-count"><span id="vehicleCount">0</span> 台</div>
+            </section>
+            <div class="vehicles-controls">
+              <input class="vehicles-control" id="vehicleSearch" type="search" placeholder="車名・モデル・メーカーを検索" aria-label="車両を検索">
+              <select class="vehicles-control" id="vehicleClass" aria-label="クラスで絞り込み"><option value="">すべてのクラス</option></select>
+              <select class="vehicles-control" id="vehicleSort" aria-label="並び順"><option value="name-asc">名前順</option><option value="price-asc">価格が安い順</option><option value="price-desc">価格が高い順</option><option value="class-asc">クラス順</option></select>
+            </div>
+            <p class="vehicles-result" id="vehicleResult" aria-live="polite"></p>
+            <div class="vehicles-grid" id="vehicleGrid"></div>
+            <div class="vehicles-empty" id="vehicleEmpty" hidden>条件に一致する車両がありません。</div>
+          </main>
+        </div>
+
         <div id="joining" class="tab-content">
                 <section class="membership-guide page">
 <header class="hero">
@@ -5212,6 +5264,44 @@ SOFTWARE.
     })();
     </script>
 
+
+
+<script>
+(() => {
+  const vehicleGrid=document.getElementById('vehicleGrid');
+  if (!vehicleGrid) return;
+  const search=document.getElementById('vehicleSearch'), classFilter=document.getElementById('vehicleClass'), sort=document.getElementById('vehicleSort');
+  const count=document.getElementById('vehicleCount'), result=document.getElementById('vehicleResult'), empty=document.getElementById('vehicleEmpty');
+  let vehicles=[];
+  const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const yen=value=>Number.isFinite(Number(value))?`${Number(value).toLocaleString('ja-JP')}円`:'—';
+  const imageUrl=model=>`https://docs.fivem.net/vehicles/${encodeURIComponent(String(model||'').toLowerCase())}.webp`;
+  function populateClasses(){
+    const current=classFilter.value, classes=[...new Set(vehicles.map(v=>v.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+    classFilter.innerHTML='<option value="">すべてのクラス</option>'+classes.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if(classes.includes(current)) classFilter.value=current;
+  }
+  function render(){
+    const q=search.value.trim().toLocaleLowerCase('ja'), cls=classFilter.value;
+    let list=vehicles.filter(v=>(!cls||v.class===cls)&&(!q||[v.name,v.model,v.manufacturer,v.class,v.note].some(x=>String(x||'').toLocaleLowerCase('ja').includes(q))));
+    const sorters={'name-asc':(a,b)=>String(a.name||a.model).localeCompare(String(b.name||b.model),'ja'),'price-asc':(a,b)=>(a.price??Infinity)-(b.price??Infinity),'price-desc':(a,b)=>(b.price??-Infinity)-(a.price??-Infinity),'class-asc':(a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ja')||String(a.name||a.model).localeCompare(String(b.name||b.model),'ja')};
+    list.sort(sorters[sort.value]||sorters['name-asc']); count.textContent=vehicles.length; result.textContent=`表示中 ${list.length} / 全 ${vehicles.length} 台`; empty.hidden=list.length>0; vehicleGrid.replaceChildren();
+    const frag=document.createDocumentFragment();
+    list.forEach(v=>{
+      const card=document.createElement('article'); card.className='vehicle-card';
+      const media=document.createElement('div'); media.className='vehicle-media';
+      const img=document.createElement('img'); img.loading='lazy'; img.alt=v.name||v.model; img.src=imageUrl(v.model); img.onerror=()=>{img.style.display='none';}; media.append(img);
+      if(v.class){const badge=document.createElement('span');badge.className='vehicle-class';badge.textContent=v.class;media.append(badge);}
+      const body=document.createElement('div'); body.className='vehicle-body';
+      const specs=[]; if(v.seats)specs.push(['定員',`${v.seats}人`]); if(v.trunk)specs.push(['トランク',v.trunk]); if(v.glovebox)specs.push(['グローブ',v.glovebox]); if(v.topspeed)specs.push(['最高速度',`${v.topspeed}km/h`]);
+      body.innerHTML=`<h3 class="vehicle-name">${esc(v.name||v.model)}</h3><p class="vehicle-meta">${esc(v.manufacturer||'')} / ${esc(v.model||'')}</p><div class="vehicle-price"><span class="vehicle-price-label">販売価格</span><strong class="vehicle-price-value">${yen(v.price)}</strong></div>${specs.length?`<ul class="vehicle-specs">${specs.map(([k,val])=>`<li class="vehicle-spec"><b>${esc(k)}</b><span>${esc(val)}</span></li>`).join('')}</ul>`:''}${v.note?`<p class="vehicle-note">${esc(v.note)}</p>`:''}`;
+      card.append(media,body); frag.append(card);
+    }); vehicleGrid.append(frag);
+  }
+  fetch('/vehicles.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('vehicle data');return r.json();}).then(data=>{vehicles=Array.isArray(data)?data:[];populateClasses();render();}).catch(()=>{vehicles=[];render();});
+  search.addEventListener('input',render); classFilter.addEventListener('change',render); sort.addEventListener('change',render);
+})();
+</script>
 
 </body>
 </html>
