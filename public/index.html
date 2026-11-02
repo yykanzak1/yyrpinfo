@@ -103,6 +103,13 @@
         .app-body > nav#mainNav.menu-editing .tab-btn:active { cursor: grabbing; }
         .app-body > nav#mainNav .tab-btn.menu-dragging { opacity: .45; }
         .app-body > nav#mainNav .tab-btn.menu-drag-over { border-color: var(--accent-cyan); box-shadow: 0 0 0 2px rgba(43,183,237,.22); }
+        .menu-reorder-panel { display: none; flex-direction: column; gap: 6px; margin: 4px 0 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 9px; background: rgba(0,0,0,.16); }
+        .menu-editing .menu-reorder-panel { display: flex; }
+        .menu-reorder-title { color: var(--text-dim); font-size: .72rem; line-height: 1.4; }
+        .menu-reorder-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
+        .menu-reorder-label { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--text-color); font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
+        .menu-move-btn { flex: 0 0 auto; width: 27px; height: 25px; padding: 0; border: 1px solid var(--border-color); border-radius: 5px; background: var(--highlight-bg); color: var(--text-color); cursor: pointer; font-weight: 700; }
+        .menu-move-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
         nav {
             display: flex;
             flex-direction: column;
@@ -4322,7 +4329,50 @@ SOFTWARE.
         }
         syncDesktopMenu();
         window.addEventListener('resize', syncDesktopMenu);
+        var reorderPanel = document.createElement('div');
+        reorderPanel.className = 'menu-reorder-panel';
+        reorderPanel.setAttribute('aria-label', 'MENUの並び替え');
         function menuButtons() { return Array.from(nav.querySelectorAll('.tab-btn')); }
+        function renderReorderPanel() {
+            reorderPanel.innerHTML = '<div class="menu-reorder-title">▲▼で順番を変更（変更は自動保存）</div>';
+            menuButtons().forEach(function (button, index) {
+                var row = document.createElement('div');
+                row.className = 'menu-reorder-row';
+                var label = document.createElement('span');
+                label.className = 'menu-reorder-label';
+                label.textContent = button.textContent.trim();
+                var up = document.createElement('button');
+                up.type = 'button';
+                up.className = 'menu-move-btn';
+                up.textContent = '▲';
+                up.title = '上へ移動';
+                up.disabled = index === 0;
+                var down = document.createElement('button');
+                down.type = 'button';
+                down.className = 'menu-move-btn';
+                down.textContent = '▼';
+                down.title = '下へ移動';
+                down.disabled = index === menuButtons().length - 1;
+                up.addEventListener('click', function () {
+                    var previous = button.previousElementSibling;
+                    while (previous && !previous.classList.contains('tab-btn')) previous = previous.previousElementSibling;
+                    if (previous) nav.insertBefore(button, previous);
+                    saveOrder();
+                    renderReorderPanel();
+                });
+                down.addEventListener('click', function () {
+                    var next = button.nextElementSibling;
+                    while (next && !next.classList.contains('tab-btn')) next = next.nextElementSibling;
+                    if (next) nav.insertBefore(next, button);
+                    saveOrder();
+                    renderReorderPanel();
+                });
+                row.appendChild(label);
+                row.appendChild(up);
+                row.appendChild(down);
+                reorderPanel.appendChild(row);
+            });
+        }
         function menuKey(button) {
             var match = (button.getAttribute('onclick') || '').match(/switchTab\(['"]([^'"]+)['"]\)/);
             return match ? match[1] : '';
@@ -4347,6 +4397,12 @@ SOFTWARE.
             nav.classList.toggle('menu-editing', enabled);
             editBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
             editBtn.textContent = enabled ? '完了' : '並び替え';
+            if (enabled) {
+                renderReorderPanel();
+                if (!reorderPanel.parentNode) nav.insertBefore(reorderPanel, menuButtons()[0] || null);
+            } else if (reorderPanel.parentNode) {
+                reorderPanel.remove();
+            }
             menuButtons().forEach(function (button) {
                 button.draggable = enabled;
                 button.setAttribute('aria-grabbed', enabled ? 'false' : 'undefined');
