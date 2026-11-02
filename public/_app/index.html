@@ -3532,6 +3532,30 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
  #exchange .exchange-card-price { font-size:.9rem; }
 }
 </style>
+
+<style id="exchange-card-readable-redesign">
+/* 換金所：画像・名称・金額を一列にまとめた明瞭なカード */
+#exchange .exchange-card-sections { gap:24px; }
+#exchange .exchange-card-section { min-width:0; }
+#exchange .exchange-card-section-head { margin-bottom:10px; padding:11px 15px; border-left-width:4px; background:linear-gradient(90deg,rgba(22,54,77,.96),rgba(12,28,44,.9)); }
+#exchange .exchange-card-grid { grid-auto-rows:auto !important; align-items:stretch; gap:10px; }
+#exchange .exchange-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; height:82px !important; min-height:82px !important; box-sizing:border-box; padding:10px 12px; border:1px solid rgba(110,190,224,.32); border-radius:12px; background:linear-gradient(135deg,#162f45,#0d1f31); box-shadow:0 5px 12px rgba(0,0,0,.16); }
+#exchange .exchange-card:hover { transform:translateY(-2px); border-color:#5bdefe; background:linear-gradient(135deg,#1a3b55,#102a40); }
+#exchange .exchange-card-item { display:flex; align-items:center; gap:10px; min-width:0; min-height:0; color:#edf9ff; font-size:.88rem; font-weight:850; line-height:1.2; }
+#exchange .exchange-card-item .item-icon, #exchange .exchange-card[data-search*="weed pooch"] .item-icon { width:44px !important; height:44px !important; flex:0 0 44px; box-sizing:border-box; padding:2px; border:1px solid rgba(132,207,231,.18); border-radius:9px; background:#0a1b2a; object-fit:contain; transform:none !important; }
+#exchange .exchange-card-item span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#exchange .exchange-card-price { align-self:center; margin:0; padding-left:8px; color:#67e1ff; font-size:1rem; font-weight:950; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; }
+@media (max-width:900px) {
+ #exchange .exchange-card { height:80px !important; min-height:80px !important; }
+}
+@media (max-width:560px) {
+ #exchange .exchange-card-grid { gap:8px; }
+ #exchange .exchange-card { height:70px !important; min-height:70px !important; padding:8px 9px; gap:7px; }
+ #exchange .exchange-card-item { gap:8px; font-size:.8rem; }
+ #exchange .exchange-card-item .item-icon, #exchange .exchange-card[data-search*="weed pooch"] .item-icon { width:38px !important; height:38px !important; flex-basis:38px; }
+ #exchange .exchange-card-price { font-size:.84rem; }
+}
+</style>
 </head>
 <body>
 <!--
