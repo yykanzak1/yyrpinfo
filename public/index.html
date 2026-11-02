@@ -3556,6 +3556,10 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
  #exchange .exchange-card-price { font-size:.84rem; }
 }
 </style>
+
+<style id="crime-detail-fallback-style">
+.crime-detail-fallback-note { margin: 24px 0 0; padding: 16px 18px; border: 1px solid var(--border-color); border-radius: 12px; color: var(--muted-text); background: var(--card-bg); }
+</style>
 </head>
 <body>
 <!--
@@ -4844,11 +4848,30 @@ SOFTWARE.
         }
         function openCrime(id) {
             const source = document.getElementById('detail-' + id);
-            if (!source) return;
             const body = document.getElementById('crimeModalBody');
-            body.innerHTML = source.innerHTML;
-            renderCrimeMaterialTotals(body, id);
-            activateVideos(body);
+            if (!body) return;
+            if (source) {
+                body.innerHTML = source.innerHTML;
+                renderCrimeMaterialTotals(body, id);
+                activateVideos(body);
+            } else {
+                // 詳細ソースが未掲載のカードも、クリック時に必ずモーダルを開く。
+                const card = Array.from(document.querySelectorAll('#crime .crime-card')).find(function (item) {
+                    return (item.getAttribute('onclick') || '') === "openCrime('" + id + "')";
+                });
+                const title = card && card.querySelector('.crime-card-top');
+                const badge = card && card.querySelector('.crime-card-badges');
+                body.innerHTML = '';
+                const heading = document.createElement('h2');
+                if (title) heading.innerHTML = title.innerHTML;
+                else heading.textContent = '犯罪詳細';
+                body.appendChild(heading);
+                if (badge) body.appendChild(badge.cloneNode(true));
+                const note = document.createElement('p');
+                note.className = 'crime-detail-fallback-note';
+                note.textContent = 'この犯罪の詳細情報を準備中です。必要人数と掲載内容をご確認ください。';
+                body.appendChild(note);
+            }
             document.getElementById('crimeModal').classList.add('open');
             document.body.style.overflow = 'hidden';
             document.getElementById('crimeModal').scrollTop = 0;
