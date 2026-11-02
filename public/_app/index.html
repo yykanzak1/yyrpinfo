@@ -3504,6 +3504,19 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
  #exchange .exchange-card-item .item-icon, #exchange .exchange-card[data-search*="weed pooch"] .item-icon { width:46px !important; height:46px !important; flex-basis:46px; }
 }
 </style>
+
+<style id="exchange-card-balance-fix">
+/* 換金所カード：内容基準の高さに戻してカテゴリ内の空白を除去 */
+#exchange .exchange-card-grid { grid-auto-rows:auto; align-items:stretch; }
+#exchange .exchange-card { height:auto !important; min-height:118px; }
+#exchange .exchange-card-item { min-height:52px; }
+#exchange .exchange-card-item .item-icon { display:block; }
+#exchange .exchange-card-item .weed-pooch-icon { transform:scale(1.55); transform-origin:center; }
+@media (max-width:560px) {
+ #exchange .exchange-card { min-height:92px; }
+ #exchange .exchange-card-item .weed-pooch-icon { transform:scale(1.45); }
+}
+</style>
 </head>
 <body>
 <!--
