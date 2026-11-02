@@ -3300,6 +3300,44 @@ table.exchange-price-table tr.exchange-category-row th { padding:14px 18px; font
  table.exchange-price-table tbody tr:not(.exchange-category-row) td.val-cost { min-width:103px; padding:9px 8px; font-size:.83rem; }
 }
 </style>
+
+<style id="crewlog-fullwidth-layout">
+/* ギャング活動ログ：画面全体を使うダッシュボードレイアウト */
+#crewlog { width:100%; max-width:none; }
+#crewlog .crew-log-embedded.wrap { width:100%; max-width:none; box-sizing:border-box; margin:0; padding:24px clamp(14px,2.5vw,38px) 42px; }
+#crewlog .crew-log-embedded .page-head { width:100%; box-sizing:border-box; }
+#crewlog .crew-log-embedded .stats { width:100%; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+#crewlog .crew-log-embedded .stat { min-width:0; }
+#crewlog .crew-log-embedded .layout { width:100%; grid-template-columns:minmax(340px,36%) minmax(0,1fr); gap:18px; align-items:start; }
+#crewlog .crew-log-embedded .card { width:100%; box-sizing:border-box; }
+#crewlog .crew-log-embedded .form-card { position:sticky; top:16px; }
+#crewlog .crew-log-embedded .list-card { min-width:0; }
+#crewlog .crew-log-embedded .record-list, #crewlog .crew-log-embedded .player-list { max-height:none; overflow:visible; }
+#crewlog .crew-log-embedded .toolbar { gap:12px; }
+#crewlog .crew-log-embedded .filters { grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,.45fr)) auto; gap:8px; }
+#crewlog .crew-log-embedded .record-item { grid-template-columns:minmax(0,1fr) auto; }
+#crewlog .crew-log-embedded .footer { font-size:10px; }
+@media (max-width:1100px) and (min-width:901px) {
+ #crewlog .crew-log-embedded .layout { grid-template-columns:minmax(300px,39%) minmax(0,1fr); gap:14px; }
+ #crewlog .crew-log-embedded .filters { grid-template-columns:1fr 1fr; }
+ #crewlog .crew-log-embedded .search-wrap { grid-column:1/-1; }
+}
+@media (max-width:900px) {
+ #crewlog .crew-log-embedded.wrap { padding:18px 12px 30px; }
+ #crewlog .crew-log-embedded .form-card { position:static; }
+ #crewlog .crew-log-embedded .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ #crewlog .crew-log-embedded .layout { grid-template-columns:minmax(0,1fr); }
+ #crewlog .crew-log-embedded .filters { grid-template-columns:1fr 1fr; }
+ #crewlog .crew-log-embedded .search-wrap { grid-column:1/-1; }
+}
+@media (max-width:540px) {
+ #crewlog .crew-log-embedded.wrap { padding:14px 8px 24px; }
+ #crewlog .crew-log-embedded .stats { gap:7px; }
+ #crewlog .crew-log-embedded .stat { min-height:84px; }
+ #crewlog .crew-log-embedded .filters { grid-template-columns:1fr; }
+ #crewlog .crew-log-embedded .search-wrap { grid-column:auto; }
+}
+</style>
 </head>
 <body>
 <!--
