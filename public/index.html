@@ -3484,6 +3484,26 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
   window.addEventListener('pageshow',filterExchangeCards);
 })();
 </script>
+
+<style id="exchange-card-size-tuning">
+/* 換金所カード：全幅を使いつつ、カードはコンパクトに統一 */
+#exchange .table-wrapper.exchange-price-wrapper { width:100%; max-width:none !important; overflow:visible; }
+#exchange .exchange-card-sections { width:100%; }
+#exchange .exchange-card-grid { grid-auto-rows:1fr; gap:12px; }
+#exchange .exchange-card { min-height:112px; height:100%; box-sizing:border-box; padding:13px 14px; }
+#exchange .exchange-card-item { gap:10px; font-size:.9rem; }
+#exchange .exchange-card-item .item-icon { width:52px !important; height:52px !important; flex-basis:52px; padding:3px; box-sizing:border-box; }
+#exchange .exchange-card-price { margin-top:10px; font-size:1rem; }
+#exchange .exchange-card[data-search*="weed pooch"] .item-icon { width:52px !important; height:52px !important; object-fit:contain; }
+@media (max-width:900px) {
+ #exchange .exchange-card { min-height:108px; }
+}
+@media (max-width:560px) {
+ #exchange .exchange-card { min-height:86px; padding:10px 11px; }
+ #exchange .exchange-card-item { font-size:.86rem; }
+ #exchange .exchange-card-item .item-icon, #exchange .exchange-card[data-search*="weed pooch"] .item-icon { width:46px !important; height:46px !important; flex-basis:46px; }
+}
+</style>
 </head>
 <body>
 <!--
