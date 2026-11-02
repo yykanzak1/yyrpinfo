@@ -2966,7 +2966,10 @@ html[data-theme="light"] .accent .crew-log-embedded{color:#fff}
 .crew-log-embedded .record-players{display:block;margin-top:8px;color:var(--muted);font-size:10px;line-height:1.4}
 .crew-log-embedded .record-players-heading{display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.04em}
 .crew-log-embedded .record-players-heading svg{width:13px;height:13px;flex:0 0 13px;color:var(--cyan)}
-.crew-log-embedded .record-player-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:5px}
+.crew-log-embedded .record-player-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.crew-log-embedded .record-player-card{grid-column:span 2}
+.crew-log-embedded .record-player-card--wide{grid-column:span 3}
+.crew-log-embedded .record-player-card--full{grid-column:1/-1}
 .crew-log-embedded .record-player-card{display:flex;align-items:center;gap:7px;min-width:0;padding:6px 8px;border:1px solid rgba(102,216,255,.18);border-radius:8px;background:linear-gradient(135deg,rgba(25,57,78,.72),rgba(8,24,39,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
 .crew-log-embedded .record-player-card::before{content:"";width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px rgba(85,223,255,.7)}
 .crew-log-embedded .record-player-card[data-category="BOSS"]::before{background:#ffd166;box-shadow:0 0 7px rgba(255,209,102,.7)}
@@ -3675,10 +3678,13 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
   #crewlog .crew-log-embedded .record-outcomes{grid-column:1/-1;grid-row:2;justify-content:flex-start}
   #crewlog .crew-log-embedded .record-actions{grid-column:2;grid-row:1}
   #crewlog .crew-log-embedded .record-player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #crewlog .crew-log-embedded .record-player-card{grid-column:span 1}
+  #crewlog .crew-log-embedded .record-player-card--full{grid-column:1/-1}
   #crewlog .crew-log-embedded .record-player-card{padding:6px}
 }
 @media (max-width:370px){
   #crewlog .crew-log-embedded .record-player-grid{grid-template-columns:1fr}
+  #crewlog .crew-log-embedded .record-player-card,#crewlog .crew-log-embedded .record-player-card--wide,#crewlog .crew-log-embedded .record-player-card--full{grid-column:1}
   #crewlog .crew-log-embedded .actions .btn{padding:6px 7px;font-size:.6rem}
   #crewlog .crew-log-embedded .ring{display:none}
 }
@@ -4741,14 +4747,18 @@ SOFTWARE.
         const playerHeadingText=document.createElement('span'); playerHeadingText.textContent=`参加メンバー（${item.players.length}人）`;
         playerHeading.append(playerIcon,playerHeadingText);
         const playerGrid=document.createElement('div'); playerGrid.className='record-player-grid';
+        const playerCards=[];
         item.players.forEach(player=>{
           const playerCard=document.createElement('div'); playerCard.className='record-player-card';
           const category=player.category||'ギャングメンバー'; playerCard.dataset.category=category;
           const body=document.createElement('div'); body.className='record-player-card-body';
           const name=document.createElement('span'); name.className='record-player-name'; name.textContent=player.name||'その他';
           const role=document.createElement('span'); role.className='record-player-role'; role.textContent=category;
-          body.append(name,role); playerCard.append(body); playerGrid.append(playerCard);
+          body.append(name,role); playerCard.append(body); playerGrid.append(playerCard); playerCards.push(playerCard);
         });
+        const remainder=playerCards.length%3;
+        if (remainder===1) playerCards[playerCards.length-1].classList.add('record-player-card--full');
+        if (remainder===2) playerCards.slice(-2).forEach(card=>card.classList.add('record-player-card--wide'));
         playerLine.append(playerHeading,playerGrid); main.append(playerLine);
       }
       const outcomes=document.createElement('div'); outcomes.className='record-outcomes';
