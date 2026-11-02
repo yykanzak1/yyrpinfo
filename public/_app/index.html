@@ -3581,6 +3581,108 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
 }
 </style>
 
+
+<style id="crewlog-balanced-ui">
+/* ギャング活動ログ：情報密度と視認性を整えた最終UI */
+#crewlog .crew-log-embedded.wrap{max-width:1480px;padding:30px clamp(16px,3vw,48px) 48px}
+#crewlog .crew-log-embedded .eyebrow{margin-bottom:12px;font-size:.68rem;letter-spacing:.16em}
+#crewlog .crew-log-embedded .page-head{align-items:center;margin-bottom:18px;padding:18px 0 22px}
+#crewlog .crew-log-embedded h1{font-size:clamp(30px,3.2vw,44px);letter-spacing:-.045em}
+#crewlog .crew-log-embedded .sub{max-width:680px;margin-top:8px;font-size:.82rem}
+#crewlog .crew-log-embedded .head-side{gap:8px}
+#crewlog .crew-log-embedded .badge,#crewlog .crew-log-embedded .clock{padding:8px 11px;font-size:.68rem}
+#crewlog .crew-log-embedded .stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+#crewlog .crew-log-embedded .stat{min-height:104px;padding:15px 16px 14px 18px;border-radius:14px}
+#crewlog .crew-log-embedded .stat-label{font-size:.68rem}
+#crewlog .crew-log-embedded .value{margin-top:7px;font-size:28px}
+#crewlog .crew-log-embedded .rate{margin-top:4px;font-size:.64rem}
+#crewlog .crew-log-embedded .ring{width:52px;height:52px;flex-basis:52px}
+#crewlog .crew-log-embedded .ring::before{inset:4px}
+#crewlog .crew-log-embedded .ring b{font-size:10px}
+#crewlog .crew-log-embedded .note{margin:10px 0 18px;padding:9px 12px;border-radius:9px;font-size:.68rem}
+#crewlog .crew-log-embedded .layout{grid-template-columns:minmax(340px,390px) minmax(0,1fr);gap:16px}
+#crewlog .crew-log-embedded .card{border-radius:15px;box-shadow:0 14px 30px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.035)}
+#crewlog .crew-log-embedded .form-card{padding:20px;top:20px}
+#crewlog .crew-log-embedded .list-card{padding:20px}
+#crewlog .crew-log-embedded .card-head{padding-bottom:12px;margin-bottom:14px}
+#crewlog .crew-log-embedded .card-head h2,#crewlog .crew-log-embedded .toolbar h2{font-size:1rem}
+#crewlog .crew-log-embedded .field{margin-bottom:13px}
+#crewlog .crew-log-embedded .field-hint{margin-top:5px;font-size:.64rem}
+#crewlog .crew-log-embedded input,#crewlog .crew-log-embedded select,#crewlog .crew-log-embedded textarea{font-size:.78rem}
+#crewlog .crew-log-embedded .seg span{min-height:38px;font-size:.76rem}
+#crewlog .crew-log-embedded .form-actions{gap:7px}
+#crewlog .crew-log-embedded .form-actions .btn{min-height:40px;padding:8px 11px;font-size:.75rem}
+#crewlog .crew-log-embedded .form-actions .primary{min-height:44px}
+#crewlog .crew-log-embedded .toolbar{padding-bottom:12px}
+#crewlog .crew-log-embedded .toolbar-title{gap:8px}
+#crewlog .crew-log-embedded .actions{gap:6px}
+#crewlog .crew-log-embedded .actions .btn{min-height:36px;padding:7px 10px;font-size:.68rem}
+#crewlog .crew-log-embedded .color-legend{margin:10px 0 12px;padding:7px 9px}
+#crewlog .crew-log-embedded .filters{grid-template-columns:minmax(190px,1fr) 155px 155px auto;gap:7px;margin-bottom:12px}
+#crewlog .crew-log-embedded .filters input,#crewlog .crew-log-embedded .filters select{min-height:39px;font-size:.7rem}
+#crewlog .crew-log-embedded .record-list{gap:9px}
+#crewlog .crew-log-embedded .record-item{grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:12px;padding:14px 14px 14px 18px;border-radius:12px}
+#crewlog .crew-log-embedded .record-time{margin-bottom:3px;font-size:.6rem}
+#crewlog .crew-log-embedded .record-title{font-size:.95rem;line-height:1.35}
+#crewlog .crew-log-embedded .record-players{margin-top:9px}
+#crewlog .crew-log-embedded .record-players-heading{margin-bottom:5px;font-size:.61rem}
+#crewlog .crew-log-embedded .record-player-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:4px}
+#crewlog .crew-log-embedded .record-player-card{padding:6px 7px;border-radius:7px}
+#crewlog .crew-log-embedded .record-player-name{font-size:.68rem}
+#crewlog .crew-log-embedded .record-player-role{font-size:.56rem}
+#crewlog .crew-log-embedded .record-outcomes{gap:4px;padding-top:1px}
+#crewlog .crew-log-embedded .tag{min-height:23px;padding:4px 8px;font-size:.62rem}
+#crewlog .crew-log-embedded .record-actions{gap:4px}
+#crewlog .crew-log-embedded .record-action{min-height:29px;padding:5px 7px;font-size:.62rem}
+#crewlog .crew-log-embedded .list-meta{margin-bottom:7px;font-size:.62rem}
+#crewlog .crew-log-embedded .footer{margin-top:14px;font-size:.62rem}
+@media (max-width:1100px){
+  #crewlog .crew-log-embedded .layout{grid-template-columns:minmax(300px,36%) minmax(0,1fr)}
+  #crewlog .crew-log-embedded .filters{grid-template-columns:1fr 1fr}
+  #crewlog .crew-log-embedded .search-wrap{grid-column:1/-1}
+  #crewlog .crew-log-embedded .filter-reset{grid-column:1/-1}
+}
+@media (max-width:900px){
+  #crewlog .crew-log-embedded.wrap{padding:22px 14px 36px}
+  #crewlog .crew-log-embedded .page-head{align-items:flex-start}
+  #crewlog .crew-log-embedded .layout{grid-template-columns:1fr;gap:12px}
+  #crewlog .crew-log-embedded .form-card{position:static}
+  #crewlog .crew-log-embedded .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  #crewlog .crew-log-embedded.wrap{padding:16px 9px 28px}
+  #crewlog .crew-log-embedded .eyebrow{font-size:.58rem;letter-spacing:.1em}
+  #crewlog .crew-log-embedded .page-head{gap:12px;margin-bottom:14px;padding:12px 0 16px}
+  #crewlog .crew-log-embedded h1{font-size:27px}
+  #crewlog .crew-log-embedded .sub{font-size:.7rem;line-height:1.5}
+  #crewlog .crew-log-embedded .head-side{width:100%;justify-content:space-between}
+  #crewlog .crew-log-embedded .stats{gap:7px}
+  #crewlog .crew-log-embedded .stat{min-height:88px;padding:11px 9px 10px 12px;border-radius:11px}
+  #crewlog .crew-log-embedded .stat-label{font-size:.59rem}
+  #crewlog .crew-log-embedded .stat-icon{width:21px;height:21px;flex-basis:21px}
+  #crewlog .crew-log-embedded .value{font-size:22px}
+  #crewlog .crew-log-embedded .rate{font-size:.56rem}
+  #crewlog .crew-log-embedded .ring{width:42px;height:42px;flex-basis:42px}
+  #crewlog .crew-log-embedded .ring b{font-size:8px}
+  #crewlog .crew-log-embedded .note{font-size:.59rem;line-height:1.45}
+  #crewlog .crew-log-embedded .form-card,#crewlog .crew-log-embedded .list-card{padding:14px}
+  #crewlog .crew-log-embedded .toolbar{align-items:stretch}
+  #crewlog .crew-log-embedded .actions{justify-content:flex-start;flex-wrap:wrap}
+  #crewlog .crew-log-embedded .filters{grid-template-columns:1fr 1fr}
+  #crewlog .crew-log-embedded .filter-reset{grid-column:1/-1}
+  #crewlog .crew-log-embedded .record-item{grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:12px 10px 12px 14px}
+  #crewlog .crew-log-embedded .record-title{font-size:.86rem}
+  #crewlog .crew-log-embedded .record-outcomes{grid-column:1/-1;grid-row:2;justify-content:flex-start}
+  #crewlog .crew-log-embedded .record-actions{grid-column:2;grid-row:1}
+  #crewlog .crew-log-embedded .record-player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #crewlog .crew-log-embedded .record-player-card{padding:6px}
+}
+@media (max-width:370px){
+  #crewlog .crew-log-embedded .record-player-grid{grid-template-columns:1fr}
+  #crewlog .crew-log-embedded .actions .btn{padding:6px 7px;font-size:.6rem}
+  #crewlog .crew-log-embedded .ring{display:none}
+}
+</style>
 </head>
 <body>
 <!--
