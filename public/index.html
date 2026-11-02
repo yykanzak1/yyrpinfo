@@ -3163,6 +3163,64 @@ html, .crew-log-embedded body, .crew-log-embedded body * { -webkit-user-select:n
 .crew-log-embedded .player-picker-toggle[aria-expanded="true"] .player-picker-arrow{transform:rotate(180deg)}
 .crew-log-embedded .player-list[hidden]{display:none}
 </style>
+
+<style id="exchange-redesign">
+/* 換金場リニューアル：カード型の取引所UI */
+#exchange .category-header {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 14px; padding: 18px 22px; overflow: hidden;
+  border: 1px solid rgba(88, 208, 255, .28); border-radius: 18px;
+  background: linear-gradient(110deg, rgba(16, 42, 65, .95), rgba(8, 19, 34, .9));
+  box-shadow: 0 12px 32px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06);
+}
+#exchange .category-header::after { content:""; position:absolute; right:-42px; top:-70px; width:220px; height:220px; border-radius:50%; border:1px solid rgba(74,208,255,.22); box-shadow:0 0 0 18px rgba(74,208,255,.04),0 0 0 36px rgba(74,208,255,.03); }
+#exchange .category-title { position:relative; z-index:1; font-size:1.3rem; letter-spacing:.04em; font-weight:900; }
+#exchange .category-header::before { content:"EXCHANGE MARKET  /  LIVE PRICE BOARD"; position:absolute; right:22px; bottom:12px; z-index:1; color:rgba(161,219,239,.68); font-size:.62rem; letter-spacing:.14em; font-weight:800; }
+#exchange .exchange-lead { display:flex; flex-wrap:wrap; align-items:center; gap:9px 14px; margin: 0 2px 17px; color:var(--text-dim); font-size:.86rem; }
+#exchange .exchange-lead strong { color:#d8f5ff; font-weight:800; }
+#exchange .exchange-lead .exchange-status { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border:1px solid rgba(80,226,168,.3); border-radius:999px; background:rgba(80,226,168,.08); color:#6ce6b2; font-size:.72rem; letter-spacing:.08em; font-weight:800; }
+#exchange .exchange-status::before { content:""; width:7px; height:7px; border-radius:50%; background:#55e8a7; box-shadow:0 0 10px #55e8a7; }
+.table-wrapper.exchange-price-wrapper { width:100%; max-width:980px !important; overflow:visible; }
+table.exchange-price-table { width:100%; max-width:980px; border-collapse:separate; border-spacing:0; table-layout:auto; }
+table.exchange-price-table thead { display:none; }
+table.exchange-price-table tbody { display:block; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto; align-items:stretch; gap:10px; margin:10px 0; padding:0; border:0; background:transparent; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td { min-width:0; border:1px solid rgba(123,164,190,.22); background:linear-gradient(145deg, rgba(21,42,61,.92), rgba(10,24,39,.94)); box-shadow:0 8px 18px rgba(0,0,0,.15); }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell { display:flex; align-items:center; gap:11px; padding:12px 14px; border-right:0; border-radius:12px 0 0 12px; color:#e7f3fa; font-weight:800; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell .item-icon { width:38px; height:38px; flex:0 0 38px; padding:4px; object-fit:contain; border:1px solid rgba(113,218,255,.22); border-radius:10px; background:rgba(4,14,25,.7); }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell span { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.val-cost { display:flex; align-items:center; justify-content:center; min-width:116px; padding:10px 13px; border-left:0; border-radius:0 12px 12px 0; color:#8deaff; font-size:1.02rem; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; text-shadow:0 0 14px rgba(67,212,255,.28); }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.val-cost::before { content:"換金額"; display:block; margin-right:7px; color:var(--text-dim); font-size:.58rem; letter-spacing:.08em; font-weight:700; text-shadow:none; }
+table.exchange-price-table tbody tr:not(.exchange-category-row) td.exchange-empty-cell { display:none; }
+table.exchange-price-table tr.exchange-category-row { display:block; margin:25px 0 9px; }
+table.exchange-price-table tr.exchange-category-row:first-child { margin-top:4px; }
+table.exchange-price-table tr.exchange-category-row th { display:flex; align-items:center; padding:11px 14px; border:0; border-left:3px solid #4bd9ff; border-radius:10px; color:#ccefff; background:linear-gradient(90deg, rgba(50,151,196,.2), rgba(19,46,66,.42) 58%, transparent); text-align:left; font-size:.98rem; font-weight:900; letter-spacing:.04em; }
+table.exchange-price-table .exchange-category-number { margin-right:10px; color:#57ddff; font-family:ui-monospace,monospace; font-size:.68rem; letter-spacing:.1em; }
+table.exchange-price-table .exchange-category-count { margin-left:auto; color:var(--text-dim); font-size:.7rem; font-weight:700; }
+table.exchange-price-table tr.exchange-universal-row td { background:linear-gradient(145deg, rgba(116,82,26,.42), rgba(35,29,18,.92)); border-color:rgba(226,181,77,.38); }
+table.exchange-price-table tr.exchange-universal-row td.item-name-cell { border-left:3px solid #e1b34e; }
+table.exchange-price-table tr.exchange-universal-row td.val-cost { color:#ffd66e; }
+html[data-theme="light"] #exchange .category-header { background:linear-gradient(110deg,#e9f8ff,#f4f7fb); border-color:#b8ddeb; }
+html[data-theme="light"] #exchange .category-header::before { color:#5b7385; }
+html[data-theme="light"] #exchange .exchange-lead strong { color:#203546; }
+html[data-theme="light"] table.exchange-price-table tbody tr:not(.exchange-category-row) td { background:linear-gradient(145deg,#fff,#f3f7fa); border-color:#d8e3eb; box-shadow:0 7px 16px rgba(34,70,92,.08); }
+html[data-theme="light"] table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell { color:#263b4b; }
+html[data-theme="light"] table.exchange-price-table tr.exchange-category-row th { color:#21546d; background:linear-gradient(90deg,#e5f6fd,transparent); }
+@media (max-width:700px) {
+  #exchange .category-header { align-items:flex-start; padding:15px 16px; }
+  #exchange .category-title { font-size:1.08rem; }
+  #exchange .category-header::before { right:16px; bottom:9px; font-size:.5rem; }
+  #exchange .exchange-lead { font-size:.78rem; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) { grid-template-columns:minmax(0,1fr) auto; gap:7px; margin:8px 0; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell { border-right:0; border-radius:11px 0 0 11px; padding:10px 11px; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td.val-cost { min-width:99px; border-left:0; border-radius:0 11px 11px 0; padding:9px 8px; font-size:.82rem; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td.val-cost::before { display:none; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td:nth-child(3), table.exchange-price-table tbody tr:not(.exchange-category-row) td:nth-child(4) { grid-column:auto; grid-row:auto; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td:nth-child(3) { margin-top:0; }
+  table.exchange-price-table tbody tr:not(.exchange-category-row) td.item-name-cell .item-icon { width:32px; height:32px; flex-basis:32px; }
+  table.exchange-price-table tr.exchange-category-row { margin-top:20px; }
+}
+</style>
 </head>
 <body>
 <!--
@@ -4487,6 +4545,7 @@ SOFTWARE.
             <div class="category-header">
                 <span class="category-title">換金所 値段表</span>
             </div>
+            <div class="exchange-lead"><span class="exchange-status">PRICE BOARD ONLINE</span><span><strong>戦利品を換金</strong>　カテゴリごとの最新換金価格を確認できます</span></div>
             <div class="table-wrapper exchange-price-wrapper" style="max-width:980px;">
                 <table class="craft-table exchange-price-table">
                     <thead>
