@@ -56,11 +56,6 @@ const asset = (env, url, path) => env.ASSETS.fetch(new Request(new URL(path, url
 const removeElement = { element(element) { element.remove(); } };
 function mercenaryManual(response) {
   return new HTMLRewriter()
-    .on('#mainNav', {
-      element(element) {
-        element.setAttribute('data-role-menu', 'mercenary');
-      },
-    })
     .on('#info', removeElement)
     .on('#craft .craft-layout', {
       element(element) {

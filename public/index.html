@@ -4278,32 +4278,6 @@ SOFTWARE.
         var resetBtn = document.getElementById('menuReset');
         if (!nav || !editBtn || !resetBtn) return;
         var storageKey = 'dassai-menu-order-v1';
-        var mainArea = document.querySelector('.app-body > .main-area');
-        var drawerHead = nav.querySelector('.nav-drawer-head');
-        function syncDesktopMenu() {
-            var desktop = window.innerWidth > 700;
-            if (desktop) {
-                nav.style.position = 'fixed';
-                nav.style.top = '0';
-                nav.style.bottom = '0';
-                nav.style.left = '0';
-                nav.style.height = '100vh';
-                nav.style.overflowY = 'auto';
-                if (mainArea) mainArea.style.marginLeft = '230px';
-                if (drawerHead) drawerHead.style.display = 'flex';
-            } else {
-                nav.style.position = '';
-                nav.style.top = '';
-                nav.style.bottom = '';
-                nav.style.left = '';
-                nav.style.height = '';
-                nav.style.overflowY = '';
-                if (mainArea) mainArea.style.marginLeft = '';
-                if (drawerHead) drawerHead.style.display = '';
-            }
-        }
-        syncDesktopMenu();
-        window.addEventListener('resize', syncDesktopMenu);
         function menuButtons() { return Array.from(nav.querySelectorAll('.tab-btn')); }
         function menuKey(button) {
             var match = (button.getAttribute('onclick') || '').match(/switchTab\(['"]([^'"]+)['"]\)/);
