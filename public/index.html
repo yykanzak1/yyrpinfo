@@ -3019,6 +3019,37 @@ html, .crew-log-embedded body, .crew-log-embedded body * { -webkit-user-select:n
   overflow: visible !important;
 }
 .crew-log-embedded { overflow: visible !important; }
+
+.crew-log-embedded .player-category{display:grid;gap:4px;margin-top:10px;padding:8px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface)}
+.crew-log-embedded .player-category:first-child{margin-top:0}
+.crew-log-embedded .player-category-title{margin:0 2px 3px;color:var(--cyan);font-size:10px;font-weight:850;letter-spacing:.04em}
+.crew-log-embedded .other-player-memo{margin-top:9px;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.crew-log-embedded .other-player-memo label{display:block;margin-bottom:5px;color:var(--ink);font-size:10px;font-weight:800}
+.crew-log-embedded .other-player-memo textarea{width:100%;resize:vertical;min-height:54px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:11px}
+
+/* 活動ログをメイン画面の表示幅に収めるコンパクトレイアウト */
+.crew-log-embedded.wrap{width:100%;max-width:none;margin:0;padding:0 0 22px}
+.crew-log-embedded .stats{gap:10px}
+.crew-log-embedded .stat{min-height:82px;padding:11px 12px 11px 15px}
+.crew-log-embedded .value{margin-top:4px;font-size:22px}
+.crew-log-embedded .note{margin:8px 2px 10px}
+.crew-log-embedded .layout{grid-template-columns:minmax(280px,34%) minmax(0,1fr);gap:12px}
+.crew-log-embedded .form-card,.crew-log-embedded .list-card{padding:13px;border-radius:12px}
+.crew-log-embedded .card-head{margin-bottom:10px}
+.crew-log-embedded .field{margin-bottom:9px}
+.crew-log-embedded .player-category{margin-top:6px;padding:6px;gap:2px}
+.crew-log-embedded .player-choice{min-height:29px;padding:4px 6px;font-size:10px}
+.crew-log-embedded .player-category-title{font-size:9px}
+.crew-log-embedded .player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;align-items:start}
+.crew-log-embedded .player-category{grid-column:1/-1}
+.crew-log-embedded .player-category .player-choice{display:flex}
+.crew-log-embedded .other-player-memo{margin-top:6px;padding:7px}
+.crew-log-embedded .other-player-memo textarea{min-height:42px}
+.crew-log-embedded .toolbar{margin-bottom:8px}
+.crew-log-embedded .filters{gap:5px;margin-bottom:7px}
+.crew-log-embedded .record-list{gap:5px}
+.crew-log-embedded .record-item{padding:8px 10px 8px 13px;gap:8px}
+@media (max-width:900px){.crew-log-embedded .layout{grid-template-columns:minmax(0,1fr)}.crew-log-embedded .player-list{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3800,6 +3831,11 @@ SOFTWARE.
         <p class="field-hint player-state" id="membersState" role="status" aria-live="polite">Discordメンバーを読み込み中…</p>
         <div class="player-list" id="playerList" role="group" aria-label="参加プレイヤー"></div>
         <div class="player-departed-list" id="departedPlayers" hidden></div>
+        <div class="other-player-memo" id="otherPlayerMemoWrap" hidden>
+          <label for="otherPlayerMemo">その他の参加者メモ</label>
+          <textarea id="otherPlayerMemo" rows="2" maxlength="100" placeholder="参加者名や呼び名を入力してください"></textarea>
+          <p class="field-hint">「その他」を選択した場合のみ記録されます。</p>
+        </div>
       </div>
       <div class="field">
         <span class="field-label">警察の結果</span>
@@ -3923,7 +3959,7 @@ SOFTWARE.
   function updatePlayerCount() { $('playerCount').textContent=`${selectedPlayers.size}人選択`; }
   function renderDepartedPlayers() {
     const container=$('departedPlayers'); container.replaceChildren();
-    const departed=[...selectedPlayers.values()].filter(player=>!memberById.has(player.id));
+    const departed=[...selectedPlayers.values()].filter(player=>player.id!=='other'&&!memberById.has(player.id));
     container.hidden=departed.length===0;
     if (!departed.length) return;
     const heading=document.createElement('span'); heading.className='player-departed-label';
@@ -3941,29 +3977,57 @@ SOFTWARE.
   function renderMemberChoices() {
     const list=$('playerList'), query=$('playerSearch').value.trim().toLocaleLowerCase('ja');
     const state=$('membersState');
-    state.textContent=membersLoading&&!members.length?'Discordメンバーを読み込み中…':memberError || `Discordメンバー ${members.length} 人（30秒ごとに更新）`;
+    const categories=['BOSS','アンボス','傭兵メンバー','ギャングメンバー'];
+    state.textContent=membersLoading&&!members.length?'Discordメンバーを読み込み中…':memberError || `Discordメンバー ${members.length} 人（ロール別表示）`;
     state.dataset.tone=memberError?'error':'ok';
     const shown=members.filter(member=>!query || member.name.toLocaleLowerCase('ja').includes(query));
     list.replaceChildren();
-    if (!shown.length) {
-      const emptyMessage=document.createElement('div'); emptyMessage.className='player-empty';
-      emptyMessage.textContent=membersLoading?'Discordメンバーを取得しています…':memberError?'参加者一覧を利用できません。設定後に更新してください。':query?'検索に一致するメンバーはいません。':'Discordメンバーがいません。';
-      list.append(emptyMessage);
-    } else {
-      const frag=document.createDocumentFragment();
-      shown.forEach(member=>{
-        const label=document.createElement('label'); label.className='player-choice';
-        const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.checked=selectedPlayers.has(member.id);
-        checkbox.addEventListener('change',()=>{
-          if (checkbox.checked) selectedPlayers.set(member.id,member); else selectedPlayers.delete(member.id);
-          updatePlayerCount(); renderDepartedPlayers();
-        });
-        const name=document.createElement('span'); name.textContent=member.name;
-        label.append(checkbox,name); frag.append(label);
+    const frag=document.createDocumentFragment();
+    const addMember=(member, target) => {
+      const label=document.createElement('label'); label.className='player-choice';
+      const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.checked=selectedPlayers.has(member.id);
+      checkbox.addEventListener('change',()=>{
+        if (checkbox.checked) selectedPlayers.set(member.id,member); else selectedPlayers.delete(member.id);
+        updatePlayerCount(); renderDepartedPlayers();
       });
-      list.append(frag);
+      const name=document.createElement('span'); name.textContent=member.name;
+      label.append(checkbox,name); target.append(label);
+    };
+    let visibleCount=0;
+    categories.forEach(category=>{
+      const group=shown.filter(member=>(member.category||'ギャングメンバー')===category);
+      if (!group.length) return;
+      visibleCount+=group.length;
+      const section=document.createElement('section'); section.className='player-category';
+      const heading=document.createElement('h3'); heading.className='player-category-title'; heading.textContent=category;
+      section.append(heading); group.forEach(member=>addMember(member,section)); frag.append(section);
+    });
+    if (!visibleCount && !membersLoading && !memberError) {
+      const emptyMessage=document.createElement('div'); emptyMessage.className='player-empty';
+      emptyMessage.textContent=query?'検索に一致するメンバーはいません。':'Discordメンバーがいません。';
+      frag.append(emptyMessage);
     }
-    updatePlayerCount(); renderDepartedPlayers();
+    const otherSection=document.createElement('section'); otherSection.className='player-category';
+    const otherHeading=document.createElement('h3'); otherHeading.className='player-category-title'; otherHeading.textContent='その他'; otherSection.append(otherHeading);
+    const otherLabel=document.createElement('label'); otherLabel.className='player-choice';
+    const otherCheckbox=document.createElement('input'); otherCheckbox.type='checkbox'; otherCheckbox.checked=selectedPlayers.has('other');
+    otherCheckbox.addEventListener('change',()=>{
+      if (otherCheckbox.checked) selectedPlayers.set('other',{id:'other',name:$('otherPlayerMemo').value.trim()||'その他',category:'その他'});
+      else selectedPlayers.delete('other');
+      updateOtherPlayerMemo(); updatePlayerCount(); renderDepartedPlayers();
+    });
+    const otherName=document.createElement('span'); otherName.textContent='登録外の参加者'; otherLabel.append(otherCheckbox,otherName); otherSection.append(otherLabel); frag.append(otherSection);
+    list.append(frag);
+    updateOtherPlayerMemo(); updatePlayerCount(); renderDepartedPlayers();
+  }
+  function updateOtherPlayerMemo() {
+    const memo=$('otherPlayerMemo'), wrap=$('otherPlayerMemoWrap');
+    const active=selectedPlayers.has('other'); wrap.hidden=!active;
+    if (!active) return;
+    const current=selectedPlayers.get('other')||{id:'other',category:'その他'};
+    if (document.activeElement !== memo && memo.value !== (current.name==='その他'?'':(current.name||''))) memo.value=current.name==='その他'?'':(current.name||'');
+    const value=memo.value.trim();
+    selectedPlayers.set('other',{...current,id:'other',name:value||'その他',category:'その他'});
   }
   async function loadMembers(silent=true) {
     if (membersLoading) return;
@@ -3978,7 +4042,7 @@ SOFTWARE.
       memberById=new Map(members.map(member=>[member.id,member]));
       memberError='';
       members.forEach(member=>{if(selectedPlayers.has(member.id))selectedPlayers.set(member.id,member);});
-      if (!editingId) for (const id of selectedPlayers.keys()) if (!memberById.has(id)) selectedPlayers.delete(id);
+      if (!editingId) for (const id of selectedPlayers.keys()) if (id!=='other'&&!memberById.has(id)) selectedPlayers.delete(id);
     } catch (error) {
       members=[]; memberById=new Map();
       memberError=error.message==='discord_bot_not_configured'
@@ -4007,7 +4071,7 @@ SOFTWARE.
         const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
         playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
         playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
-        const names=document.createElement('span'); names.textContent=item.players.map(player=>player.name).join(' · ');
+        const names=document.createElement('span'); names.textContent=item.players.map(player=>`${player.category ? player.category+'：' : ''}${player.name||'その他'}`).join(' · ');
         playerLine.append(playerIcon,names); main.append(playerLine);
       }
       const outcomes=document.createElement('div'); outcomes.className='record-outcomes';
@@ -4129,7 +4193,7 @@ SOFTWARE.
     activityInput.focus({preventScroll:true});
   });
   $('refresh').addEventListener('click',()=>load(false));
-  $('playerSearch').addEventListener('input',renderMemberChoices);
+  $('playerSearch').addEventListener('input',renderMemberChoices); $('otherPlayerMemo').addEventListener('input',()=>{if(selectedPlayers.has('other')) updateOtherPlayerMemo();});
   $('playerSearch').addEventListener('keydown',event=>{if(event.key==='Enter')event.preventDefault();});
   $('refreshMembers').addEventListener('click',()=>loadMembers(false));
   $('cancelEdit').addEventListener('click',()=>{resetEditor();setStatus('編集をキャンセルしました。','info');});
@@ -5107,290 +5171,6 @@ SOFTWARE.
     })();
     </script>
 
-<script>
-/* Integrated crew activity log app */
 
-(() => {
-  'use strict';
-  const $ = id => document.getElementById(id);
-  const form = $('form'), activityInput = $('activity'), rows = $('rows'), empty = $('empty'), emptyText = $('emptyText'), status = $('status');
-  const CHOICE_KEY = 'dassai_crew_last_choice';
-  const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-  const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
-  let records = [], canDelete = false, loading = false, flashId = null, statusTimer = 0, editingId = null;
-  let members = [], memberById = new Map(), memberError = '', membersLoading = false;
-  let selectedPlayers = new Map(), preEditPlayers = null;
-
-  function now() {
-    const parts = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(new Date());
-    const value = Object.fromEntries(parts.map(part => [part.type, part.value]));
-    return `${value.year}-${value.month}-${value.day}T${value.hour}:${value.minute}`;
-  }
-  function displayNow() { const value=now(); return `${value.slice(0,10).replace(/-/g,'/')} ${value.slice(11)} JST`; }
-  function clockNow() { return new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date()); }
-  function dateParts(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    const parts = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(date);
-    const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
-    return { day:`${fields.year}/${fields.month}/${fields.day}`, time:`${fields.hour}:${fields.minute}` };
-  }
-  function dateLabel(value) { const parts=dateParts(value); return parts ? `${parts.day} ${parts.time} JST` : ''; }
-  function resultLabel(value) { return value === 'caught' ? '捕まった' : '逃げ切った'; }
-
-  function setStatus(message, tone='info') {
-    status.textContent = message;
-    status.dataset.tone = tone;
-    clearTimeout(statusTimer);
-    if (message && tone === 'ok') statusTimer = setTimeout(() => setStatus('', 'info'), 6000);
-  }
-  function setRing(ringId, textId, pct) {
-    $(ringId).style.setProperty('--progress', String(pct));
-    $(textId).textContent = `${Math.round(pct)}%`;
-  }
-  function updateStats() {
-    const count=records.length, caught=records.filter(x=>x.result==='caught').length;
-    const free=records.filter(x=>x.result==='not_caught').length, cashed=records.filter(x=>x.cashed==='yes').length;
-    $('total').innerHTML=`${count}<small>件</small>`; $('caught').innerHTML=`${caught}<small>件</small>`;
-    $('free').innerHTML=`${free}<small>件</small>`; $('cash').innerHTML=`${cashed}<small>件</small>`;
-    const arrestPct=count?100*caught/count:0, escapePct=count?100*free/count:0, cashPct=count?100*cashed/count:0;
-    $('caughtRate').textContent=`${arrestPct.toFixed(1)}%`;
-    $('freeRate').textContent=`${escapePct.toFixed(1)}%`;
-    $('cashRate').textContent=`${cashPct.toFixed(1)}%`;
-    setRing('caughtRing','caughtRingText',arrestPct); setRing('freeRing','freeRingText',escapePct); setRing('cashRing','cashRingText',cashPct);
-  }
-  function makeTag(tone, value) {
-    const badge=document.createElement('span'); badge.className=`tag ${tone}`; badge.textContent=value; return badge;
-  }
-  function updatePlayerCount() { $('playerCount').textContent=`${selectedPlayers.size}人選択`; }
-  function renderDepartedPlayers() {
-    const container=$('departedPlayers'); container.replaceChildren();
-    const departed=[...selectedPlayers.values()].filter(player=>!memberById.has(player.id));
-    container.hidden=departed.length===0;
-    if (!departed.length) return;
-    const heading=document.createElement('span'); heading.className='player-departed-label';
-    heading.textContent=memberError?'在籍状態を確認できない選択中プレイヤー':'サーバー退会済み（過去ログから引き継ぎ）';
-    container.append(heading);
-    departed.forEach(player=>{
-      const chip=document.createElement('span'); chip.className='player-departed-chip';
-      const name=document.createElement('span'); name.textContent=player.name;
-      const remove=document.createElement('button'); remove.type='button'; remove.className='btn ghost player-remove'; remove.textContent='外す';
-      remove.setAttribute('aria-label',`${player.name}を参加者から外す`);
-      remove.addEventListener('click',()=>{selectedPlayers.delete(player.id);renderMemberChoices();});
-      chip.append(name,remove); container.append(chip);
-    });
-  }
-  function renderMemberChoices() {
-    const list=$('playerList'), query=$('playerSearch').value.trim().toLocaleLowerCase('ja');
-    const state=$('membersState');
-    state.textContent=membersLoading&&!members.length?'Discordメンバーを読み込み中…':memberError || `Discordメンバー ${members.length} 人（30秒ごとに更新）`;
-    state.dataset.tone=memberError?'error':'ok';
-    const shown=members.filter(member=>!query || member.name.toLocaleLowerCase('ja').includes(query));
-    list.replaceChildren();
-    if (!shown.length) {
-      const emptyMessage=document.createElement('div'); emptyMessage.className='player-empty';
-      emptyMessage.textContent=membersLoading?'Discordメンバーを取得しています…':memberError?'参加者一覧を利用できません。設定後に更新してください。':query?'検索に一致するメンバーはいません。':'Discordメンバーがいません。';
-      list.append(emptyMessage);
-    } else {
-      const frag=document.createDocumentFragment();
-      shown.forEach(member=>{
-        const label=document.createElement('label'); label.className='player-choice';
-        const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.checked=selectedPlayers.has(member.id);
-        checkbox.addEventListener('change',()=>{
-          if (checkbox.checked) selectedPlayers.set(member.id,member); else selectedPlayers.delete(member.id);
-          updatePlayerCount(); renderDepartedPlayers();
-        });
-        const name=document.createElement('span'); name.textContent=member.name;
-        label.append(checkbox,name); frag.append(label);
-      });
-      list.append(frag);
-    }
-    updatePlayerCount(); renderDepartedPlayers();
-  }
-  async function loadMembers(silent=true) {
-    if (membersLoading) return;
-    membersLoading=true;
-    const button=$('refreshMembers'); button.disabled=true;
-    if (!silent) { memberError=''; renderMemberChoices(); }
-    try {
-      const response=await fetch('/api/members',{cache:'no-store'});
-      const payload=await response.json().catch(()=>({}));
-      if (!response.ok) throw new Error(payload.error||'discord_member_fetch_failed');
-      members=Array.isArray(payload)?payload.filter(member=>member&&/^\d{17,20}$/.test(member.id)&&typeof member.name==='string'):[];
-      memberById=new Map(members.map(member=>[member.id,member]));
-      memberError='';
-      members.forEach(member=>{if(selectedPlayers.has(member.id))selectedPlayers.set(member.id,member);});
-      if (!editingId) for (const id of selectedPlayers.keys()) if (!memberById.has(id)) selectedPlayers.delete(id);
-    } catch (error) {
-      members=[]; memberById=new Map();
-      memberError=error.message==='discord_bot_not_configured'
-        ? 'Bot未設定です。管理者がBotをサーバーへ招待し、GUILD_MEMBERSとDISCORD_BOT_TOKENを設定してください。'
-        : 'Discordメンバー一覧を取得できません。Botの参加状態・Intent・トークン設定を確認してください。';
-    } finally {
-      membersLoading=false; button.disabled=false; renderMemberChoices();
-    }
-  }
-  function render() {
-    const query=$('search').value.trim().toLocaleLowerCase('ja'), resultFilter=$('filter').value, cashFilter=$('cashFilter').value;
-    const shown=records.slice().sort((a,b)=>String(b.occurred_at||'').localeCompare(String(a.occurred_at||''))).filter(item =>
-      (!query || String(item.activity||'').toLocaleLowerCase('ja').includes(query) || (item.players||[]).some(player=>String(player.name||'').toLocaleLowerCase('ja').includes(query))) &&
-      (resultFilter==='all' || item.result===resultFilter) && (cashFilter==='all' || item.cashed===cashFilter));
-    $('shownCount').textContent=shown.length===records.length ? `${records.length} 件` : `${shown.length} / ${records.length} 件を表示`;
-    const frag=document.createDocumentFragment();
-    shown.forEach(item => {
-      const card=document.createElement('article'); card.className='record-item'; card.dataset.result=item.result; card.dataset.cashed=item.cashed==='yes'?'yes':'no';
-      if (item.id===flashId) card.classList.add('is-new');
-      const main=document.createElement('div'); main.className='record-main';
-      const timestamp=document.createElement('time'); timestamp.className='record-time'; timestamp.textContent=dateLabel(item.occurred_at);
-      const title=document.createElement('h3'); title.className='record-title'; title.textContent=item.activity||'名称未設定';
-      main.append(timestamp,title);
-      if (Array.isArray(item.players)&&item.players.length) {
-        const playerLine=document.createElement('div'); playerLine.className='record-players';
-        const playerIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        playerIcon.setAttribute('viewBox','0 0 24 24'); playerIcon.setAttribute('fill','none'); playerIcon.setAttribute('stroke','currentColor'); playerIcon.setAttribute('stroke-width','2'); playerIcon.setAttribute('stroke-linecap','round'); playerIcon.setAttribute('stroke-linejoin','round'); playerIcon.setAttribute('aria-hidden','true');
-        playerIcon.innerHTML='<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
-        const names=document.createElement('span'); names.textContent=item.players.map(player=>player.name).join(' · ');
-        playerLine.append(playerIcon,names); main.append(playerLine);
-      }
-      const outcomes=document.createElement('div'); outcomes.className='record-outcomes';
-      outcomes.append(makeTag(item.result==='caught'?'caught':'free',resultLabel(item.result)));
-      outcomes.append(makeTag(item.cashed==='yes'?'done':'pending',item.cashed==='yes'?'利確できた':'利確できず'));
-      card.append(main,outcomes);
-      if (item.can_edit === true || canDelete) {
-        const actions=document.createElement('div'); actions.className='record-actions';
-        if (item.can_edit === true) {
-          const editButton=document.createElement('button'); editButton.className='record-action edit'; editButton.type='button'; editButton.innerHTML=EDIT_ICON+'<span>編集</span>';
-          editButton.setAttribute('aria-label',`${item.activity||'記録'}を編集`); editButton.addEventListener('click',()=>startEdit(item));
-          actions.append(editButton);
-        }
-        if (canDelete) {
-          const button=document.createElement('button'); button.className='record-action delete'; button.type='button'; button.innerHTML=TRASH_ICON+'<span>削除</span>';
-          button.setAttribute('aria-label',`${item.activity||'記録'}を削除`); button.addEventListener('click',()=>remove(item));
-          actions.append(button);
-        }
-        card.append(actions);
-      }
-      frag.append(card);
-    });
-    rows.replaceChildren(frag);
-    empty.hidden=shown.length>0;
-    emptyText.textContent=records.length?'条件に一致する記録がありません。条件をクリアして再表示できます。':'記録はまだありません。上のフォームから追加できます。';
-    updateStats();
-  }
-  async function load(silent=false) {
-    if (loading) return;
-    loading=true;
-    const sync=$('syncState');
-    if (!silent) { sync.textContent='共有記録を更新中…'; sync.dataset.state=''; $('refresh').disabled=true; $('refresh').classList.add('is-busy'); }
-    try {
-      const response=await fetch('/api/records',{cache:'no-store'}); if (!response.ok) throw new Error('load failed');
-      canDelete=response.headers.get('X-Crew-Can-Delete')==='1'; $('clear').hidden=!canDelete;
-      records=await response.json(); if (!Array.isArray(records)) records=[];
-      render();
-      sync.textContent=`最終同期 ${clockNow()} JST`; sync.dataset.state='ok';
-      if (!silent) setStatus('共有記録を読み込みました。','ok');
-    } catch (error) {
-      sync.textContent='未接続・再試行中'; sync.dataset.state='error';
-      if (!silent) setStatus('共有記録を読み込めません。通信を確認してください。','error');
-    } finally { loading=false; $('refresh').disabled=false; $('refresh').classList.remove('is-busy'); }
-  }
-  async function remove(item) {
-    if (!confirm('この記録を削除しますか？')) return;
-    try {
-      const response=await fetch(`/api/records/${encodeURIComponent(item.id)}`,{method:'DELETE'}); if (!response.ok) throw new Error('delete failed');
-      records=records.filter(record=>record.id!==item.id); render(); setStatus('記録を削除して共有データを更新しました。','ok');
-    } catch (error) { setStatus('削除できませんでした。通信を確認してください。','error'); }
-  }
-  function restoreChoice() {
-    try {
-      const saved=JSON.parse(localStorage.getItem(CHOICE_KEY)||'null'); if (!saved) return;
-      const hasActivity=[...activityInput.options].some(option=>option.value===saved.activity);
-      if (hasActivity) activityInput.value=saved.activity;
-      const result=form.querySelector(`input[name="result"][value="${saved.result}"]`);
-      const cashed=form.querySelector(`input[name="cashed"][value="${saved.cashed}"]`);
-      if (result) result.checked=true; if (cashed) cashed.checked=true;
-    } catch (error) {}
-  }
-  function saveChoice(activity, result, cashed) {
-    try { localStorage.setItem(CHOICE_KEY, JSON.stringify({ activity, result, cashed })); } catch (error) {}
-  }
-  function updateClock() { $('clock').textContent=`${clockNow().slice(0,5)} JST`; $('whenLabel').textContent=displayNow(); }
-  function startEdit(item) {
-    if (item.can_edit !== true) return;
-    editingId=item.id;
-    let option=[...activityInput.options].find(candidate=>candidate.value===item.activity);
-    if (!option) {
-      option=document.createElement('option'); option.value=item.activity; option.textContent=`${item.activity}（過去の記録）`; option.dataset.legacy='true';
-      activityInput.add(option);
-    }
-    activityInput.value=item.activity;
-    const result=form.querySelector(`input[name="result"][value="${item.result}"]`);
-    const cashed=form.querySelector(`input[name="cashed"][value="${item.cashed}"]`);
-    if (result) result.checked=true; if (cashed) cashed.checked=true;
-    preEditPlayers=new Map(selectedPlayers); selectedPlayers=new Map((Array.isArray(item.players)?item.players:[]).map(player=>[player.id,player]));
-    renderMemberChoices();
-    $('recordFormCard').classList.add('edit-mode'); $('submitLabel').textContent='変更を保存'; $('cancelEdit').hidden=false;
-    setStatus('自分が作成した記録を編集中です。','info');
-    $('recordFormCard').scrollIntoView({behavior:'smooth',block:'start'}); activityInput.focus({preventScroll:true});
-  }
-  function resetEditor() {
-    editingId=null; form.reset();
-    activityInput.querySelectorAll('option[data-legacy="true"]').forEach(option=>option.remove());
-    if (preEditPlayers) { selectedPlayers=preEditPlayers; preEditPlayers=null; }
-    restoreChoice(); renderMemberChoices(); $('recordFormCard').classList.remove('edit-mode'); $('submitLabel').textContent='記録する'; $('cancelEdit').hidden=true;
-  }
-
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    const data=new FormData(form);
-    const payload={activity:String(data.get('activity')||'').trim(),result:String(data.get('result')||'caught'),cashed:String(data.get('cashed')||'yes'),players:[...selectedPlayers.values()]};
-    if (!payload.activity) { setStatus('犯罪名を選択してください。','error'); activityInput.focus(); return; }
-    const submitButton=$('submitButton');
-    const targetId=editingId;
-    submitButton.disabled=true; setStatus(targetId?'記録を更新しています…':'共有データに記録しています…','info');
-    let succeeded=false;
-    try {
-      const response=await fetch(targetId?`/api/records/${encodeURIComponent(targetId)}`:'/api/records',{
-        method:targetId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
-      });
-      const saved=await response.json(); if (!response.ok) throw new Error('save failed');
-      records=targetId?records.map(item=>item.id===targetId?saved:item):[saved,...records.filter(item=>item.id!==saved.id)];
-      flashId=saved.id; saveChoice(payload.activity,payload.result,payload.cashed);
-      if (targetId) resetEditor();
-      render(); updateClock();
-      setStatus(targetId?`「${payload.activity}」の記録を更新しました。`:`「${payload.activity}」を記録しました。このまま同じ犯罪を続けて登録できます。`,'ok');
-      succeeded=true;
-      setTimeout(()=>{flashId=null;},1800);
-    } catch (error) { setStatus(targetId?'更新できませんでした。権限または通信を確認してください。':'追加できませんでした。通信を確認して再度お試しください。','error'); }
-    finally { submitButton.disabled=false; if (succeeded) submitButton.focus(); }
-  });
-  $('search').addEventListener('input',render); $('filter').addEventListener('change',render); $('cashFilter').addEventListener('change',render);
-  $('resetFilters').addEventListener('click',()=>{$('search').value='';$('filter').value='all';$('cashFilter').value='all';render();$('search').focus();});
-  $('jumpToForm').addEventListener('click',()=>{
-    $('recordFormCard').scrollIntoView({behavior:'smooth',block:'start'});
-    activityInput.focus({preventScroll:true});
-  });
-  $('refresh').addEventListener('click',()=>load(false));
-  $('playerSearch').addEventListener('input',renderMemberChoices);
-  $('playerSearch').addEventListener('keydown',event=>{if(event.key==='Enter')event.preventDefault();});
-  $('refreshMembers').addEventListener('click',()=>loadMembers(false));
-  $('cancelEdit').addEventListener('click',()=>{resetEditor();setStatus('編集をキャンセルしました。','info');});
-  $('clear').addEventListener('click',async()=>{
-    if (!records.length || !confirm('共有されている全記録を削除します。この操作は元に戻せません。続けますか？')) return;
-    try { const response=await fetch('/api/records',{method:'DELETE'}); if (!response.ok) throw new Error('clear failed'); records=[]; render(); setStatus('すべての共有記録を削除しました。','ok'); }
-    catch (error) { setStatus('全削除できませんでした。通信を確認してください。','error'); }
-  });
-  $('export').addEventListener('click',()=>{
-    if (!records.length) { alert('CSVに保存する記録がありません。'); return; }
-    const data=[['日時（JST）','犯罪名','参加プレイヤー','警察結果','利確'],...records.map(item=>[dateLabel(item.occurred_at),item.activity,(item.players||[]).map(player=>player.name).join('、'),resultLabel(item.result),item.cashed==='yes'?'できた':'できなかった'])];
-    const csv=data.map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
-    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
-    link.href=url; link.download=`gang-activity-log-${now().slice(0,10)}.csv`; document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
-  });
-  restoreChoice(); updateClock(); render(); load(false); loadMembers(false);
-  setInterval(updateClock,30000); setInterval(()=>load(true),5000); setInterval(()=>loadMembers(true),30000);
-})();
-</script>
 </body>
 </html>

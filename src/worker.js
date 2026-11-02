@@ -94,6 +94,13 @@ function mercenaryManual(response) {
 function roleIds(value) {
   return String(value || '').split(',').map((id) => id.trim()).filter(Boolean);
 }
+function memberCategory(member, env) {
+  const roles = new Set(Array.isArray(member?.roles) ? member.roles : []);
+  if (roleIds(env.BOSS_ROLE_ID).some((id) => roles.has(id))) return 'BOSS';
+  if (roleIds(env.UNDERBOSS_ROLE_ID).some((id) => roles.has(id))) return 'アンボス';
+  if (roleIds(env.MERCENARY_ROLE_ID).some((id) => roles.has(id))) return '傭兵メンバー';
+  return 'ギャングメンバー';
+}
 function gangPage(response) {
   return new HTMLRewriter()
     .on('#joining', removeElement)
@@ -154,7 +161,7 @@ async function discordGuildMembers(url, env) {
     for (const member of page) {
       const user = member?.user;
       if (!user?.id || user.bot) continue;
-      members.push({ id: user.id, name: member.nick || user.global_name || user.username || user.id });
+      members.push({ id: user.id, name: member.nick || user.global_name || user.username || user.id, category: memberCategory(member, env) });
     }
     if (page.length < 1000) break;
     const nextAfter = page.at(-1)?.user?.id;
