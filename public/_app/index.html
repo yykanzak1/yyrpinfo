@@ -1030,6 +1030,37 @@
   .fines-section{margin-top:18px}.fines-section-title{gap:8px;margin-bottom:8px;font-size:1.05rem}.fines-section-icon{flex-basis:27px;width:27px;height:27px;padding:5px}.fines-table th,.fines-table td{padding:9px 8px;font-size:.79rem}.fines-table th:nth-child(1){width:52%}.fines-table th:nth-child(2){width:27%}.fines-table th:nth-child(3){width:21%}
   .fines-offenses,.fines-goods{grid-template-columns:1fr;gap:8px}.fines-offense,.fines-goods-card{padding:12px}.fines-offense h4,.fines-goods-card h4{font-size:.87rem}.fines-offense p,.fines-goods-card ul{font-size:.8rem}.fines-goods-card ul{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px}.fines-chip{font-size:.68rem}.fines-callout{padding:10px 11px;font-size:.81rem}
 }
+
+/* 罪状一覧：カテゴリごとのアイコン・アクセントカラー */
+#fines .fines-section{--fine-accent:var(--accent-cyan)}
+#fines #fine-small{--fine-accent:#45d483}
+#fines #fine-medium{--fine-accent:#8b7cff}
+#fines #fine-large{--fine-accent:#ff6b78}
+#fines #fine-conflict{--fine-accent:#ff9f43}
+#fines #fine-other{--fine-accent:#35b9ff}
+#fines #fine-seizure{--fine-accent:#c58cff}
+#fines #fine-blackmoney{--fine-accent:#f4c95d}
+#fines .fines-section-title{color:var(--fine-accent);padding:8px 11px;margin-bottom:10px;border:1px solid color-mix(in srgb,var(--fine-accent) 28%,var(--border-color));border-left:3px solid var(--fine-accent);border-radius:10px;background:color-mix(in srgb,var(--fine-accent) 7%,transparent)}
+#fines .fines-section-icon{border-color:color-mix(in srgb,var(--fine-accent) 42%,var(--border-color));background:color-mix(in srgb,var(--fine-accent) 14%,transparent);color:var(--fine-accent);box-shadow:0 0 14px color-mix(in srgb,var(--fine-accent) 20%,transparent)}
+#fines .fines-table-shell{border-color:color-mix(in srgb,var(--fine-accent) 26%,var(--border-color));box-shadow:0 8px 22px color-mix(in srgb,var(--fine-accent) 7%,transparent)}
+#fines .fines-table thead{background:color-mix(in srgb,var(--fine-accent) 12%,var(--card-bg))}
+#fines .fines-table th{color:var(--fine-accent);border-bottom-color:color-mix(in srgb,var(--fine-accent) 30%,var(--border-color))}
+#fines .fines-table tbody tr{border-left:3px solid transparent;transition:background .16s,border-color .16s}
+#fines .fines-table tbody tr:hover{border-left-color:var(--fine-accent);background:color-mix(in srgb,var(--fine-accent) 8%,transparent)}
+#fines .fines-name{display:inline-flex;align-items:center;gap:8px;font-weight:750}
+#fines .fines-name-icon{width:25px;height:25px;flex:0 0 25px;padding:5px;border:1px solid color-mix(in srgb,var(--fine-accent) 35%,var(--border-color));border-radius:8px;background:color-mix(in srgb,var(--fine-accent) 13%,transparent);color:var(--fine-accent)}
+#fines .fines-table td:nth-child(2){color:#ffcf70;font-weight:800;font-variant-numeric:tabular-nums}
+#fines .fines-table td:nth-child(3){color:#79cfff;font-weight:800;font-variant-numeric:tabular-nums}
+#fines .fines-offense{border-color:color-mix(in srgb,var(--fine-accent) 28%,var(--border-color));border-left:3px solid var(--fine-accent);background:linear-gradient(135deg,color-mix(in srgb,var(--fine-accent) 8%,var(--card-bg)),var(--card-bg))}
+#fines .fines-offense-icon{padding:4px;border-radius:7px;background:color-mix(in srgb,var(--fine-accent) 14%,transparent);color:var(--fine-accent)}
+#fines .fines-offense:nth-child(2n){--fine-accent:#ff7b8b}
+#fines .fines-offense:nth-child(3n){--fine-accent:#72c7ff}
+#fines .fines-goods-card{border-top:3px solid var(--fine-accent);border-color:color-mix(in srgb,var(--fine-accent) 28%,var(--border-color));background:linear-gradient(135deg,color-mix(in srgb,var(--fine-accent) 7%,var(--card-bg)),var(--card-bg))}
+#fines .fines-goods-card h4{color:var(--fine-accent)}
+#fines .fines-goods-card h4::before{background:var(--fine-accent);box-shadow:0 0 10px var(--fine-accent)}
+#fines #fine-seizure .fines-goods-card:nth-child(2){--fine-accent:#45d4ff}
+#fines #fine-seizure .fines-goods-card:nth-child(3){--fine-accent:#d19cff}
+#fines #fine-blackmoney .fines-callout{border-color:var(--fine-accent);background:color-mix(in srgb,var(--fine-accent) 10%,transparent);color:var(--fine-accent)}
 </style>
 
     <meta property="og:url" content="https://yydassai.f5.si/">
