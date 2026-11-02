@@ -57,6 +57,11 @@ const removeElement = { element(element) { element.remove(); } };
 function mercenaryManual(response) {
   return new HTMLRewriter()
     .on('#info', removeElement)
+    .on('#craft .craft-layout', {
+      element(element) {
+        element.setAttribute('class', 'craft-layout mercenary-craft-layout');
+      },
+    })
     .on('#craft .mercenary-hide', removeElement)
     .on('#exchange', removeElement)
     .on('#crewlog', removeElement)

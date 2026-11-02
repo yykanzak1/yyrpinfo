@@ -970,8 +970,8 @@
             table.craft-recipe-matrix th:not(:first-child):not(:last-child) { width: auto; font-size: .8rem; }
             table.craft-recipe-matrix .craft-th-cell { width: 100%; }
             table.craft-recipe-matrix .craft-th-cell span:not(.mat-icon) { overflow-wrap: anywhere; word-break: keep-all; }
-            /* 傭兵向けは左側の素材価格欄を削除するため、残った表を全幅で表示する */
-            .craft-layout > div:only-child { grid-column: 1 / -1; }
+            /* 傭兵向けは左側の素材価格欄を削除するため、レシピ欄をPCでも全幅で表示する */
+            .craft-layout.mercenary-craft-layout { grid-template-columns: minmax(0, 1fr); }
         }
         .reward-item-badge { gap: 9px; }
         .reward-item-icon { width: 34px; height: 34px; flex: 0 0 34px; object-fit: contain; }
