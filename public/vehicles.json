@@ -1414,20 +1414,6 @@
     "note": ""
   },
   {
-    "id": "ecb00ae9-9979-40b1-bc28-20e8b7943d1a",
-    "model": "faggio2",
-    "name": "Faggio",
-    "manufacturer": "Pegassi",
-    "class": "Motorcycle",
-    "price": 100000,
-    "seats": 1,
-    "trunk": "5枠/40kg",
-    "glovebox": "5枠/40kg",
-    "stash": "",
-    "topspeed": null,
-    "note": ""
-  },
-  {
     "id": "1edb64f7-9e2b-409c-bd3a-b7ca2280c414",
     "model": "blazer4",
     "name": "Street Blazer",
