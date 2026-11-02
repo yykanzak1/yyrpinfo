@@ -1101,6 +1101,32 @@
 #vehicles .vehicles-empty{padding:40px;text-align:center;border:1px dashed var(--border-color);border-radius:13px;color:var(--text-dim)}
 @media (max-width:760px){#vehicles .vehicles-page{padding:14px 0 32px}#vehicles .vehicles-hero{align-items:flex-start;flex-direction:column;padding:14px}.vehicles-count{align-self:flex-end}#vehicles .vehicles-controls{grid-template-columns:1fr;gap:6px}#vehicles .vehicles-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#vehicles .vehicle-body{padding:9px}#vehicles .vehicle-name{font-size:.86rem}#vehicles .vehicle-price-value{font-size:.86rem}}
 @media (max-width:430px){#vehicles .vehicles-grid{grid-template-columns:1fr}}
+
+/* 罪状一覧：色数を抑えた見やすい配色 */
+#fines .fines-section,#fines #fine-small,#fines #fine-medium,#fines #fine-large,#fines #fine-conflict,#fines #fine-other,#fines #fine-seizure,#fines #fine-blackmoney{--fine-accent:#78a5b4}
+#fines .fines-section-title{color:var(--text-color);padding:4px 9px;margin-bottom:10px;border:0;border-left:2px solid var(--fine-accent);border-radius:0;background:transparent}
+#fines .fines-section-icon{border-color:var(--border-color);background:var(--highlight-bg);color:var(--fine-accent);box-shadow:none}
+#fines .fines-table-shell{border-color:var(--border-color);box-shadow:none}
+#fines .fines-table thead{background:var(--highlight-bg)}
+#fines .fines-table th{color:var(--text-color);border-bottom-color:var(--border-color)}
+#fines .fines-table tbody tr{border-left:2px solid transparent}
+#fines .fines-table tbody tr:hover{border-left-color:var(--fine-accent);background:var(--highlight-bg)}
+#fines .fines-name-icon{border:0;background:transparent;color:var(--fine-accent)}
+#fines .fines-table td:nth-child(2),#fines .fines-table td:nth-child(3){color:var(--text-color);font-weight:700}
+#fines .fines-offense,#fines .fines-offense:nth-child(2n),#fines .fines-offense:nth-child(3n){border-color:var(--border-color);border-left:2px solid var(--border-color);background:var(--card-bg)}
+#fines .fines-offense-icon{padding:0;border-radius:0;background:transparent;color:var(--fine-accent)}
+#fines .fines-goods-card{border-color:var(--border-color);border-top:1px solid var(--border-color);background:var(--card-bg)}
+#fines .fines-goods-card h4{color:var(--text-color)}
+#fines .fines-goods-card h4::before{background:var(--fine-accent);box-shadow:none}
+#fines .fines-goods-card li::marker{color:var(--fine-accent)}
+#fines .fines-chip{border-color:var(--border-color);background:var(--highlight-bg)}
+
+/* メニューを目的別に整理 */
+.app-body > nav .nav-group{margin:0 0 8px;padding:0 0 8px;border-bottom:1px solid rgba(127,153,180,.18)}
+.app-body > nav .nav-group:last-child{border-bottom:0}
+.app-body > nav .nav-group-label{padding:8px 10px 5px;color:var(--text-dim);font-size:.64rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.app-body > nav .nav-group:not(:has(.tab-btn)){display:none}
+@media(max-width:600px){.app-body > nav .nav-group{margin-bottom:6px;padding-bottom:6px}.app-body > nav .nav-group-label{padding:8px 10px 4px;font-size:.62rem}}
 </style>
 
     <meta property="og:url" content="https://yydassai.f5.si/">
@@ -3207,14 +3233,23 @@ SOFTWARE.
                 <a class="theme-btn" href="/auth/logout" style="text-decoration:none;display:inline-flex;align-items:center" aria-label="ログアウト">ログアウト</a>
                 <button class="theme-btn" id="mobileThemeBtn" onclick="toggleTheme()" aria-label="ライト/ダーク切り替え"><svg class="lucide-icon theme-symbol" aria-hidden="true" focusable="false"><use href="#lucide-sun"></use></svg><span class="theme-label">ライト</span></button>
             </div>
+            <div class="nav-group">
+              <div class="nav-group-label">基本情報</div>
             <button class="tab-btn active" onclick="switchTab('info')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-map-pin"></use></svg><span>ギャングINFO</span></button>
             <button class="tab-btn" onclick="switchTab('fines')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-landmark"></use></svg><span>罪状一覧</span></button>
+            </div>
+            <div class="nav-group">
+              <div class="nav-group-label">犯罪・車両</div>
             <button class="tab-btn" onclick="switchTab('vehicles')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><span>車両一覧</span></button>
             <button class="tab-btn" onclick="switchTab('crime')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-clapperboard"></use></svg><span>犯罪マニュアル</span></button>
             <button class="tab-btn" onclick="switchTab('craft')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-hammer"></use></svg><span>クラフトレシピ</span></button>
             <button class="tab-btn" onclick="switchTab('exchange')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-banknote"></use></svg><span>換金場</span></button>
+            </div>
+            <div class="nav-group">
+              <div class="nav-group-label">ギャング管理</div>
             <button class="tab-btn" onclick="switchTab('crewlog')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-list-ordered"></use></svg><span>ギャング活動ログ</span></button>
             <button class="tab-btn" onclick="switchTab('joining')"><svg class="lucide-icon tab-icon" aria-hidden="true" focusable="false"><use href="#lucide-user-round"></use></svg><span>加入条件</span></button>
+            </div>
         </nav>
 
         <div class="main-area">
