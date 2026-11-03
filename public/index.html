@@ -3812,6 +3812,61 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
   .fines-goods-card ul{grid-template-columns:1fr!important}
 }
 </style>
+
+<style id="bluegang-motion-welcome">
+/* Blue Gang welcome / motion layer */
+.splash-screen{
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(0,157,255,.18),transparent 30%),
+    radial-gradient(circle at 15% 85%,rgba(0,210,255,.08),transparent 28%),
+    #03070d;
+}
+.splash-screen::before{
+  content:"";position:absolute;inset:-30%;opacity:.3;pointer-events:none;
+  background-image:linear-gradient(rgba(57,183,232,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(57,183,232,.09) 1px,transparent 1px);
+  background-size:42px 42px;transform:perspective(520px) rotateX(58deg) translateY(18%);transform-origin:center bottom;
+  animation:splashGridDrift 18s linear infinite;
+}
+.splash-screen::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;
+  background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(118,220,255,.06) 6px 7px);
+  mix-blend-mode:screen;animation:splashScan 7s linear infinite;
+}
+.splash-content{
+  width:min(620px,calc(100vw - 28px));padding:28px 22px 24px;border:1px solid rgba(75,190,235,.28);border-radius:24px;
+  background:linear-gradient(145deg,rgba(10,28,43,.78),rgba(4,12,22,.66));box-shadow:0 24px 80px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.07),0 0 45px rgba(0,145,255,.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.splash-content::before{content:"";position:absolute;inset:10px;border:1px solid rgba(0,210,255,.09);border-radius:17px;pointer-events:none}
+.splash-kicker{position:relative;z-index:1;animation:welcomeItemIn .65s .05s both}
+.splash-mark{animation:welcomeMarkIn .8s .12s cubic-bezier(.18,.8,.25,1) both}
+.splash-text{position:relative;z-index:1;letter-spacing:.34em;text-shadow:0 0 10px rgba(0,210,255,.75),0 0 34px rgba(0,136,255,.5);animation:welcomeTitleIn .7s .28s both}
+.splash-brand,.splash-subtitle,.splash-progress,.splash-status{position:relative;z-index:1}
+.splash-brand{animation:welcomeItemIn .55s .42s both}
+.splash-subtitle{animation:welcomeItemIn .55s .52s both}
+.splash-system{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:100%;margin-top:20px;animation:welcomeItemIn .6s .58s both}
+.splash-system-item{display:flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:6px 4px;border:1px solid rgba(79,177,218,.22);border-radius:9px;background:rgba(4,18,31,.58);color:#90b6c9;font-size:.55rem;font-weight:750;letter-spacing:.1em;white-space:nowrap}
+.splash-system-dot{width:6px;height:6px;border-radius:50%;background:#35e7a1;box-shadow:0 0 10px #35e7a1;animation:statusPulse 1.8s ease-in-out infinite}
+.splash-system-item:nth-child(2) .splash-system-dot{animation-delay:.25s}.splash-system-item:nth-child(3) .splash-system-dot{animation-delay:.5s}
+.splash-progress{margin-top:20px;width:190px;height:3px;border-radius:99px;box-shadow:0 0 18px rgba(0,210,255,.25);animation:welcomeItemIn .55s .65s both}
+.splash-status{letter-spacing:.32em;animation:welcomeItemIn .55s .72s both}
+@keyframes splashScan{from{transform:translateY(-12%)}to{transform:translateY(12%)}}
+@keyframes welcomeItemIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes welcomeMarkIn{from{opacity:0;transform:scale(.72) rotate(-8deg);filter:blur(5px)}to{opacity:1;transform:scale(1) rotate(0);filter:none}}
+@keyframes welcomeTitleIn{from{opacity:0;transform:translateY(12px);letter-spacing:.6em}to{opacity:1;transform:none;letter-spacing:.34em}}
+@keyframes statusPulse{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.18)}}
+/* Page transitions and gentle card entrance */
+.tab-content.active{animation:bluegangSectionIn .34s cubic-bezier(.2,.7,.25,1) both}
+.tab-content.active .crime-card,.tab-content.active .exchange-card,.tab-content.active .vehicle-category,.tab-content.active .fines-section,.tab-content.active .info-card{animation:cardRise .42s both}
+.tab-content.active .crime-card:nth-child(2),.tab-content.active .exchange-card:nth-child(2),.tab-content.active .vehicle-category:nth-child(2),.tab-content.active .fines-section:nth-child(2){animation-delay:.05s}
+.tab-content.active .crime-card:nth-child(3),.tab-content.active .exchange-card:nth-child(3),.tab-content.active .vehicle-category:nth-child(3),.tab-content.active .fines-section:nth-child(3){animation-delay:.1s}
+.tab-content.active .crime-card:nth-child(4),.tab-content.active .exchange-card:nth-child(4),.tab-content.active .vehicle-category:nth-child(4),.tab-content.active .fines-section:nth-child(4){animation-delay:.15s}
+.app-body > nav .tab-btn{transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease}
+.app-body > nav .tab-btn:hover{transform:translateX(4px);box-shadow:0 5px 16px rgba(0,152,230,.13)}
+@keyframes cardRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:600px){.splash-content{padding:24px 14px 20px;border-radius:20px}.splash-system{gap:5px}.splash-system-item{font-size:.48rem;letter-spacing:.04em}.splash-text{font-size:1.45rem}.splash-mark{margin-top:13px}}
+@media(prefers-reduced-motion:reduce){.splash-screen::before,.splash-screen::after,.splash-system-dot,.splash-content,.splash-kicker,.splash-mark,.splash-text,.splash-brand,.splash-subtitle,.splash-system,.splash-progress,.splash-status,.tab-content.active,.tab-content.active .crime-card,.tab-content.active .exchange-card,.tab-content.active .vehicle-category,.tab-content.active .fines-section,.tab-content.active .info-card{animation:none!important}.app-body > nav .tab-btn{transition:none!important}}
+</style>
 </head>
 <body>
 <!--
@@ -3871,6 +3926,7 @@ SOFTWARE.
     <div class="splash-text">WELCOME</div>
     <div class="splash-brand">獺祭 DASSAI <span>｜ Blue Gang</span></div>
     <div class="splash-subtitle"><span>GANG INFO</span><i>•</i><span>CRAFT</span><i>•</i><span>EXCHANGE</span></div>
+    <div class="splash-system" aria-label="システム状態"><div class="splash-system-item"><span class="splash-system-dot"></span>SECURE LINK</div><div class="splash-system-item"><span class="splash-system-dot"></span>ACCESS GRANTED</div><div class="splash-system-item"><span class="splash-system-dot"></span>LIVE DATA</div></div>
     <div class="splash-progress" aria-hidden="true"><span></span></div>
     <div class="splash-status">LOADING SITE</div>
   </div>
