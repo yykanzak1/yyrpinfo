@@ -401,7 +401,7 @@ async function callback(request, url, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const path = url.pathname;
+    const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, '') : url.pathname;
     if (path === '/auth/login') return startLogin(url, env);
     if (path === LOGIN_ASSET) return loginPage(url, env);
     if (path === '/auth/callback') return callback(request, url, env);
@@ -439,13 +439,13 @@ export default {
     }
     if (PAGE_ROUTES.has(path)) {
       if (!access) return loginPage(url, env);
-      if (access === 'mercenary' && !MERCENARY_ROUTES.has(path)) return new Response('Not found', { status: 404 });
-      if (access === 'gang' && !GANG_ROUTES.has(path)) return new Response('Not found', { status: 404 });
+      if (access === 'mercenary' && !MERCENARY_ROUTES.has(path)) return redirect('/crime');
+      if (access === 'gang' && !GANG_ROUTES.has(path)) return redirect('/');
       const page = await asset(env, url, '/_app/index.html');
       if (access === 'gang') return gangPage(page);
       if (access === 'mercenary') return mercenaryManual(page);
       return secure(page);
     }
-    return access ? new Response('Not found', { status: 404 }) : redirect('/');
+    return access ? redirect(access === 'mercenary' ? '/crime' : '/') : redirect('/');
   },
 };
