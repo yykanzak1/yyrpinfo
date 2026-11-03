@@ -6,7 +6,7 @@ const STATE = 'dassai_oauth_state';
 const LOGIN_ASSET = '/x9Qm4Lz7Vp2N8kR';
 const PUBLIC_FILES = new Set(['/og-image-bluegang-20261002.png', ...['info','fines','crime','craft','exchange','vehicles','crewlog','joining'].map((name) => `/ogp/${name}.png`)]);
 const PAGE_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog','/joining']);
-const MERCENARY_ROUTES = new Set(['/crime','/fines','/craft','/joining']);
+const MERCENARY_ROUTES = new Set(['/crime','/fines','/craft','/vehicles','/joining']);
 const GANG_ROUTES = new Set(['/','/index.html','/info','/fines','/crime','/craft','/exchange','/vehicles','/crewlog']);
 const API = 'https://discord.com/api';
 const MERCENARY_ASSETS = new Set([
@@ -419,13 +419,12 @@ export default {
     }
     if (path === '/vehicles.json') {
       if (!access) return redirect('/');
-      if (access === 'mercenary') return new Response('Not found', { status: 404 });
       const response = secure(await env.ASSETS.fetch(request));
       response.headers.set('Cache-Control', 'private, max-age=300');
       return response;
     }
     if (path.startsWith('/vehicle-images/')) {
-      if (!access || access === 'mercenary') return new Response('Not found', { status: 404 });
+      if (!access) return new Response('Not found', { status: 404 });
       const response = secure(await env.ASSETS.fetch(request));
       response.headers.set('Cache-Control', 'private, max-age=86400');
       return response;
