@@ -3710,6 +3710,14 @@ html[data-theme="light"] #crewlog .crew-log-embedded input, html[data-theme="lig
   #crewlog .crew-log-embedded .record-actions{grid-column:2;grid-row:1;align-self:start}
 }
 </style>
+<style id="craft-vehicle-lucide-icons">
+.category-header .category-title-icon{width:20px;height:20px;flex:0 0 20px;color:var(--accent-cyan);filter:drop-shadow(0 0 5px rgba(0,210,255,.28))}
+.category-header .category-title{line-height:1.25}
+#vehicles .vehicles-title{display:flex;align-items:center;gap:9px}
+#vehicles .vehicles-title-icon{width:1.05em;height:1.05em;flex:0 0 1.05em;color:var(--accent-cyan);filter:drop-shadow(0 0 6px rgba(0,210,255,.32))}
+#vehicles .vehicle-category-icon{width:18px;height:18px;flex:0 0 18px;color:var(--accent-cyan)}
+#vehicles .vehicle-category-head h3{line-height:1.3}
+</style>
 <style id="mobile-final-polish">
 /* スマホ最終調整：固定幅・横はみ出し・タップしづらさを解消 */
 @media (max-width:700px){
@@ -3956,7 +3964,7 @@ SOFTWARE.
 
                     <!-- 武器クラフト (普通) -->
                     <div class="category-header">
-                        <span class="category-title">武器クラフト</span>
+                        <svg class="lucide-icon category-title-icon" aria-hidden="true" focusable="false"><use href="#lucide-hammer"></use></svg><span class="category-title">武器クラフト</span>
                         <span class="category-badge">普通</span>
                     </div>
                     <div class="table-wrapper craft-recipe-wrapper">
@@ -3993,7 +4001,7 @@ SOFTWARE.
 
                     <!-- 武器クラフト (上級) -->
                     <div class="category-header">
-                        <span class="category-title">武器クラフト</span>
+                        <svg class="lucide-icon category-title-icon" aria-hidden="true" focusable="false"><use href="#lucide-hammer"></use></svg><span class="category-title">武器クラフト</span>
                         <span class="category-badge" style="border-color:#ff9900; color:#ff9900;">上級</span>
                     </div>
                     <div class="table-wrapper craft-recipe-wrapper">
@@ -4473,7 +4481,7 @@ SOFTWARE.
         <div id="vehicles" class="tab-content">
           <main class="vehicles-page">
             <section class="vehicles-hero">
-              <div><p class="vehicles-kicker">YYRP / VEHICLE CATALOG</p><h2 class="vehicles-title">車両一覧</h2><p class="vehicles-lead">車名・メーカー・クラス・価格・収納情報を検索できます。</p></div>
+              <div><p class="vehicles-kicker">YYRP / VEHICLE CATALOG</p><h2 class="vehicles-title"><svg class="lucide-icon vehicles-title-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><span>車両一覧</span></h2><p class="vehicles-lead">車名・メーカー・クラス・価格・収納情報を検索できます。</p></div>
               <div class="vehicles-count"><span id="vehicleCount">0</span> 台</div>
             </section>
             <div class="vehicles-controls">
@@ -6046,7 +6054,7 @@ SOFTWARE.
     const frag=document.createDocumentFragment();
     ordered.forEach(category=>{
       const section=document.createElement('section'); section.className='vehicle-category';
-      section.innerHTML=`<div class="vehicle-category-head"><h3>${esc(categoryLabels[category]||category)}</h3><span class="vehicle-category-count">${groups.get(category).length}台</span></div><div class="vehicle-category-grid"></div>`;
+      section.innerHTML=`<div class="vehicle-category-head"><svg class="lucide-icon vehicle-category-icon" aria-hidden="true" focusable="false"><use href="#lucide-car-front"></use></svg><h3>${esc(categoryLabels[category]||category)}</h3><span class="vehicle-category-count">${groups.get(category).length}台</span></div><div class="vehicle-category-grid"></div>`;
       const grid=section.querySelector('.vehicle-category-grid');
       groups.get(category).forEach(v=>{
         const recommended=recommendedModels.has(v.model);
