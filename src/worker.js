@@ -69,7 +69,6 @@ function mercenaryManual(response) {
     .on('#craft .mercenary-hide', removeElement)
     .on('#exchange', removeElement)
     .on('#crewlog', removeElement)
-    .on('#vehicles', removeElement)
     .on('.search-bar', removeElement)
     .on('.search-bar', removeElement)
     .on('#searchInput', removeElement)
@@ -85,9 +84,11 @@ function mercenaryManual(response) {
         const isFines = onclick.includes("switchTab('fines')");
         const isJoining = onclick.includes("switchTab('joining')");
         const isCraft = onclick.includes("switchTab('craft')");
-        if (!isCrime && !isFines && !isJoining && !isCraft) element.remove();
+        const isVehicles = onclick.includes("switchTab('vehicles')");
+        if (!isCrime && !isFines && !isJoining && !isCraft && !isVehicles) element.remove();
         else element.setAttribute('class', isCrime ? 'tab-btn active' : 'tab-btn');
         if (isCraft) element.setInnerContent('クラフトレシピ', { html: false });
+        if (isVehicles) element.setInnerContent('車両一覧', { html: false });
       },
     })
     .on('#crime', {
