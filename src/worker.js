@@ -391,7 +391,8 @@ async function callback(request, url, env) {
     if (!access) return fail(joined ? 'role' : error ? 'server' : 'denied');
     const days = Number(env.SESSION_DAYS) || 7;
     const token = await sign(env, { v: 2, u: me.id, n: me.global_name || me.username, a: access, exp: Math.floor(Date.now() / 1000) + days * 86400 });
-    return redirect('/', [setCookie(SESSION, token, '/', days * 86400), clearState]);
+    const destination = access === 'mercenary' ? '/crime' : '/';
+    return redirect(destination, [setCookie(SESSION, token, '/', days * 86400), clearState]);
   } catch {
     return fail('server');
   }
