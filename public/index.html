@@ -3948,6 +3948,28 @@ table th{background:linear-gradient(180deg,rgba(30,142,198,.3),rgba(8,47,73,.3))
 @media(max-width:700px){header{height:60px;min-height:60px;padding:0 12px}header:before{display:none}.logo-container{gap:8px}.logo-container h1:after{display:none}.logo-container h1{font-size:.9rem}.header-tools .updates-btn,.header-tools .theme-btn{min-height:32px;padding:0 8px}.command-banner{align-items:flex-start;flex-direction:column;gap:12px;margin-top:12px;width:calc(100% - 20px);padding:17px 16px;border-radius:13px}.command-title{font-size:21px}.command-sub{font-size:10px}.command-status{align-self:flex-end}.search-bar{margin:9px 10px 0}.container{padding-left:10px;padding-right:10px}.tab-content{padding-top:4px}}
 @media(prefers-reduced-motion:reduce){.command-status:before,header:before,.tab-content.active{animation:none!important}.crime-card:hover,.clothing-card:hover,.exchange-card:hover,.vehicle-card:hover,.spot-card:hover{transform:none}}
 </style>
+
+<style id="bluegang-left-menu-readable-v4">
+/* V4: readable left navigation with the new visual language */
+@media(min-width:701px){
+  .app-body{display:grid;grid-template-columns:258px minmax(0,1fr);align-items:start}
+  .app-body>nav{position:sticky;top:74px;z-index:900;width:258px;height:calc(100vh - 74px);min-height:620px;box-sizing:border-box;display:block;padding:18px 11px 24px;overflow-y:auto;border:0;border-right:1px solid rgba(70,204,255,.23);background:linear-gradient(180deg,rgba(5,23,40,.98),rgba(3,13,25,.98));box-shadow:10px 0 28px rgba(0,0,0,.2);backdrop-filter:blur(16px)}
+  .app-body>nav .nav-drawer-head{display:flex;align-items:center;justify-content:space-between;height:35px;margin:0 7px 17px;padding:0 2px;color:#bdeafa;font:900 12px ui-monospace,monospace;letter-spacing:.2em;border-bottom:1px solid rgba(70,204,255,.2)}
+  .app-body>nav .nav-close,.app-body>nav .nav-drawer-actions{display:none}
+  .app-body>nav .nav-group{display:block;margin:0 0 18px;padding:0 5px;border:0;background:transparent}
+  .app-body>nav .nav-group-label{display:flex;align-items:center;height:26px;padding:0 9px;color:#6b9aae;font-size:10px;letter-spacing:.15em;font-weight:900;writing-mode:horizontal-tb;transform:none;border:0}
+  .app-body>nav .nav-group-label:before{content:"";width:5px;height:5px;margin-right:8px;border-radius:50%;background:#38d9ff;box-shadow:0 0 9px #38d9ff}
+  .app-body>nav .tab-btn{display:flex;width:100%;min-height:42px;margin:3px 0;padding:0 12px;align-items:center;justify-content:flex-start;gap:10px;border:1px solid transparent;border-radius:10px;color:#a2b9c6;font-size:.79rem;white-space:nowrap}
+  .app-body>nav .tab-btn .tab-icon{width:17px;height:17px;flex:0 0 17px;color:#78dfff;opacity:.82}
+  .app-body>nav .tab-btn:hover{transform:translateX(3px);background:rgba(35,156,231,.13);border-color:rgba(71,208,255,.25);color:#f2fcff}
+  .app-body>nav .tab-btn.active{color:#fff;background:linear-gradient(100deg,rgba(18,136,230,.55),rgba(21,190,218,.14));border-color:rgba(67,212,255,.45);box-shadow:inset 3px 0 #35d9ff,0 6px 18px rgba(0,126,220,.16)}
+  .main-area{min-width:0;width:100%;padding-bottom:30px}.command-banner{width:calc(100% - 48px);max-width:1500px;margin-top:22px}.search-bar{width:calc(100% - 48px);max-width:1500px;margin-top:14px}.container{max-width:1500px;padding-left:24px;padding-right:24px}
+}
+/* brighter text and calmer surfaces for scanability */
+.command-title{letter-spacing:.03em}.command-sub{color:#a1becc;font-size:12px}.command-kicker{font-size:11px}.search-bar input{font-size:13px;color:#effaff!important}.info-section-title,.crime-category-title{font-size:1rem}.crime-card-top,.clothing-card-title,.vehicle-name,.fines-section-title,.category-title{font-weight:850}.crime-card,.clothing-card,.exchange-card,.vehicle-card,.fines-section,.category-header,.crew-log-embedded .card,.membership-guide .card,.spot-card,.info-card{background:linear-gradient(145deg,rgba(13,44,67,.98),rgba(6,20,35,.99));border-color:rgba(102,207,241,.27)}
+html[data-theme="light"] .app-body>nav{background:linear-gradient(180deg,#f7fcff,#eaf6fb);border-color:#bedce8}html[data-theme="light"] .app-body>nav .nav-drawer-head{color:#194b64;border-color:#bddce7}html[data-theme="light"] .app-body>nav .nav-group-label{color:#5e8293}html[data-theme="light"] .app-body>nav .tab-btn{color:#4d7184}html[data-theme="light"] .app-body>nav .tab-btn.active{color:#083e5b;background:linear-gradient(100deg,rgba(24,143,215,.2),rgba(15,193,216,.1));border-color:#82cce3}
+@media(max-width:700px){.app-body{display:block}.command-banner{width:calc(100% - 20px)}.search-bar{width:auto}.container{padding-left:10px;padding-right:10px}.app-body>nav .tab-btn{font-size:.84rem}}
+</style>
 </head>
 <body>
 <!--
