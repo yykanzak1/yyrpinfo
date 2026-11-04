@@ -3970,6 +3970,17 @@ table th{background:linear-gradient(180deg,rgba(30,142,198,.3),rgba(8,47,73,.3))
 html[data-theme="light"] .app-body>nav{background:linear-gradient(180deg,#f7fcff,#eaf6fb);border-color:#bedce8}html[data-theme="light"] .app-body>nav .nav-drawer-head{color:#194b64;border-color:#bddce7}html[data-theme="light"] .app-body>nav .nav-group-label{color:#5e8293}html[data-theme="light"] .app-body>nav .tab-btn{color:#4d7184}html[data-theme="light"] .app-body>nav .tab-btn.active{color:#083e5b;background:linear-gradient(100deg,rgba(24,143,215,.2),rgba(15,193,216,.1));border-color:#82cce3}
 @media(max-width:700px){.app-body{display:block}.command-banner{width:calc(100% - 20px)}.search-bar{width:auto}.container{padding-left:10px;padding-right:10px}.app-body>nav .tab-btn{font-size:.84rem}}
 </style>
+
+<style id="bluegang-layout-fix-v5">
+@media(min-width:701px){
+  .app-body,.main-area,.command-banner,.search-bar,.container{box-sizing:border-box}
+  .main-area{min-width:0;max-width:100%;overflow-x:hidden}
+  .command-banner,.search-bar{width:calc(100% - 48px);margin-left:auto;margin-right:auto}
+  .container{width:100%;max-width:1500px;margin-left:auto;margin-right:auto}
+  .main-area>.container{padding-left:24px;padding-right:24px}
+}
+html,body{max-width:100%;overflow-x:hidden}
+</style>
 </head>
 <body>
 <!--
