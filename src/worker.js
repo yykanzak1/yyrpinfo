@@ -170,7 +170,7 @@ async function discordGuildMembers(url, env) {
   const guildId = String(env.GUILD_ID || '').split(',')[0].trim();
   if (!guildId) throw new Error('Discord guild is not configured');
   const cache = globalThis.caches?.default;
-  const cacheKey = new Request(new URL(`/__internal/discord-members/${guildId}`, url.origin));
+  const cacheKey = new Request(new URL(`/__internal/discord-members-v2/${guildId}`, url.origin));
   if (cache) {
     try {
       const cached = await cache.match(cacheKey);
@@ -190,7 +190,7 @@ async function discordGuildMembers(url, env) {
     for (const member of page) {
       const user = member?.user;
       if (!user?.id || user.bot) continue;
-      members.push({ id: user.id, name: member.nick || user.global_name || user.username || user.id, category: memberCategory(member, env) });
+      members.push({ id: user.id, name: member.nick || user.global_name || user.username || user.id, discord_name: user.username || user.global_name || user.id, category: memberCategory(member, env) });
     }
     if (page.length < 1000) break;
     const nextAfter = page.at(-1)?.user?.id;
