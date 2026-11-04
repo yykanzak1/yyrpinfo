@@ -116,6 +116,19 @@ function gangPage(response) {
     })
     .transform(secure(response));
 }
+function underbossPage(response) {
+  // アンボスは加入条件を含む全ページを閲覧可能。専用分岐でメニュー削除の影響を受けないようにする。
+  return new HTMLRewriter()
+    .on('#joining', { element(element) { element.removeAttribute('hidden'); } })
+    .on('button.tab-btn', {
+      element(element) {
+        if ((element.getAttribute('onclick') || '').includes("switchTab('joining')")) {
+          element.setAttribute('aria-label', '加入条件');
+        }
+      },
+    })
+    .transform(secure(response));
+}
 
 
 function jsonResponse(data, status = 200, extraHeaders = {}) {
@@ -444,6 +457,7 @@ export default {
       const page = await asset(env, url, '/_app/index.html');
       if (access === 'gang') return gangPage(page);
       if (access === 'mercenary') return mercenaryManual(page);
+      if (access === 'underboss') return underbossPage(page);
       return secure(page);
     }
     return access ? redirect(access === 'mercenary' ? '/crime' : '/') : redirect('/');
