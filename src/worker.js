@@ -14,6 +14,7 @@ const MERCENARY_ASSETS = new Set([
   '/assets/fivem/rewards/cash.webp',
   '/assets/fivem/rewards/gold-bar.webp',
   '/assets/fivem/rewards/zentorno.webp',
+  '/assets/fivem/rewards/weapon-grenade.png',
 ]);
 
 const b64u = {
@@ -426,6 +427,10 @@ export default {
     // 旧形式のCookieには権限情報がないため再ログインを必須にする。
     const allowedRoles = new Set(['gang', 'mercenary', 'boss', 'underboss']);
     const access = session && session.v === 2 && allowedRoles.has(session.a) ? session.a : null;
+    if (path === '/crew-log.html') {
+      if (!access || access === 'mercenary') return new Response('Not found', { status: 404 });
+      return secure(await asset(env, url, '/crew-log.html'));
+    }
     if (path === '/api/members' || path === '/api/records' || path.startsWith('/api/records/')) {
       if (!access) return redirect('/');
       if (access === 'mercenary') return new Response('Not found', { status: 404 });
